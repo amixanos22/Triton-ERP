@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>billing.html</title>
+    <style>
+        /* ΚΑΘΑΡΙΣΜΟΣ BLOGGER */
+        #navbar-iframe, .navbar, .header-outer, .footer-outer { display: none !important; height: 0 !important; }
+        
+        body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        
+        #triton-app { 
+            width: 1150px; 
+            margin: 80px auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            min-height: 1000px;
+        }
+
+        :root { --triton-blue: #0ea5e9; --triton-bg: #f1f5f9; --triton-border: #cbd5e1; }
+        input, select, textarea { border: none; outline: none; background: transparent; font-family: inherit; width: 100%; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        .header-top-grid { display: grid; grid-template-columns: 220px 1fr 150px; gap: 20px; align-items: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 25px; }
+        .logo-area img { max-width: 100%; max-height: 100px; }
+        .company-info-area h1 { margin: 0; font-size: 26px; text-transform: uppercase; }
+        .company-info-area p { margin: 2px 0; font-size: 13px; font-weight: 600; color: #475569; }
+
+      /* ΜΠΑΡΑ ΠΛΗΡΟΦΟΡΙΩΝ */
+        .triton-info-bar { display: flex; background: var(--triton-bg); border-radius: 4px; border: 1px solid var(--triton-border); margin-bottom: 25px; }
+        .bar-cell { flex: 1; padding: 10px 15px; border-right: 1px solid var(--triton-border); }
+        .bar-cell:last-child { border-right: none; }
+        /* Τίτλος Bold */
+        .bar-cell label { display: block; font-size: 9px; color: var(--triton-blue); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+        /* Δεδομένα Normal */
+        .bar-cell span, .bar-cell input { font-size: 14px; font-weight: normal; color: #000; }
+
+        /* ΚΑΡΤΕΣ ΠΕΛΑΤΗ / ΔΙΑΚΙΝΗΣΗΣ */
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .info-card { background: var(--triton-bg); padding: 15px; border-radius: 6px; border-left: 5px solid var(--triton-blue); }
+        /* Τίτλος Bold */
+        .info-card label { display: block; font-size: 9px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+        /* Δεδομένα Normal */
+        .info-card input, .info-card select { border-bottom: 1px solid var(--triton-border); padding: 4px 0; font-size: 13px; margin-bottom: 8px; font-weight: normal; color: #000; }
+
+        /* ΠΙΝΑΚΑΣ ΠΡΟΪΟΝΤΩΝ */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        /* Κεφαλίδες Πίνακα Bold */
+        th { background: #f1f5f9; padding: 10px 5px; font-size: 9px; border-bottom: 2px solid black; text-transform: uppercase; font-weight: bold; }
+        td { padding: 8px 5px; border-bottom: 1px solid #eee; }
+        /* Δεδομένα Πίνακα Normal */
+        .col-input { text-align: center; font-size: 13px; font-weight: normal; color: #000; }
+        .readonly-cell { background: #f9fafb; color: #64748b; }
+
+        /* FOOTER & ΣΥΝΟΛΑ */
+        .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 25px; }
+        .uid-container { margin-top: 15px; padding: 10px; border: 1px dashed var(--triton-border); font-size: 11px; font-weight: normal; background: #f8fafc; color: #64748b; }
+        
+        .totals-box { display: flex; flex-direction: column; }
+        /* Τίτλοι συνόλων Bold για να ξεχωρίζουν */
+        .total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; font-weight: bold; color: #475569; }
+        /* Το τελικό ποσό παραμένει έντονο */
+        .grand-total { border-top: 2px solid black; padding-top: 10px; font-size: 22px; color: var(--triton-blue); font-weight: 900; margin-top: 5px; }
+        
+        .btn-print { width: 100%; padding: 15px; background: black; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; margin-top: 20px; font-size: 16px; transition: 0.2s; }
+        .btn-print:hover { background: #333; }
+
+       /* 1. Ρυθμίσεις Εκτύπωσης: Εξαφανίζει ό,τι έχει class "no-print" και καθαρίζει τα χρώματα */
+@media print { 
+    .no-print { display: none !important; } 
+    #triton-app { margin: 0; box-shadow: none; width: 100%; padding: 0; }
+    input, select { background-color: transparent !important; border: none !important; color: black !important; }
+}
+
+/* 2. Styling για το πεδίο όταν υπάρχει ζημιά (Μόνο στην οθόνη) */
+.price-alert {
+    background-color: #fee2e2 !important;
+    color: #ef4444 !important;
+    border: 2px solid #ef4444 !important;
+    font-weight: bold;
+}
+    </style>
+</head>
+<body>
+<div class="no-print" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+    <a href="dashboard.html" style="
+        text-decoration: none; 
+        background: #0ea5e9; 
+        color: white; 
+        padding: 12px 20px; 
+        border-radius: 50px; 
+        font-weight: bold; 
+        font-size: 14px; 
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.3s;
+    " onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'">
+        📊 <span>ΣΤΑΤΙΣΤΙΚΑ ΜΗΝΑ</span>
+    </a>
+</div>
+<div id="triton-app">
+   
+    <div class="header-top-grid">
+        <div id="idxLogo" class="logo-area"></div>
+        <div class="company-info-area">
+            <h1 id="idxCompName">ΦΟΡΤΩΣΗ...</h1>
+            <p id="idxActivity">-</p>
+            <p id="idxAddress">-</p>
+            <p>ΑΦΜ: <span id="idxTaxId" style="margin-right:25px;">-</span> ΔΟΥ: <span id="idxTaxOffice">-</span></p>
+        </div>
+        <div style="width:115px; height:115px; border:1px solid #ddd; background:#fafafa; display:flex; align-items:center; justify-content:center; font-size:10px; text-align:center;">QR CODE<br>myData</div>
+    </div>
+
+   <div class="triton-info-bar">
+        <div class="bar-cell"><label>Ημερομηνία</label><span id="dtDisplay">--/--/----</span></div>
+        <div class="bar-cell"><label>Αρ. Παραστατικού</label><input type="text" value="ΑΑ0001"></div>
+        <div class="bar-cell"><label>MARK (myData)</label><input type="text" placeholder="..."></div>
+        <div class="bar-cell"><label>Τρόπος Πληρωμής</label><select><option>ΜΕΤΡΗΤΑ</option><option>ΚΑΡΤΑ POS</option><option>ΕΠΙ ΠΙΣΤΩΣΕΙ</option></select></div>
+    </div>
+
+    <div style="display: flex; gap: 20px; margin-bottom: 25px;">
+        <div class="info-card" style="flex: 1;">
+            <label>Στοιχεία Πελάτη</label>
+            <input id="cName" list="custData" placeholder="Αναζήτηση..." onchange="autoFillCustomer()">
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 2;">
+                    <label style="font-size: 8px;">ΑΦΜ</label>
+                    <input id="cTax" placeholder="ΑΦΜ">
+                </div>
+                <div style="flex: 1.5;">
+                    <label style="font-size: 8px;">ΔΟΥ</label>
+                    <input id="cTaxOffice" placeholder="ΔΟΥ">
+                </div>
+            </div>
+
+            <label>Διεύθυνση</label>
+            <input id="cAddr" placeholder="Διεύθυνση">
+
+            <div id="emailSelectionArea" style="margin-top: 10px; padding: 10px; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; display: none;">
+                <label style="display: block; font-size: 9px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 5px;">ΑΠΟΣΤΟΛΗ ΣΕ:</label>
+                <div id="recipientCheckboxes" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+        </div>
+
+       <div class="info-card" style="flex: 1;">
+            <label>Σκοπός Διακίνησης</label>
+            <select style="font-weight:normal; margin-bottom:10px; border-bottom: 1px solid var(--triton-border);">
+                <option>ΠΩΛΗΣΗ</option>
+                <option>ΕΠΙΣΤΡΟΦΗ</option>
+                <option>ΔΕΙΓΜΑΤΙΣΜΟΣ</option>
+            </select>
+            
+            <label>Τόπος Παράδοσης</label>
+            <input placeholder="π.χ. ΕΔΡΑ ΤΟΥ" style="font-weight: normal;">
+
+            <label style="margin-top:10px;">Αριθμός Αυτοκινήτου</label>
+<input id="carNumber" placeholder="π.χ. ΙΚΥ-1234" style="font-weight: normal;" onkeydown="if(event.key==='Enter') document.querySelector('.prod-name').focus()">
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40%">ΠΕΡΙΓΡΑΦΗ</th>
+                <th style="width:10%">ΠΟΣ.</th>
+                <th style="width:8%">Μ.Μ.</th>
+                <th style="width:10%">ΤΙΜΗ</th>
+                <th style="width:10%">ΑΞΙΑ</th>
+                <th style="width:6%">ΕΚΠΤ.%</th>
+                <th style="width:6%">ΦΠΑ%</th>
+                <th style="width:10%">ΣΥΝΟΛΟ</th>
+            </tr>
+        </thead>
+        <tbody id="rowsBody"></tbody>
+    </table>
+
+    <div class="footer-grid">
+        <div class="remarks-col">
+            <label style="font-size:9px; font-weight:bold; color:#64748b;">ΠΑΡΑΤΗΡΗΣΕΙΣ</label>
+            <textarea style="height:80px; border:1px solid var(--triton-border); border-radius:4px; padding:10px; width:100%; margin-top:5px; background:white;" placeholder="Σημειώσεις..."></textarea>
+            <div class="uid-container">UID: <span id="myDataUID">................................................................</span></div>
+        </div>
+        
+       <div class="totals-box">
+    <div class="total-line"><span>ΚΑΘΑΡΗ ΑΞΙΑ:</span> <span id="sumNet">0.00 €</span></div>
+    <div class="total-line"><span>ΕΚΠΤΩΣΗ:</span> <span id="sumDisc">0.00 €</span></div>
+    <div class="total-line"><span>ΦΠΑ:</span> <span id="sumTax">0.00 €</span></div>
+    <div class="total-line grand-total"><span>ΤΕΛΙΚΟ ΠΟΣΟ:</span> <span id="sumGrand">0.00 €</span></div>
+    
+    <div class="total-line no-print" style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed #0ea5e9;">
+        <span style="color: #0ea5e9;">ΠΡΑΓΜΑΤΙΚΟ ΚΕΡΔΟΣ:</span> 
+        <span id="totalProfitMargin" style="font-weight: 900;">0.0% (0.00 €)</span>
+    </div>
+
+    <button class="btn-print no-print" onclick="handlePrint()">ΕΚΤΥΠΩΣΗ (F10)</button>
+</div>
+    </div>
+</div>
+
+<datalist id="custData"></datalist>
+<datalist id="prodData"></datalist>
+
+<script>
+    // 1. ΦΟΡΤΩΣΗ ΔΕΔΟΜΕΝΩΝ (ΠΕΛΑΤΕΣ & ΠΡΟΪΟΝΤΑ ΑΠΟ ΤΙΣ ΑΛΛΕΣ ΣΕΛΙΔΕΣ)
+  function loadData() {
+    // Στοιχεία Εταιρείας
+    const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
+    document.getElementById('idxCompName').innerText = s.companyName || "TRITON ERP";
+    document.getElementById('idxActivity').innerText = s.activity || "-";
+    document.getElementById('idxAddress').innerText = s.address || "-";
+    document.getElementById('idxTaxId').innerText = s.taxId || "-";
+    document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
+    
+    // Λίστα Πελατών - ΚΑΘΑΡΟ ΚΑΙ ΣΩΣΤΟ
+    const dl = document.getElementById('custData');
+    dl.innerHTML = ''; // Καθαρίζουμε για να μην διπλασιάζονται
+    const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    
+    Object.keys(customers).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        dl.appendChild(opt);
+    });
+
+    // Λίστα Προϊόντων
+    const pdl = document.getElementById('prodData');
+    pdl.innerHTML = ''; 
+    const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
+    Object.values(products).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.desc;
+        pdl.appendChild(opt);
+    });
+}
+
+ // 2. ΠΕΛΑΤΗΣ AUTOFILL (ΜΕ ΕΛΕΓΧΟ ΤΙΜΟΚΑΤΑΛΟΓΟΥ & ΕΚΠΤΩΣΗΣ)
+    function autoFillCustomer() {
+        const name = document.getElementById('cName').value;
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const found = db[name]; 
+        
+        if (found) {
+            // Βασικά Στοιχεία
+            document.getElementById('cTax').value = found.afm || "";
+            if(document.getElementById('cTaxOffice')) {
+                document.getElementById('cTaxOffice').value = found.doy || found.taxOffice || "";
+            }
+            document.getElementById('cAddr').value = found.address || "";
+            
+            // --- ΝΕΑ ΛΟΓΙΚΗ ---
+            // Αποθηκεύουμε προσωρινά τις ρυθμίσεις του πελάτη σε "κρυφές" μεταβλητές
+            // για να τις χρησιμοποιήσει μετά η checkProduct()
+            window.currentCustomerPriceList = found.priceList || 'retail';
+            window.currentCustomerDiscount = found.discount || 0;
+
+            // Προαιρετικά: Ενημέρωση όλων των υπαρχουσών γραμμών αν αλλάξουμε πελάτη στη μέση
+            updateAllRowsWithCustomerPolicy();
+
+            updateEmailRecipients(name);
+            
+            console.log("Customer Policy Loaded:", window.currentCustomerPriceList, window.currentCustomerDiscount + "%");
+        }
+    }
+
+ // 3. ΠΡΟΣΘΗΚΗ ΓΡΑΜΜΗΣ (ΜΕ ΕΛΕΓΧΟ STOCK & ΚΟΣΤΟΥΣ)
+function addRow() {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" class="col-input prod-name" list="prodData" 
+            onchange="checkProduct(this); validateTritonProfit(this.closest('tr').querySelector('.prc'))" 
+            onkeydown="nav(event, 'prod')"></td>
+        
+        <td><input type="number" class="col-input qty" value="1" 
+            oninput="checkStockAvailability(this); recalc();" 
+            onkeydown="nav(event, 'qty')"></td>
+        
+        <td><input type="text" class="col-input unit-cell readonly-cell" value="ΤΕΜ" readonly></td>
+        
+        <td><input type="number" class="col-input prc" step="0.01" 
+            oninput="recalc(); validateTritonProfit(this)" 
+            onkeydown="nav(event, 'prc')"></td>
+            
+        <td><input type="text" class="col-input raw-val readonly-cell" readonly value="0.00"></td>
+        <td><input type="number" class="col-input dsc" oninput="recalc(); validateTritonProfit(this.closest('tr').querySelector('.prc'))"></td>
+        <td><input type="number" class="col-input tax-p" oninput="recalc()"></td>
+        <td><input type="text" class="col-input line-total readonly-cell" readonly value="0.00"></td>
+    `;
+    document.getElementById('rowsBody').appendChild(tr);
+    return tr;
+}
+
+    // 4. SMART NAVIGATION (Enter)
+    function nav(e, field) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const row = e.target.closest('tr');
+            if (field === 'prod') row.querySelector('.qty').focus();
+            else if (field === 'qty') { addRow(); document.querySelector('#rowsBody tr:last-child .prod-name').focus(); }
+        }
+    }
+
+   // 5. ΑΥΤΟΜΑΤΟ ΠΡΟΪΟΝ (ΜΕ ΕΠΙΛΟΓΗ ΤΙΜΟΚΑΤΑΛΟΓΟΥ ΠΕΛΑΤΗ)
+    function checkProduct(input) {
+        const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
+        const found = Object.values(products).find(p => p.desc === input.value);
+        
+        if (found) {
+            const row = input.closest('tr');
+            
+            // 1. ΕΠΙΛΟΓΗ ΤΙΜΗΣ: Αν ο πελάτης είναι χονδρικής, βάλε τη χονδρική (price_wholesale)
+            // Αλλιώς βάλε τη λιανική (price)
+            let selectedPrice = found.price || 0;
+            if (window.currentCustomerPriceList === 'wholesale') {
+                // Αν δεν έχει οριστεί χονδρική στο προϊόν, κράτα τη λιανική ως ασφάλεια
+                selectedPrice = found.price_wholesale || found.price || 0;
+            }
+
+            // 2. ΕΠΙΛΟΓΗ ΕΚΠΤΩΣΗΣ: Αν ο πελάτης έχει μόνιμη έκπτωση, βάλε αυτήν.
+            // Αλλιώς βάλε την έκπτωση του προϊόντος.
+            let selectedDiscount = found.discount || 0;
+            if (window.currentCustomerDiscount > 0) {
+                selectedDiscount = window.currentCustomerDiscount;
+            }
+
+            // Ενημέρωση των πεδίων της γραμμής
+            row.querySelector('.prc').value = selectedPrice;
+            row.querySelector('.dsc').value = selectedDiscount;
+            row.querySelector('.tax-p').value = found.vat || 24;
+            row.querySelector('.unit-cell').value = found.unit || "ΤΕΜ";
+            
+            recalc();
+        }
+    }
+
+    // 6. ΥΠΟΛΟΓΙΣΜΟΙ
+   function recalc() {
+    let n=0, d=0, t=0, totalCostOfAllItems = 0;
+    
+    // Φορτώνουμε τις συνταγές για να ξέρουμε τα κόστη
+    const recipes = JSON.parse(localStorage.getItem('tritonRecipes') || '{}');
+
+    document.querySelectorAll('#rowsBody tr').forEach(r => {
+        const pName = r.querySelector('.prod-name').value;
+        const q = parseFloat(r.querySelector('.qty').value) || 0;
+        const p = parseFloat(r.querySelector('.prc').value) || 0;
+        const dp = parseFloat(r.querySelector('.dsc').value) || 0;
+        const tp = parseFloat(r.querySelector('.tax-p').value) || 0;
+
+        const raw = q*p; 
+        const disc = raw*(dp/100); 
+        const net = raw-disc; 
+        const tax = net*(tp/100);
+
+        r.querySelector('.raw-val').value = raw.toFixed(2);
+        r.querySelector('.line-total').value = (net+tax).toFixed(2);
+        
+        n+=raw; d+=disc; t+=tax;
+
+        // Προσθήκη κόστους παραγωγής στο συνολικό κουβά
+        if (recipes[pName]) {
+            totalCostOfAllItems += (parseFloat(recipes[pName].totalCost) || 0) * q;
+        }
+    });
+
+    // Ενημέρωση των κλασικών πεδίων
+    document.getElementById('sumNet').innerText = n.toFixed(2) + " €";
+    document.getElementById('sumDisc').innerText = d.toFixed(2) + " €";
+    document.getElementById('sumGrand').innerText = (n-d+t).toFixed(2) + " €";
+
+    // --- ΤΟ ΝΕΟ ΚΟΜΜΑΤΙ: ΥΠΟΛΟΓΙΣΜΟΣ ΣΥΝΟΛΙΚΟΥ ΚΕΡΔΟΥΣ ---
+    const finalNetValue = n - d;
+    const profitMarginElement = document.getElementById('totalProfitMargin');
+    
+    if (profitMarginElement && finalNetValue > 0) {
+        const profitEuro = finalNetValue - totalCostOfAllItems;
+        const profitPercent = (profitEuro / finalNetValue) * 100;
+
+        profitMarginElement.innerText = profitPercent.toFixed(1) + "%";
+        
+        // Αλλαγή χρώματος: Πράσινο αν είσαι ΟΚ, Κόκκινο αν το κέρδος είναι κάτω από 15%
+        profitMarginElement.style.color = profitPercent < 15 ? "#ef4444" : "#059669";
+    }
+}
+  // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: ΕΜΦΑΝΙΣΗ CHECKBOXES ΓΙΑ EMAILS
+function updateEmailRecipients(name) {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const c = db[name];
+    const container = document.getElementById('recipientCheckboxes');
+    const area = document.getElementById('emailSelectionArea');
+
+    if (!container || !area) return; 
+
+    container.innerHTML = ''; 
+    if (c && c.emails && c.emails.length > 0) {
+        area.style.display = 'block';
+        c.emails.forEach((email, index) => {
+            container.innerHTML += `
+                <label style="display: flex; align-items: center; background: white; padding: 5px 10px; border-radius: 5px; border: 1px solid #0ea5e9; cursor: pointer; font-size: 12px; font-weight:bold; color:#0369a1;">
+                    <input type="checkbox" class="email-to-send" value="${email}" checked style="margin-right: 8px;">
+                    ${email}
+                </label>
+            `;
+        });
+    } else {
+        area.style.display = 'none';
+    }
+}
+  function handlePrint() {
+    // 1. ΕΛΕΓΧΟΣ ΖΗΜΙΑΣ (Triton Profit Guard)
+    const priceInputs = document.querySelectorAll('.prc');
+    let lossItems = [];
+
+    priceInputs.forEach(input => {
+        //rgb(254, 226, 226) είναι το απαλό κόκκινο που βάλαμε στο validateTritonProfit
+        if (input.style.backgroundColor === "rgb(254, 226, 226)") { 
+            const row = input.closest('tr');
+            const name = row.querySelector('.prod-name').value;
+            lossItems.push(name);
+        }
+    });
+
+    if (lossItems.length > 0) {
+        const confirmMsg = `⚠️ ΠΡΟΣΟΧΗ: ΖΗΜΙΑ ΣΤΗΝ ΠΩΛΗΣΗ!\n\n` +
+            `Τα παρακάτω είδη έχουν τιμή κάτω από το κόστος παραγωγής:\n` +
+            `- ${lossItems.join('\n- ')}\n\n` +
+            `Θέλετε ΣΙΓΟΥΡΑ να προχωρήσετε στην έκδοση;`;
+        
+        if (!confirm(confirmMsg)) {
+            return; // Διακοπή: Δεν προχωράει στην εκτύπωση
+        }
+    }
+
+    // 2. ΑΠΟΣΤΟΛΗ EMAILS (Ο υπάρχων κώδικάς σου)
+    const selected = [];
+    document.querySelectorAll('.email-to-send:checked').forEach(cb => {
+        selected.push(cb.value);
+    });
+
+    if (selected.length > 0) {
+        alert("Το τιμολόγιο θα σταλεί στους παραλήπτες: " + selected.join(", "));
+    }
+    
+    // 3. ΕΚΤΥΠΩΣΗ
+    saveSaleToHistory(); window.print(); 
+}
+ function updateAllRowsWithCustomerPolicy() {
+    const rows = document.querySelectorAll('#invoiceBody tr');
+    const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
+
+    rows.forEach(row => {
+        const descInput = row.querySelector('input[list="productList"]');
+        if (!descInput) return;
+
+        const found = Object.values(products).find(p => p.desc === descInput.value);
+        if (found) {
+            // 1. Επαναφορά τιμής βάσει του νέου τιμοκαταλόγου
+            let selectedPrice = found.price || 0;
+            if (window.currentCustomerPriceList === 'wholesale') {
+                selectedPrice = found.price_wholesale || found.price || 0;
+            }
+            row.querySelector('.prc').value = selectedPrice;
+
+            // 2. Εφαρμογή της νέας μόνιμης έκπτωσης
+            row.querySelector('.dsc').value = window.currentCustomerDiscount || 0;
+        }
+    });
+    recalc(); // Φρεσκάρισμα των τελικών συνόλων
+} 
+  function checkStockAvailability(input) {
+    const row = input.closest('tr');
+    const descInput = row.querySelector('.prod-name');
+    if (!descInput) return;
+    
+    const desc = descInput.value;
+    const qtyRequested = parseFloat(input.value) || 0;
+    
+    const productsDB = JSON.parse(localStorage.getItem('triton_products') || '{}');
+    const product = Object.values(productsDB).find(p => p.desc === desc);
+
+    if (product) {
+        const available = parseFloat(product.stock) || 0;
+        
+        // Αν ζητάμε περισσότερα από όσα έχουμε, το κουτάκι γίνεται απαλό κόκκινο
+        if (qtyRequested > available) {
+            input.style.backgroundColor = "#fee2e2"; 
+            input.style.border = "1px solid #ef4444";
+            input.title = "Προσοχή: Διαθέσιμο απόθεμα: " + available;
+        } else {
+            input.style.backgroundColor = ""; 
+            input.style.border = "";
+            input.title = "";
+        }
+    }
+}
+ function validateTritonProfit(priceInput) {
+    if (!priceInput) return;
+    
+    const tr = priceInput.closest('tr');
+    const pName = tr.querySelector('.prod-name').value;
+    
+    // Φόρτωση δεδομένων
+    const recipes = JSON.parse(localStorage.getItem('tritonRecipes') || '{}');
+    const allProducts = JSON.parse(localStorage.getItem('triton_products') || '{}');
+    const recipe = recipes[pName];
+
+    // Έλεγχος αν υπάρχει η συνταγή ΚΑΙ τα συστατικά της
+    if (recipe && recipe.ingredients && Array.isArray(recipe.ingredients)) {
+        let liveCost = 0;
+
+        recipe.ingredients.forEach(ing => {
+            // Ψάχνουμε την πρώτη ύλη στα προϊόντα (ShoppingTriton)
+            const material = Object.values(allProducts).find(p => p.desc === ing.name);
+            if (material) {
+                // Χρήση της τρέχουσας τιμής αγοράς (cost)
+                const currentMatCost = parseFloat(material.cost) || 0;
+                liveCost += currentMatCost * parseFloat(ing.qty);
+            }
+        });
+
+        // Υπολογισμός τιμής πώλησης (με έκπτωση)
+        const sellingPrice = parseFloat(priceInput.value || 0);
+        const discount = parseFloat(tr.querySelector('.dsc').value || 0);
+        const finalPrice = sellingPrice * (1 - discount / 100);
+
+        // ΟΠΤΙΚΗ ΕΙΔΟΠΟΙΗΣΗ
+        if (finalPrice < liveCost && finalPrice > 0) {
+            priceInput.style.backgroundColor = "#fee2e2"; 
+            priceInput.style.color = "#ef4444";
+            priceInput.style.border = "2px solid #ef4444";
+            priceInput.title = `⚠️ LIVE ΖΗΜΙΑ!\nΚόστος Υλικών: ${liveCost.toFixed(2)}€\nΠουλάτε: ${finalPrice.toFixed(2)}€`;
+        } else {
+            priceInput.style.backgroundColor = ""; 
+            priceInput.style.color = "";
+            priceInput.style.border = "";
+            priceInput.title = liveCost > 0 ? `✅ Κέρδος ΟΚ (Κόστος: ${liveCost.toFixed(2)}€)` : "";
+        }
+    }
+}
+  function saveSaleToHistory() {
+    const saleData = {
+        date: new Date().toISOString(), // Κρατάει ημερομηνία και ώρα
+        customer: document.getElementById('cName').value,
+        totalNet: parseFloat(document.getElementById('sumNet').innerText),
+        totalGrand: parseFloat(document.getElementById('sumGrand').innerText),
+        // Παίρνουμε το καθαρό κέρδος από το κρυφό πεδίο που φτιάξαμε
+        profit: parseFloat(document.getElementById('totalProfitMargin').innerText.split('(')[1]) || 0
+    };
+
+    const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+    history.push(saleData);
+    localStorage.setItem('triton_sales_history', JSON.stringify(history));
+}
+</script>
+</body>
+</html>

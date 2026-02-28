@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -248,24 +248,30 @@
 
 
  
-  <div id="loginOverlay">
-    <div class="login-box">
-        <h2 style="color: #7dd3fc; margin-bottom: 20px;">🚀 Είσοδος στο SpaceInvoice</h2>
+  <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+    <div class="login-box" style="background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #1e293b; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
         
-        <input type="email" id="loginEmail" placeholder="Email Επιχείρησης">
-        <input type="password" id="loginPass" placeholder="Κωδικός Πρόσβασης" onkeypress="if(event.key === 'Enter') checkLogin()">
-        <button class="login-btn" onclick="checkLogin()">ΕΚΚΙΝΗΣΗ</button>
+        <h2 style="color: #7dd3fc; margin-bottom: 10px; font-family: sans-serif;">🔱 TRITON ERP</h2>
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Σύστημα Διαχείρισης & Τιμολόγησης</p>
         
-        <p id="loginError" style="color: #ef4444; font-size: 0.8rem; margin-top: 10px; display: none;">Λάθος στοιχεία!</p>
+        <input type="email" id="loginEmail" placeholder="Email Χρήστη" style="width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #1e293b; border-radius: 10px; background: #1e293b; color: white; outline: none;">
+        
+        <input type="password" id="loginPass" placeholder="Κωδικός Ενοικίασης (TRITON2026)" onkeypress="if(event.key === 'Enter') checkLogin()" style="width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #1e293b; border-radius: 10px; background: #1e293b; color: white; outline: none;">
+        
+        <button class="login-btn" onclick="checkLogin()" style="width: 100%; padding: 14px; background: #0ea5e9; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem;">
+            ΕΝΕΡΓΟΠΟΙΗΣΗ ΠΡΟΓΡΑΜΜΑΤΟΣ
+        </button>
+        
+        <p id="loginError" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; font-weight: bold;">❌ Λάθος Κωδικός!</p>
 
-        <div style="margin: 20px 0; color: #64748b; font-size: 0.8rem; position: relative; text-align: center;">
-            <span style="background: #0f172a; padding: 0 15px; position: relative; z-index: 1;">ή</span>
+        <div style="margin: 25px 0; color: #475569; font-size: 0.8rem; position: relative; text-align: center;">
+            <span style="background: #0f172a; padding: 0 15px; position: relative; z-index: 1;">ή σύνδεση με</span>
             <hr style="position: absolute; top: 50%; left: 0; width: 100%; border: 0; border-top: 1px solid #1e293b; z-index: 0; margin: 0;">
         </div>
 
-        <button onclick="loginWithGoogle()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
+        <button onclick="loginWithGoogle()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;">
             <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" alt="Google">
-            Σύνδεση μέσω Google
+            Google Account
         </button>
     </div>
 </div>

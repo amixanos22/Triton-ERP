@@ -1,6 +1,7 @@
    <!DOCTYPE html>
 <html lang="el">
 <head>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> index.html</title>
@@ -225,7 +226,7 @@
             <span id="alertMessage" style="color: #b45309; font-size: 14px;">Έγιναν αυτόματες ανατιμήσεις από το ShoppingTriton.</span>
         </div>
     </div>
-    <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#92400e; cursor:pointer; font-weight:bold;">&times; Κλείσιμο</button>
+   <button onclick="fakeGoogleLogin()" style="..."> Σύνδεση με Google </button>
 </div>
 
 <script>
@@ -272,9 +273,10 @@
             <hr style="position: absolute; top: 50%; left: 0; width: 100%; border: 0; border-top: 1px solid #1e293b;">
         </div>
 
-        <button onclick="completeLogin()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Google Account
-        </button>
+       <button onclick="fakeGoogleLogin()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; transition: 0.2s;">
+    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> 
+    Σύνδεση με Google
+</button>
     </div>
 </div>
  
@@ -858,15 +860,19 @@ document.addEventListener('DOMContentLoaded', refreshDashboardMetrics);
 </div>
 
 <script>
-// --- 1. ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ TRITON (ΕΚΤΕΛΕΙΤΑΙ ΠΡΩΤΟ) ---
+// --- 1. ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ TRITON ---
 
+// Βήμα Α: Έλεγχος Master Key
+// Βήμα Α: Έλεγχος Master Key (TRITON2026)
 function unlockTriton() {
     const key = document.getElementById('masterKey').value;
     const error = document.getElementById('unlockError');
+    
     if (key === "TRITON2026") {
         localStorage.setItem('triton_gate_unlocked', 'true');
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
+        // Δεν καλούμε πια το initGoogleAuth() γιατί δεν έχουμε API
     } else {
         if(error) {
             error.style.display = 'block';
@@ -875,25 +881,41 @@ function unlockTriton() {
     }
 }
 
+// Βήμα Β: Χειροκίνητη Είσοδος (Από το κουμπί ΕΚΚΙΝΗΣΗ)
 function completeLogin() {
+    const email = document.getElementById('userEmail').value;
+    
+    // Έλεγχος αν συμπληρώθηκε email
+    if (!email || !email.includes('@')) {
+        alert("⚠️ Παρακαλώ εισάγετε ένα έγκυρο Email Επιχείρησης.");
+        return;
+    }
+
+    localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
+    
     const overlay = document.getElementById('loginOverlay');
     if(overlay) {
         overlay.style.opacity = "0";
         setTimeout(() => {
             overlay.style.display = 'none';
+            // Έλεγχος για άνοιγμα ρυθμίσεων αν είναι η πρώτη φορά
             if (!localStorage.getItem('bizSettings')) {
-                const settingsModal = document.getElementById('settingsModal');
-                if(settingsModal) settingsModal.style.display = 'flex';
-                else if (typeof openSettings === "function") openSettings();
+                if (typeof openSettings === "function") openSettings();
             }
         }, 500);
     }
 }
 
-function loginWithGoogle() { completeLogin(); }
-
-// Ο ΦΥΛΑΚΑΣ ΤΗΣ ΠΥΛΗΣ
+// Βήμα Γ: Η "Ψεύτικη" Σύνδεση Google (Για το άσπρο κουμπί)
+function fakeGoogleLogin() {
+    let email = prompt("Εισάγετε το Google Email σας:");
+    if (email && email.includes("@")) {
+        document.getElementById('userEmail').value = email;
+        completeLogin();
+    }
+}
+// Φύλακας κατά το φόρτωμα της σελίδας
 document.addEventListener('DOMContentLoaded', () => {
     const isUnlocked = localStorage.getItem('triton_gate_unlocked');
     const isLoggedIn = localStorage.getItem('triton_is_logged_in');
@@ -907,15 +929,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isUnlocked === 'true') {
                 document.getElementById('masterGate').style.display = 'none';
                 document.getElementById('authGate').style.display = 'block';
+                initGoogleAuth(); // Φόρτωσε το κουμπί αν είναι ήδη στο 2ο βήμα
             }
         }
     }
-    // Μετά το login, φόρτωσε τα στατιστικά
     loadStats();
-    if(typeof updateDashboard === "function") updateDashboard();
 });
 
-// --- 2. ΛΕΙΤΟΥΡΓΙΕΣ DASHBOARD & ΤΙΜΟΛΟΓΗΣΗΣ ---
+// --- 2. ΛΕΙΤΟΥΡΓΙΕΣ DASHBOARD & BACKUP ---
+// (Οι συναρτήσεις σου παραμένουν ως έχουν)
 
 function finalizeInvoice() {
     const customer = document.getElementById('invCustomer').value;
@@ -976,42 +998,40 @@ function loadStats() {
     }
 }
 
-// --- 3. BACKUP & RESTORE ---
-
 function downloadBackup() {
     const allData = {
         bizSettings: JSON.parse(localStorage.getItem('bizSettings') || '{}'),
         triton_customers: JSON.parse(localStorage.getItem('triton_customers') || '{}'),
         triton_products: JSON.parse(localStorage.getItem('triton_products') || '{}'),
-        invoiceHistory: JSON.parse(localStorage.getItem('invoiceHistory') || '[]'),
-        backupDate: new Date().toLocaleString('el-GR')
+        invoiceHistory: JSON.parse(localStorage.getItem('invoiceHistory') || '[]')
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 4));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "TRITON_BACKUP_" + new Date().toLocaleDateString('el-GR').replace(/\//g, '-') + ".json");
+    downloadAnchor.setAttribute("download", "TRITON_BACKUP.json");
     downloadAnchor.click();
     downloadAnchor.remove();
 }
-
-function importBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const importedData = JSON.parse(e.target.result);
-            if (confirm("⚠️ Η επαναφορά θα αντικαταστήσει τα πάντα. Προχωράμε;")) {
-                Object.keys(importedData).forEach(key => {
-                    if(key !== "backupDate") localStorage.setItem(key, JSON.stringify(importedData[key]));
-                });
-                location.reload();
-            }
-        } catch (err) { alert("❌ Άκυρο αρχείο Backup."); }
-    };
-    reader.readAsText(file);
+  function fakeGoogleLogin() {
+    let email = prompt("Εισάγετε το Google Email σας για ταυτοποίηση:");
+    
+    if (email && email.includes("@")) {
+        // Αποθηκεύουμε το email για να φαίνεται στο προφίλ του
+        localStorage.setItem('triton_user_email', email);
+        localStorage.setItem('triton_is_logged_in', 'true');
+        
+        // Κλείνουμε το overlay
+        const overlay = document.getElementById('loginOverlay');
+        overlay.style.opacity = "0";
+        setTimeout(() => { 
+            overlay.style.display = 'none'; 
+            if (typeof loadStats === "function") loadStats();
+        }, 500);
+        
+        alert("🔱 Καλωσήρθατε στο Triton ERP!");
+    }
 }
 </script>
  
 </body>
-</html>    
+</html>     

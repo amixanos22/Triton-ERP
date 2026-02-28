@@ -1,0 +1,245 @@
+  <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triton ERP - Απόδειξη Είσπραξης</title>
+    <style>
+        /* 1. ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER & ΣΤΟΙΧΕΙΩΝ */
+        #navbar-iframe, .navbar, .header-outer, .footer-outer, .base-cms-navbar { 
+            display: none !important; 
+            visibility: hidden !important; 
+            height: 0 !important; 
+        }
+
+        :root { 
+            --triton-dark: #020617; 
+            --triton-blue: #0ea5e9; 
+            --triton-light: #7dd3fc;
+            --triton-dark-blue: #000080;
+        }
+
+        body { 
+            background: #f0f9ff; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+        }
+
+        /* Navigation Bar - Ίδια με το shopping.html */
+        .nav-header {
+            background: var(--triton-dark-blue);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 5px 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+
+        #triton-receipt-box { 
+            max-width: 800px; 
+            margin: 80px auto 40px auto; /* Απόσταση για την fixed μπάρα */
+            background: #fff; 
+            border-radius: 12px; 
+            border: 1px solid #cbd5e1; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
+
+        /* Τα υπόλοιπα στυλ παραμένουν ως είχαν */
+        .company-info { padding: 15px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: flex-start; }
+        .company-details h1 { margin: 0; color: var(--triton-dark); font-size: 19px; text-transform: uppercase; }
+        .logo-area { max-width: 180px; max-height: 90px; display: flex; justify-content: flex-end; }
+        .logo-area img { max-width: 100%; height: auto; }
+        
+        .triton-header { background: var(--triton-dark); color: var(--triton-light); padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--triton-blue); }
+        .counter-badge { background: var(--triton-blue); color: #fff; padding: 5px 15px; border-radius: 6px; font-weight: 900; }
+        
+        .form-container { padding: 25px; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+        .field-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+        .field-group label { font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        .field-group input, .field-group select, .field-group textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
+        
+        #cheque-area { background: #f0fdfa; border: 1px solid #99f6e4; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; }
+        .amount-panel { background: #f8fafc; border: 2px dashed var(--triton-blue); border-radius: 12px; padding: 15px; text-align: center; }
+        .big-amount-input { font-size: 32px; font-weight: 900; border: none; background: transparent; width: 160px; text-align: center; color: var(--triton-dark); }
+        
+        .btn-main { background: var(--triton-dark); color: var(--triton-light); border: 2px solid var(--triton-blue); padding: 15px; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 15px; transition: 0.3s; }
+        .btn-main:hover { background: var(--triton-blue); color: white; }
+        #balance-info { font-size: 12px; color: #ef4444; font-weight: bold; margin-top: 5px; }
+
+        @media print { .no-print { display: none !important; } .nav-header { display: none; } #triton-receipt-box { border: 1px solid #000; box-shadow: none; margin: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+
+<div class="nav-header no-print">
+    <a href="index.html" class="back-btn">⬅ Επιστροφή στο Μενού</a>
+    <span style="color: white; font-weight: bold;">TRITON RECEIPTS</span>
+</div>
+
+<div id="triton-receipt-box">
+    <div class="company-info">
+        <div class="company-details">
+            <h1 id="viewCompName">ΦΟΡΤΩΣΗ...</h1>
+            <p id="viewCompActivity">-</p>
+            <p id="viewCompAddress">-</p>
+            <p>ΑΦΜ: <span id="viewCompTaxId">-</span> | ΔΟΥ: <span id="viewCompTaxOffice">-</span></p>
+        </div>
+        <div class="logo-area" id="logoContainer"></div>
+    </div>
+
+    <div class="triton-header">
+        <h2 style="margin:0; font-size:16px;">ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ</h2>
+        <div id="displayCounter" class="counter-badge">ΕΕ001</div>
+    </div>
+
+    <div class="form-container">
+        <div class="field-row">
+            <div class="field-group"><label>Ημερομηνία</label><input type="date" id="inpDate" /></div>
+            <div class="field-group">
+                <label>Τρόπος</label>
+                <select id="inpMethod" onchange="toggleCheque()">
+                    <option value="ΜΕΤΡΗΤΑ">ΜΕΤΡΗΤΑ</option>
+                    <option value="ΕΠΙΤΑΓΗ">ΕΠΙΤΑΓΗ</option>
+                    <option value="ΤΡΑΠΕΖΑ">ΤΡΑΠΕΖΑ</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="cheque-area">
+            <div class="field-row">
+                <div class="field-group"><label>Αρ. Επιταγής</label><input type="text" id="chequeNo" /></div>
+                <div class="field-group"><label>Λήξη</label><input type="date" id="chequeDate" /></div>
+            </div>
+            <div class="field-group"><label>Τράπεζα</label><select id="chequeBank"></select></div>
+        </div>
+
+        <div class="field-group">
+            <label>Πελάτης</label>
+            <input id="inpCustomer" list="custData" onchange="checkBalance()"/>
+            <div id="balance-info"></div>
+            <datalist id="custData"></datalist>
+        </div>
+
+        <div class="field-group"><label>Αιτιολογία</label><textarea id="inpNote" rows="1">ΕΝΑΝΤΙ ΛΟΓΑΡΙΑΣΜΟΥ</textarea></div>
+        
+        <div class="amount-panel">
+            <input type="number" id="inpAmount" class="big-amount-input" value="0.00" step="0.01" /><span>€</span>
+        </div>
+        
+        <button type="button" class="btn-main no-print" onclick="processAll()">ΚΑΤΑΧΩΡΗΣΗ &amp; ΕΚΤΥΠΩΣΗ (F10)</button>
+    </div>
+</div>
+
+<script>
+    // Εδώ μπαίνει όλο το JavaScript logic που έγραψες (setupBanks, toggleCheque, checkBalance, processAll κλπ)
+    // Διατηρείται αυτούσιο γιατί είναι λειτουργικά τέλειο.
+    const TRITON_CONFIG = {
+        banks: ["ΠΕΙΡΑΙΩΣ", "ΕΘΝΙΚΗ", "ALPHA BANK", "EUROBANK", "ATTICA BANK", "OPTIMA", "VIVA", "REVOLUT"]
+    };
+
+    function setupBanks() {
+        const sel = document.getElementById('chequeBank');
+        if(sel) {
+            sel.innerHTML = '<option value="">--- Επιλέξτε Τράπεζα ---</option>';
+            TRITON_CONFIG.banks.forEach(b => { sel.innerHTML += `<option value="${b}">${b}</option>`; });
+        }
+    }
+
+    function toggleCheque() {
+        document.getElementById('cheque-area').style.display = (document.getElementById('inpMethod').value === "ΕΠΙΤΑΓΗ") ? "block" : "none";
+    }
+
+    function checkBalance() {
+        const name = document.getElementById('inpCustomer').value;
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        if(db[name]) {
+            const bal = db[name].balance || 0;
+            document.getElementById('balance-info').innerText = "Τρέχον Υπόλοιπο: " + bal.toFixed(2) + "€";
+        }
+    }
+
+    function loadFromSystem() {
+        const s = JSON.parse(localStorage.getItem('triton_settings'));
+        if (s) {
+            document.getElementById('viewCompName').innerText = s.companyName || "ΕΠΩΝΥΜΙΑ";
+            document.getElementById('viewCompActivity').innerText = s.activity || "";
+            document.getElementById('viewCompAddress').innerText = s.address || "";
+            document.getElementById('viewCompTaxId').innerText = s.taxId || "-";
+            document.getElementById('viewCompTaxOffice').innerText = s.taxOffice || "-";
+            if (s.logoUrl) document.getElementById('logoContainer').innerHTML = `<img src="${s.logoUrl}" alt="Logo">`;
+        }
+        
+        const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const dl = document.getElementById('custData');
+        dl.innerHTML = "";
+        Object.keys(customers).forEach(name => {
+            let opt = document.createElement('option');
+            opt.value = name;
+            dl.appendChild(opt);
+        });
+    }
+
+    let count = parseInt(localStorage.getItem('triton_count_ee')) || 1;
+
+    function init() {
+        setupBanks();
+        loadFromSystem();
+        document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('displayCounter').innerText = "ΕΕ" + count.toString().padStart(3, '0');
+    }
+
+    function processAll() {
+        const customerName = document.getElementById('inpCustomer').value;
+        const amount = parseFloat(document.getElementById('inpAmount').value) || 0;
+        if (!customerName || amount <= 0) { alert("Συμπληρώστε Πελάτη και Ποσό!"); return; }
+
+        let db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        if(db[customerName]) {
+            if (db[customerName].balance === undefined) db[customerName].balance = 0;
+            if (!db[customerName].history) db[customerName].history = [];
+
+            db[customerName].balance -= amount; 
+            db[customerName].history.push({
+                date: new Date().toLocaleDateString('el-GR'),
+                type: 'ΑΠ ' + document.getElementById('displayCounter').innerText,
+                amount: -amount,
+                newBalance: db[customerName].balance
+            });
+            localStorage.setItem('customersDB', JSON.stringify(db));
+        }
+
+        window.print();
+        count++;
+        localStorage.setItem('triton_count_ee', count);
+        setTimeout(() => { location.reload(); }, 500);
+    }
+
+    document.addEventListener('keydown', e => { if(e.key === "F10") { e.preventDefault(); processAll(); } });
+    
+    window.addEventListener('load', () => {
+        init();
+        const auto = localStorage.getItem('auto_select_customer');
+        if (auto) {
+            document.getElementById('inpCustomer').value = auto;
+            checkBalance();
+            localStorage.removeItem('auto_select_customer');
+        }
+    });
+</script>
+
+</body>
+</html>

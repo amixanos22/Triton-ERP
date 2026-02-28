@@ -858,15 +858,69 @@ document.addEventListener('DOMContentLoaded', refreshDashboardMetrics);
 </div>
 
 <script>
-// --- ΣΥΜΠΛΗΡΩΜΑΤΙΚΕΣ ΛΕΙΤΟΥΡΓΙΕΣ ---
+// --- 1. ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ TRITON (ΕΚΤΕΛΕΙΤΑΙ ΠΡΩΤΟ) ---
 
-// 1. Αποθήκευση και Ενημέρωση Dashboard
+function unlockTriton() {
+    const key = document.getElementById('masterKey').value;
+    const error = document.getElementById('unlockError');
+    if (key === "TRITON2026") {
+        localStorage.setItem('triton_gate_unlocked', 'true');
+        document.getElementById('masterGate').style.display = 'none';
+        document.getElementById('authGate').style.display = 'block';
+    } else {
+        if(error) {
+            error.style.display = 'block';
+            setTimeout(() => { error.style.display = 'none'; }, 3000);
+        } else { alert("Λάθος Κωδικός Ενοικίασης!"); }
+    }
+}
+
+function completeLogin() {
+    localStorage.setItem('triton_is_logged_in', 'true');
+    const overlay = document.getElementById('loginOverlay');
+    if(overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            if (!localStorage.getItem('bizSettings')) {
+                const settingsModal = document.getElementById('settingsModal');
+                if(settingsModal) settingsModal.style.display = 'flex';
+                else if (typeof openSettings === "function") openSettings();
+            }
+        }, 500);
+    }
+}
+
+function loginWithGoogle() { completeLogin(); }
+
+// Ο ΦΥΛΑΚΑΣ ΤΗΣ ΠΥΛΗΣ
+document.addEventListener('DOMContentLoaded', () => {
+    const isUnlocked = localStorage.getItem('triton_gate_unlocked');
+    const isLoggedIn = localStorage.getItem('triton_is_logged_in');
+    const overlay = document.getElementById('loginOverlay');
+
+    if (overlay) {
+        if (isLoggedIn === 'true') {
+            overlay.style.display = 'none';
+        } else {
+            overlay.style.display = 'flex';
+            if (isUnlocked === 'true') {
+                document.getElementById('masterGate').style.display = 'none';
+                document.getElementById('authGate').style.display = 'block';
+            }
+        }
+    }
+    // Μετά το login, φόρτωσε τα στατιστικά
+    loadStats();
+    if(typeof updateDashboard === "function") updateDashboard();
+});
+
+// --- 2. ΛΕΙΤΟΥΡΓΙΕΣ DASHBOARD & ΤΙΜΟΛΟΓΗΣΗΣ ---
+
 function finalizeInvoice() {
     const customer = document.getElementById('invCustomer').value;
     if(!customer) { alert("⚠️ Παρακαλώ εισάγετε όνομα πελάτη."); return; }
-
     const totalRaw = document.getElementById('invGrandTotal').innerText;
-    // Καθαρισμός του string για να πάρουμε τον αριθμό
     const amount = parseFloat(totalRaw.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
     
     const newInv = {
@@ -877,52 +931,43 @@ function finalizeInvoice() {
         status: 'Πληρώθηκε'
     };
 
-    // Αποθήκευση
     let history = JSON.parse(localStorage.getItem('invoiceHistory') || '[]');
     history.unshift(newInv);
     localStorage.setItem('invoiceHistory', JSON.stringify(history));
 
     alert("🚀 Το παραστατικό εκδόθηκε με επιτυχία!");
-    closeInvoiceForm();
-    location.reload(); // Ανανέωση για να ενημερωθούν τα γραφήματα και ο πίνακας
+    location.reload();
 }
 
 function loadStats() {
     const history = JSON.parse(localStorage.getItem('invoiceHistory') || '[]');
     const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
     const tbody = document.querySelector('table tbody');
-    const statsCards = document.querySelectorAll('.stats-grid h2'); // Οι 3 κάρτες με νούμερα
-    const lowStockList = document.getElementById('lowStockList'); // Η 4η κάρτα (Stock)
+    const statsCards = document.querySelectorAll('.stats-grid h2');
+    const lowStockList = document.getElementById('lowStockList');
 
     if (history.length > 0 && tbody) {
         tbody.innerHTML = ''; 
         let totalMonthly = 0;
-        
-        // 1. Γέμισμα Πίνακα και Υπολογισμός Συνόλου
-        history.slice(-5).reverse().forEach(inv => { // Δείξε τα τελευταία 5
+        history.slice(0, 5).forEach(inv => { 
             totalMonthly += inv.amount;
-            const row = `
+            tbody.innerHTML += `
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 15px 0; font-weight: 600;">${inv.customer}</td>
                     <td>${inv.date}</td>
                     <td style="font-weight: 600;">${inv.amount.toLocaleString('el-GR', {minimumFractionDigits:2})} €</td>
                     <td><span class="status status-paid">Εκδόθηκε</span></td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
+                </tr>`;
         });
         
-        // 2. Ενημέρωση Καρτών (Stats) με σωστή σειρά
         if (statsCards.length >= 3) {
             const vats = totalMonthly * 0.24 / 1.24; 
-            
-            statsCards[0].innerText = vats.toLocaleString('el-GR', {minimumFractionDigits:2}) + " €"; // ΦΠΑ
-            statsCards[1].innerText = "0,00 €"; // ΑΝΕΞΟΦΛΗΤΑ (Μπορείς να το υπολογίσεις αργότερα)
-            statsCards[2].innerText = totalMonthly.toLocaleString('el-GR', {minimumFractionDigits:2}) + " €"; // ΕΣΟΔΑ
+            statsCards[0].innerText = vats.toLocaleString('el-GR', {minimumFractionDigits:2}) + " €";
+            statsCards[1].innerText = "0,00 €";
+            statsCards[2].innerText = totalMonthly.toLocaleString('el-GR', {minimumFractionDigits:2}) + " €";
         }
     }
 
-    // 3. Ενημέρωση Κάρτας Stock (Ανεξάρτητα από το ιστορικό τιμολογίων)
     if (lowStockList) {
         const lowItems = Object.values(products).filter(p => parseFloat(p.stock) <= 5);
         lowStockList.innerHTML = lowItems.length > 0 
@@ -930,187 +975,42 @@ function loadStats() {
             : '<li style="color:#10b981;">✅ Όλα επαρκή</li>';
     }
 }
-  
-// 3. Print Function (Απλή μορφή)
-function printInvoice() {
-    window.print();
-}
 
-// Εκτέλεση κατά το φόρτωμα
-window.addEventListener('load', loadStats);
-  
-  // ==========================================
-// ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ ΔΕΔΟΜΕΝΩΝ TRITON (BACKUP & RESTORE)
-// ==========================================
+// --- 3. BACKUP & RESTORE ---
 
-// 1. ΛΕΙΤΟΥΡΓΙΑ BACKUP (ΕΞΑΓΩΓΗ)
 function downloadBackup() {
-    // Συγκεντρώνουμε ΟΛΑ τα δεδομένα από τη μνήμη (LocalStorage)
     const allData = {
         bizSettings: JSON.parse(localStorage.getItem('bizSettings') || '{}'),
-        triton_settings: JSON.parse(localStorage.getItem('triton_settings') || '{}'),
         triton_customers: JSON.parse(localStorage.getItem('triton_customers') || '{}'),
         triton_products: JSON.parse(localStorage.getItem('triton_products') || '{}'),
         invoiceHistory: JSON.parse(localStorage.getItem('invoiceHistory') || '[]'),
         backupDate: new Date().toLocaleString('el-GR')
     };
-
-    // Μετατροπή σε κείμενο JSON
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 4));
-    
-    // Δημιουργία εικονικού συνδέσμου για το κατέβασμα
     const downloadAnchor = document.createElement('a');
-    const fileName = "TRITON_BACKUP_" + new Date().toLocaleDateString('el-GR').replace(/\//g, '-') + ".json";
-    
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", fileName);
-    document.body.appendChild(downloadAnchor);
-    
-    downloadAnchor.click(); // Ξεκινάει το κατέβασμα
+    downloadAnchor.setAttribute("download", "TRITON_BACKUP_" + new Date().toLocaleDateString('el-GR').replace(/\//g, '-') + ".json");
+    downloadAnchor.click();
     downloadAnchor.remove();
-    
-    alert("✅ Το Backup δημιουργήθηκε! Φυλάξτε το αρχείο " + fileName + " σε ασφαλές μέρος.");
 }
 
-// 2. ΛΕΙΤΟΥΡΓΙΑ RESTORE (ΕΙΣΑΓΩΓΗ)
 function importBackup(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            
-            // Έλεγχος αν το αρχείο είναι έγκυρο
-            if (!importedData.triton_customers && !importedData.triton_products) {
-                throw new Error("Invalid file format");
+            if (confirm("⚠️ Η επαναφορά θα αντικαταστήσει τα πάντα. Προχωράμε;")) {
+                Object.keys(importedData).forEach(key => {
+                    if(key !== "backupDate") localStorage.setItem(key, JSON.stringify(importedData[key]));
+                });
+                location.reload();
             }
-
-            const confirmMsg = "⚠️ ΠΡΟΣΟΧΗ!\n\nΗ επαναφορά θα ΔΙΑΓΡΑΨΕΙ τα τωρινά δεδομένα και θα τα αντικαταστήσει με αυτά του αρχείου.\n\nΘέλετε να προχωρήσετε;";
-            
-            if (confirm(confirmMsg)) {
-                // Ενημέρωση της μνήμης με τα νέα δεδομένα
-                if (importedData.bizSettings) localStorage.setItem('bizSettings', JSON.stringify(importedData.bizSettings));
-                if (importedData.triton_settings) localStorage.setItem('triton_settings', JSON.stringify(importedData.triton_settings));
-                if (importedData.triton_customers) localStorage.setItem('triton_customers', JSON.stringify(importedData.triton_customers));
-                if (importedData.triton_products) localStorage.setItem('triton_products', JSON.stringify(importedData.triton_products));
-                if (importedData.invoiceHistory) localStorage.setItem('invoiceHistory', JSON.stringify(importedData.invoiceHistory));
-
-                alert("🚀 Η επαναφορά ολοκληρώθηκε με επιτυχία! Η σελίδα θα ανανεωθεί.");
-                location.reload(); // Ανανέωση για να φανούν οι αλλαγές
-            }
-        } catch (err) {
-            alert("❌ Σφάλμα: Το αρχείο που επιλέξατε δεν είναι έγκυρο αντίγραφο ασφαλείας του Triton.");
-            console.error(err);
-        }
+        } catch (err) { alert("❌ Άκυρο αρχείο Backup."); }
     };
     reader.readAsText(file);
-    
-    // Μηδενισμός του input για να μπορεί να ξαναχρησιμοποιηθεί
-    event.target.value = '';
 }
-  
- function updateDashboard() {
-    // 1. ΕΛΕΓΧΟΣ STOCK
-    const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
-    const lowStockCont = document.getElementById('lowStockList');
-    
-    // Φιλτράρουμε τα 5 είδη με το μικρότερο stock (κάτω από 5 τεμάχια)
-    const lowItems = Object.values(products)
-        .filter(p => parseFloat(p.stock) <= 5)
-        .sort((a, b) => parseFloat(a.stock) - parseFloat(b.stock))
-        .slice(0, 5);
-
-    lowStockCont.innerHTML = lowItems.length ? '' : '<li style="color:#64748b;">Όλα τα αποθέματα είναι επαρκή.</li>';
-    lowItems.forEach(p => {
-        lowStockCont.innerHTML += `
-            <li style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #f1f5f9;">
-                <span>${p.desc}</span>
-                <strong style="color:#ef4444;">${p.stock} ${p.unit}</strong>
-            </li>`;
-    });
-
-    // 2. ΕΛΕΓΧΟΣ ΤΖΙΡΟΥ (Από τα αποθηκευμένα τιμολόγια)
-    const invoices = JSON.parse(localStorage.getItem('invoicesDB') || '[]');
-    const today = new Date().toISOString().split('T')[0];
-    
-    let totalToday = 0;
-    let countToday = 0;
-
-    invoices.forEach(inv => {
-        if (inv.date === today) {
-            totalToday += parseFloat(inv.total);
-            countToday++;
-        }
-    });
-
-    document.getElementById('dailySales').innerText = totalToday.toFixed(2) + '€';
-    document.getElementById('invoiceCount').innerText = countToday + ' Παραστατικά σήμερα';
-}  
- // --- ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ TRITON ---
-
-// 1. Ξεκλείδωμα πρώτης πύλης (Master Key)
-function unlockTriton() {
-    const key = document.getElementById('masterKey').value;
-    const error = document.getElementById('unlockError');
-
-    if (key === "TRITON2026") {
-        localStorage.setItem('triton_gate_unlocked', 'true');
-        document.getElementById('masterGate').style.display = 'none';
-        document.getElementById('authGate').style.display = 'block';
-    } else {
-        if(error) {
-            error.style.display = 'block';
-            setTimeout(() => { error.style.display = 'none'; }, 3000);
-        } else {
-            alert("Λάθος Κωδικός Ενοικίασης!");
-        }
-    }
-}
-
-// 2. Ολοκλήρωση σύνδεσης (Email ή Google)
-function completeLogin() {
-    localStorage.setItem('triton_is_logged_in', 'true');
-    const overlay = document.getElementById('loginOverlay');
-    
-    overlay.style.opacity = "0";
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        
-        // Αυτόματο άνοιγμα ρυθμίσεων αν το κατάστημα είναι "άδειο"
-        if (!localStorage.getItem('bizSettings')) {
-            const settingsModal = document.getElementById('settingsModal');
-            if(settingsModal) {
-                settingsModal.style.display = 'flex';
-            } else if (typeof openSettings === "function") {
-                openSettings();
-            }
-        }
-    }, 500);
-}
-
-// 3. Σύνδεση με Google (καλεί την ίδια λειτουργία)
-function loginWithGoogle() {
-    completeLogin();
-}
-
-// 4. Ο Φύλακας που ελέγχει τη μνήμη κατά το φόρτωμα
-document.addEventListener('DOMContentLoaded', () => {
-    const isUnlocked = localStorage.getItem('triton_gate_unlocked');
-    const isLoggedIn = localStorage.getItem('triton_is_logged_in');
-    const overlay = document.getElementById('loginOverlay');
-
-    if (isLoggedIn === 'true') {
-        if(overlay) overlay.style.display = 'none';
-    } else if (isUnlocked === 'true') {
-        document.getElementById('masterGate').style.display = 'none';
-        document.getElementById('authGate').style.display = 'block';
-        if(overlay) overlay.style.display = 'flex';
-    } else {
-        if(overlay) overlay.style.display = 'flex';
-    }
-});
 </script>
  
 </body>

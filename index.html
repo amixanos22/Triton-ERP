@@ -248,23 +248,21 @@
 
 
  
- <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 999999; display: flex; align-items: center; justify-content: center;">
-    <div id="masterGate" style="background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 350px; text-align: center; border: 1px solid #1e293b;">
-        <h2 style="color: #7dd3fc; margin-bottom: 20px;">🔱 TRITON ERP</h2>
-        <p style="color: #64748b; font-size: 0.8rem; margin-bottom: 20px;">SYSTEM LOCKED</p>
-        
-        <input type="password" id="masterKey" placeholder="Enter Access Key..." style="width: 100%; padding: 14px; border-radius: 10px; background: #1e293b; color: white; border: 1px solid #334155; text-align: center; font-size: 1.1rem;">
-        
-        <button onclick="unlockTriton()" style="width: 100%; padding: 14px; background: #0ea5e9; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px;">UNLOCK</button>
-        
-        <p id="unlockError" style="color: #ef4444; font-size: 0.8rem; margin-top: 15px; display: none;">Invalid Access Key</p>
+ <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+    
+    <div id="masterGate" style="background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #1e293b; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+        <h2 style="color: #7dd3fc; margin-bottom: 10px;">🔱 TRITON ERP</h2>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px;">Περιορισμένη Πρόσβαση</p>
+        <input type="password" id="masterKey" placeholder="Κωδικός Πρόσβασης" style="width: 100%; padding: 14px; border-radius: 10px; background: #1e293b; color: white; border: 1px solid #334155; text-align: center; font-size: 1.1rem; outline: none;">
+        <button onclick="unlockTriton()" style="width: 100%; padding: 14px; background: #0ea5e9; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s;">ΕΞΟΥΣΙΟΔΟΤΗΣΗ</button>
+        <p id="unlockError" style="color: #ef4444; font-size: 0.8rem; margin-top: 15px; display: none; font-weight: bold;">❌ Το κλειδί δεν είναι έγκυρο.</p>
     </div>
 
-    <div id="authGate" style="display: none; background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #1e293b;">
+    <div id="authGate" style="display: none; background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #1e293b;">
         <h2 style="color: #7dd3fc; margin-bottom: 10px;">Καλωσήρθατε</h2>
-        <p style="color: #94a3b8; margin-bottom: 25px;">Συνδεθείτε για να ρυθμίσετε το κατάστημά σας</p>
-        <button onclick="loginWithGoogle()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Σύνδεση με Google
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 25px;">Συνδεθείτε για να ρυθμίσετε το προφίλ σας</p>
+        <button onclick="loginWithGoogle()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;">
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Σύνδεση μέσω Google
         </button>
     </div>
 </div>
@@ -1039,7 +1037,52 @@ function importBackup(event) {
 
     document.getElementById('dailySales').innerText = totalToday.toFixed(2) + '€';
     document.getElementById('invoiceCount').innerText = countToday + ' Παραστατικά σήμερα';
-}   
+}  
+  // ΣΥΝΑΡΤΗΣΗ 1: Ξεκλείδωμα Πύλης
+function unlockTriton() {
+    const key = document.getElementById('masterKey').value;
+    const error = document.getElementById('unlockError');
+
+    if (key === "TRITON2026") {
+        localStorage.setItem('triton_gate_unlocked', 'true'); // Αποθήκευση στη μνήμη
+        document.getElementById('masterGate').style.display = 'none';
+        document.getElementById('authGate').style.display = 'block';
+    } else {
+        error.style.display = 'block';
+        setTimeout(() => { error.style.display = 'none'; }, 3000);
+    }
+}
+
+// ΣΥΝΑΡΤΗΣΗ 2: Σύνδεση με Google
+function loginWithGoogle() {
+    localStorage.setItem('triton_is_logged_in', 'true'); // Τελική έγκριση
+    document.getElementById('loginOverlay').style.display = 'none';
+    
+    // Αν είναι η πρώτη φορά, άνοιξε τις ρυθμίσεις καταστήματος
+    if (!localStorage.getItem('bizSettings')) {
+        if(typeof openSettings === "function") openSettings();
+    }
+}
+
+// ΣΥΝΑΡΤΗΣΗ 3: Ο "Φύλακας" κατά το άνοιγμα της σελίδας
+document.addEventListener('DOMContentLoaded', () => {
+    const gateUnlocked = localStorage.getItem('triton_gate_unlocked');
+    const userLoggedIn = localStorage.getItem('triton_is_logged_in');
+    const overlay = document.getElementById('loginOverlay');
+
+    if (userLoggedIn === 'true') {
+        // Αν έχει κάνει και τα δύο, εξαφάνισε το banner αμέσως
+        overlay.style.display = 'none';
+    } else if (gateUnlocked === 'true') {
+        // Αν έχει ξεκλειδώσει την πύλη αλλά όχι το Google
+        document.getElementById('masterGate').style.display = 'none';
+        document.getElementById('authGate').style.display = 'block';
+        overlay.style.display = 'flex';
+    } else {
+        // Αν είναι ολότελα νέος, δείξε την πρώτη πύλη
+        overlay.style.display = 'flex';
+    }
+});
 </script>
  
 </body>

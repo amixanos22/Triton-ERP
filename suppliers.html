@@ -1,0 +1,304 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Triton ERP - ΠΡΟΜΗΘΕΥΤΕΣ</title>
+    <style>
+        #navbar-iframe { display: none !important; }
+        :root {
+            --triton-nav: #000080;
+            --triton-blue: #0ea5e9;
+            --triton-bg: #e2e8f0;
+            --triton-card: #ffffff;
+            --triton-text: #1e293b;
+            --triton-muted: #64748b;
+        }
+
+        body { background: var(--triton-bg); margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: var(--triton-text); }
+
+        /* TRITON NAVBAR */
+        .triton-navbar {
+            background: var(--triton-nav);
+            color: white;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 10000;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .nav-brand { font-weight: 800; font-size: 18px; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 25px; }
+        .nav-links a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+        }
+        .nav-links a:hover { color: var(--triton-blue); }
+        .nav-links a.active { color: var(--triton-blue); border-bottom: 2px solid var(--triton-blue); }
+
+        .container { 
+            max-width: 1200px; 
+            margin: 90px auto 50px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
+
+        .header-actions { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;
+        }
+        
+        .search-box { padding: 12px; width: 300px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
+        .search-box:focus { border-color: var(--triton-blue); }
+
+        .btn-add { background: var(--triton-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-add:hover { background: #0284c7; }
+
+        .suppliers-table { width: 100%; border-collapse: collapse; }
+        .suppliers-table th { 
+            background: #f1f5f9; color: var(--triton-muted); padding: 15px; text-align: left; 
+            font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; 
+        }
+        .suppliers-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+
+        /* MODAL STYLE */
+        .modal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background: white; width: 850px; margin: 50px auto; padding: 30px; border-radius: 15px; position: relative; }
+        
+        .section-title { font-size: 13px; color: var(--triton-blue); border-bottom: 1px solid #e0f2fe; padding-bottom: 5px; margin: 25px 0 15px 0; font-weight: 800; text-transform: uppercase; }
+        label { display: block; font-size: 11px; font-weight: bold; color: var(--triton-muted); margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-weight: 600; font-family: inherit; }
+        
+        .cat-chip {
+            display: inline-flex; align-items: center; background: #e0f2fe; color: #0369a1; 
+            padding: 4px 10px; border-radius: 6px; margin: 4px; font-size: 12px; font-weight: bold;
+        }
+
+        .btn-myData { 
+            background: #1e293b; color: white; border: none; padding: 10px; border-radius: 6px; 
+            cursor: pointer; font-size: 11px; font-weight: bold; height: 38px;
+        }
+        .btn-myData:hover { background: #000; }
+    </style>
+</head>
+<body>
+
+<nav class="triton-navbar no-print">
+    <div class="nav-brand">✦ TRITON ERP</div>
+    <div class="nav-links">
+        <a href="index.html">ΑΡΧΙΚΗ</a>
+        <a href="returns.html">ΔΕΛΤΙΑ</a>
+        <a href="customers.html">ΠΕΛΑΤΕΣ</a>
+        <a href="suppliers.html" class="active">ΠΡΟΜΗΘΕΥΤΕΣ</a>
+        <a href="inventory.html">ΑΠΟΘΗΚΗ</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header-actions">
+        <div>
+            <h1 style="margin:0; font-size: 32px; color: var(--triton-blue);">✦ Triton <span style="font-weight:300; color:var(--triton-text);">Suppliers</span></h1>
+            <p style="margin:5px 0 0; color: var(--triton-muted);">Διαχείριση Προμηθευτών & Πρώτων Υλών</p>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <input type="text" id="supplierSearch" class="search-box" placeholder="Αναζήτηση..." onkeyup="filterSuppliers()">
+            <button class="btn-add" onclick="openModal()">+ ΝΕΟΣ ΠΡΟΜΗΘΕΥΤΗΣ</button>
+        </div>
+    </div>
+
+    <table class="suppliers-table">
+        <thead>
+            <tr>
+                <th>ΠΡΟΜΗΘΕΥΤΗΣ</th>
+                <th>ΑΦΜ</th>
+                <th>ΚΑΤΗΓΟΡΙΑ</th>
+                <th>ΤΗΛΕΦΩΝΟ</th>
+                <th style="text-align:right">ΕΝΕΡΓΕΙΕΣ</th>
+            </tr>
+        </thead>
+        <tbody id="suppliersBody"></tbody>
+    </table>
+</div>
+
+<div id="supplierModal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+            <h2 style="margin:0;">Καρτέλα Προμηθευτή</h2>
+            <button onclick="closeModal()" style="background:none; border:none; font-size:30px; cursor:pointer; color:#cbd5e1;">&times;</button>
+        </div>
+
+        <div class="section-title">Στοιχεία Επιχείρησης</div>
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr 2fr; gap: 15px; align-items: end;">
+            <div>
+                <label>ΑΦΜ</label>
+                <input type="text" id="mSupAfm" placeholder="9 ψηφία">
+            </div>
+            <div>
+                <button onclick="searchMyData()" class="btn-myData">🔍 myData ΑΝΑΚΤΗΣΗ</button>
+            </div>
+            <div>
+                <label>ΕΠΩΝΥΜΙΑ ΠΡΟΜΗΘΕΥΤΗ</label>
+                <input type="text" id="mSupName" placeholder="Όνομα Εταιρείας">
+            </div>
+        </div>
+
+        <div class="section-title">Διεύθυνση & Επικοινωνία</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px;">
+            <div><label>ΠΟΛΗ</label><input type="text" id="mSupCity"></div>
+            <div><label>ΤΗΛΕΦΩΝΟ</label><input type="text" id="mSupPhone"></div>
+            <div><label>EMAIL</label><input type="email" id="mSupEmail"></div>
+        </div>
+
+        <div class="section-title">Είδη Προμηθειών & Όροι</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label>ΚΑΤΗΓΟΡΙΑ ΥΛΙΚΩΝ</label>
+                <select id="mSupCategory">
+                    <option value="Packaging">Υλικά Συσκευασίας</option>
+                    <option value="Raw Materials">Πρώτες Ύλες (Χημικά/Αρώματα)</option>
+                    <option value="Labels">Ετικέτες / Εκτυπώσεις</option>
+                    <option value="Services">Υπηρεσίες / Μεταφορικά</option>
+                </select>
+            </div>
+            <div>
+                <label>ΟΡΟΙ ΠΛΗΡΩΜΗΣ</label>
+                <input type="text" id="mSupPaymentTerms" placeholder="π.χ. 30 ημέρες">
+            </div>
+        </div>
+
+        <div style="margin-top:40px; display:flex; justify-content:flex-end; gap:15px; border-top:1px solid #eee; padding-top:20px;">
+            <button onclick="closeModal()" style="padding:12px 30px; background:#f1f5f9; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">ΑΚΥΡΩΣΗ</button>
+            <button onclick="saveSupplier()" style="padding:12px 40px; background:var(--triton-blue); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">ΑΠΟΘΗΚΕΥΣΗ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editingSup = null;
+
+    function renderSuppliers() {
+        const db = JSON.parse(localStorage.getItem('suppliersDB') || '{}');
+        const tbody = document.getElementById('suppliersBody');
+        tbody.innerHTML = '';
+        
+        Object.keys(db).sort().forEach(name => {
+            const s = db[name];
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:bold; color:var(--triton-blue);">${name}</td>
+                    <td>${s.afm || '-'}</td>
+                    <td><span class="cat-chip">${s.category || '-'}</span></td>
+                    <td>${s.phone || '-'}</td>
+                    <td style="text-align:right">
+                        <button onclick="editSupplier('${name.replace(/'/g, "\\'")}')" style="border:none; background:none; cursor:pointer; font-size:18px;">✏️</button>
+                        <button onclick="deleteSupplier('${name.replace(/'/g, "\\'")}')" style="border:none; background:none; cursor:pointer; font-size:18px;">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    function saveSupplier() {
+        const name = document.getElementById('mSupName').value.trim();
+        if(!name) return alert("Το όνομα είναι υποχρεωτικό!");
+        
+        const db = JSON.parse(localStorage.getItem('suppliersDB') || '{}');
+        if (editingSup && editingSup !== name) delete db[editingSup];
+
+        db[name] = {
+            afm: document.getElementById('mSupAfm').value,
+            city: document.getElementById('mSupCity').value,
+            phone: document.getElementById('mSupPhone').value,
+            email: document.getElementById('mSupEmail').value,
+            category: document.getElementById('mSupCategory').value,
+            terms: document.getElementById('mSupPaymentTerms').value
+        };
+
+        localStorage.setItem('suppliersDB', JSON.stringify(db));
+        closeModal();
+        renderSuppliers();
+    }
+
+    function editSupplier(name) {
+        const db = JSON.parse(localStorage.getItem('suppliersDB') || '{}');
+        const s = db[name];
+        if(!s) return;
+        editingSup = name;
+        openModal();
+        
+        document.getElementById('mSupName').value = name;
+        document.getElementById('mSupAfm').value = s.afm || '';
+        document.getElementById('mSupCity').value = s.city || '';
+        document.getElementById('mSupPhone').value = s.phone || '';
+        document.getElementById('mSupEmail').value = s.email || '';
+        document.getElementById('mSupCategory').value = s.category || 'Packaging';
+        document.getElementById('mSupPaymentTerms').value = s.terms || '';
+    }
+
+    function deleteSupplier(name) {
+        if(confirm(`Διαγραφή του προμηθευτή ${name};`)) {
+            const db = JSON.parse(localStorage.getItem('suppliersDB') || '{}');
+            delete db[name];
+            localStorage.setItem('suppliersDB', JSON.stringify(db));
+            renderSuppliers();
+        }
+    }
+
+    function openModal() { 
+        if(!editingSup) {
+            document.querySelectorAll('#supplierModal input').forEach(i => i.value = '');
+        }
+        document.getElementById('supplierModal').style.display = 'block'; 
+    }
+
+    function closeModal() { 
+        editingSup = null;
+        document.getElementById('supplierModal').style.display = 'none'; 
+    }
+
+    function filterSuppliers() {
+        const val = document.getElementById('supplierSearch').value.toLowerCase();
+        document.querySelectorAll('#suppliersBody tr').forEach(tr => {
+            tr.style.display = tr.innerText.toLowerCase().includes(val) ? '' : 'none';
+        });
+    }
+
+    async function searchMyData() {
+        const afm = document.getElementById('mSupAfm').value.trim();
+        if(afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να είναι 9 ψηφία");
+
+        const settings = JSON.parse(localStorage.getItem('myDataSettings') || '{}');
+        if(!settings.userId || !settings.subscriptionKey) {
+            alert("🚨 Τα κλειδιά myData δεν βρέθηκαν στην Αρχική σελίδα.");
+            return;
+        }
+
+        try {
+            alert("✦ Triton Intelligence: Σύνδεση με ΑΑΔΕ...");
+            // Σημείωση: Εδώ χρειάζεται το δικό σας proxy URL για να λειτουργήσει το CORS
+            const response = await fetch(`https://your-proxy-endpoint.com/aade?afm=${afm}`, {
+                headers: { 'aade-user-id': settings.userId, 'aade-api-key': settings.subscriptionKey }
+            });
+            const data = await response.json();
+            if(data && data.onomasia) {
+                document.getElementById('mSupName').value = data.onomasia;
+                document.getElementById('mSupCity').value = data.city || '';
+                alert("✅ Επιτυχής ανάκτηση!");
+            }
+        } catch (e) {
+            alert("Σφάλμα σύνδεσης με myData.");
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', renderSuppliers);
+</script>
+
+</body>
+</html>

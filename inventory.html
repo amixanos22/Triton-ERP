@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Triton ERP - Αποθήκη & Προϊόντα</title>
+    <style>
+        #navbar-iframe { display: none !important; }
+        :root {
+            --triton-nav: #000080;
+            --triton-blue: #0ea5e9;
+            --triton-bg: #e2e8f0;
+            --triton-text: #1e293b;
+            --triton-muted: #64748b;
+            --triton-danger: #ef4444;
+            --triton-success: #10b981;
+        }
+
+        body { background: var(--triton-bg); margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: var(--triton-text); }
+
+        /* TRITON NAVBAR */
+        .triton-navbar {
+            background: var(--triton-nav);
+            color: white;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 10000;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .nav-brand { font-weight: 800; font-size: 18px; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 25px; }
+        .nav-links a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+        }
+        .nav-links a:hover { color: var(--triton-blue); }
+        .nav-links a.active { color: var(--triton-blue); border-bottom: 2px solid var(--triton-blue); }
+
+        .container { max-width: 1250px; margin: 90px auto 50px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .upload-section { background: #f0f9ff; border: 2px dashed var(--triton-blue); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; }
+        .search-box { padding: 12px; width: 300px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
+        .search-box:focus { border-color: var(--triton-blue); }
+
+        .btn-blue { background: var(--triton-blue); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .btn-dark { background: #1e293b; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .products-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .products-table th { background: #f8fafc; color: var(--triton-muted); padding: 15px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+        .products-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        
+        .price-tag { font-weight: 800; color: var(--triton-blue); }
+        .stock-tag { font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #f1f5f9; }
+        .low-stock { color: var(--triton-danger); background: #fee2e2; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        .modal-content { background: white; width: 650px; margin: 50px auto; padding: 30px; border-radius: 15px; position: relative; }
+        
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .triple-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: var(--triton-muted); margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-weight: 600; font-size: 14px; font-family: inherit; }
+        
+        .pagination { display: flex; justify-content: center; gap: 5px; margin-top: 25px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
+        .pg-btn { padding: 8px 14px; border: 1px solid #cbd5e1; background: white; cursor: pointer; border-radius: 5px; font-weight: bold; color: var(--triton-muted); }
+        .pg-btn.active { background: var(--triton-blue); color: white; border-color: var(--triton-blue); }
+    </style>
+</head>
+<body>
+
+<nav class="triton-navbar no-print">
+    <div class="nav-brand">✦ TRITON ERP</div>
+    <div class="nav-links">
+        <a href="index.html">ΑΡΧΙΚΗ</a>
+        <a href="returns.html">ΔΕΛΤΙΑ</a>
+        <a href="customers.html">ΠΕΛΑΤΕΣ</a>
+        <a href="suppliers.html">ΠΡΟΜΗΘΕΥΤΕΣ</a>
+        <a href="inventory.html" class="active">ΑΠΟΘΗΚΗ</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="upload-section">
+        <div>
+            <strong style="color:#0369a1;">Εισαγωγή Δεδομένων</strong>
+            <p style="margin:0; font-size:12px; color:var(--triton-muted);">Υποστηρίζεται αρχείο .xlsx (Excel) για μαζική ενημέρωση</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <input type="file" id="excelUpload" accept=".xlsx" style="display:none;" onchange="handleFileUpload()">
+            <button class="btn-blue" onclick="document.getElementById('excelUpload').click()">📤 ΕΠΙΛΟΓΗ ΑΡΧΕΙΟΥ</button>
+        </div>
+    </div>
+
+    <div class="header-actions">
+        <div>
+            <h1 style="margin:0; font-size: 32px; color: var(--triton-blue);">✦ Triton <span style="font-weight:300; color:var(--triton-text);">Inventory</span></h1>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="pSearch" class="search-box" placeholder="Αναζήτηση..." onkeyup="filterProds()">
+            <button class="btn-blue" onclick="openModal()">+ ΝΕΟ ΠΡΟΪΟΝ</button>
+        </div>
+    </div>
+
+    <table class="products-table">
+       <thead>
+            <tr>
+                <th style="width:70px;">ΚΩΔ.</th>
+                <th>ΠΕΡΙΓΡΑΦΗ ΕΙΔΟΥΣ</th>
+                <th style="width:80px;">ΜΟΝ.</th>
+                <th style="width:100px;">ΤΙΜΗ (€)</th>
+                <th style="width:100px; color:var(--triton-muted);">ΚΟΣΤΟΣ</th> 
+                <th style="width:100px;">ΚΕΡΔΟΣ</th>        
+                <th style="width:70px;">ΕΚΠ.</th>
+                <th style="width:80px;">STOCK</th>
+                <th style="text-align:right; width:100px;">ΕΝΕΡΓΕΙΕΣ</th>
+            </tr>
+        </thead>
+        <tbody id="productsBody"></tbody>
+    </table>
+
+    <div id="pagination" class="pagination"></div>
+</div>
+
+<div id="prodModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle" style="margin-top:0;">Καρτέλα Είδους</h2>
+        
+        <div class="grid-form">
+            <div>
+                <label>Κωδικός (ID)</label>
+                <input type="text" id="pCode">
+            </div>
+            <div>
+                <label>Μονάδα Μέτρησης</label>
+                <select id="pUnit">
+                    <option value="ΤΕΜ">Τεμάχια (ΤΕΜ)</option>
+                    <option value="ΚΙΛ">Κιλά (ΚΙΛ)</option>
+                    <option value="ΜΕΤ">Μέτρα (ΜΕΤ)</option>
+                    <option value="ΣΕΤ">Σετ (ΣΕΤ)</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top:15px;">
+            <label>Περιγραφή Είδους</label>
+            <input type="text" id="pDesc">
+        </div>
+
+        <div class="triple-grid">
+            <div style="grid-column: span 2; display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Τιμή Λιανικής</label>
+                    <input type="number" id="pPrice" step="0.01" value="0.00">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color:var(--triton-blue);">Τιμή Χονδρικής</label>
+                    <input type="number" id="pPriceWholesale" step="0.01" value="0.00" style="border: 1px solid var(--triton-blue);">
+                </div>
+            </div>
+            <div>
+                <label>ΦΠΑ (%)</label>
+                <select id="pVat">
+                    <option value="24">24%</option>
+                    <option value="13">13%</option>
+                    <option value="6">6%</option>
+                    <option value="0">0%</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
+            <div>
+                <label>Προεπιλεγμένη Έκπτωση (%)</label>
+                <input type="number" id="pDisc" step="0.1" value="0.0">
+            </div>
+            <div>
+                <label style="color:var(--triton-blue);">ΑΠΟΘΕΜΑ (STOCK)</label>
+                <input type="number" id="pStock" value="0" style="border: 2px solid var(--triton-blue);">
+            </div>
+        </div>
+
+        <div style="margin-top:30px; display:flex; gap:10px;">
+            <button class="btn-blue" style="flex:2; height:50px; font-size:16px;" onclick="saveProduct()">ΑΠΟΘΗΚΕΥΣΗ</button>
+            <button class="btn-dark" style="flex:1;" onclick="closeModal()">ΑΚΥΡΩΣΗ</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    let editId = null;
+    let currentPage = 1;
+    const itemsPerPage = 15;
+
+    function getNextAutoCode() {
+        const db = JSON.parse(localStorage.getItem('triton_products') || '{}');
+        let maxNum = 0;
+        Object.values(db).forEach(p => {
+            const codeNum = parseInt(p.code);
+            if (!isNaN(codeNum) && codeNum > maxNum) maxNum = codeNum;
+        });
+        return (maxNum + 1).toString().padStart(4, '0');
+    }
+
+    function renderProducts() {
+        const db = JSON.parse(localStorage.getItem('triton_products') || '{}');
+        const recipes = JSON.parse(localStorage.getItem('tritonRecipes') || '{}'); 
+        const tbody = document.getElementById('productsBody');
+        const searchVal = document.getElementById('pSearch').value.toLowerCase();
+        
+        let filtered = Object.keys(db).map(id => ({id, ...db[id]}))
+            .filter(p => p.desc.toLowerCase().includes(searchVal) || p.code.toLowerCase().includes(searchVal))
+            .sort((a, b) => a.code.localeCompare(b.code));
+
+        const totalPages = Math.ceil(filtered.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const pagedItems = filtered.slice(start, start + itemsPerPage);
+
+        tbody.innerHTML = '';
+        pagedItems.forEach(p => {
+            const stockNum = parseFloat(p.stock || 0);
+            const stockClass = stockNum <= 5 ? 'stock-tag low-stock' : 'stock-tag';
+            
+            const recipe = recipes[p.desc]; 
+            const productionCost = recipe ? parseFloat(recipe.totalCost || 0) : 0;
+            const salePrice = parseFloat(p.price || 0);
+            const profit = salePrice - productionCost;
+            
+            const profitColor = (profit < (salePrice * 0.2)) ? '#ef4444' : '#10b981';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td style="color:var(--triton-muted); font-weight:bold;">${p.code}</td>
+                    <td style="color:var(--triton-text); font-weight:bold;">${p.desc}</td>
+                    <td>${p.unit}</td>
+                    <td class="price-tag">${salePrice.toFixed(2)}€</td>
+                    <td style="color:var(--triton-muted); font-size:12px;">${productionCost > 0 ? productionCost.toFixed(2) + '€' : '-'}</td>
+                    <td style="font-weight:bold; color:${profitColor};">${productionCost > 0 ? profit.toFixed(2) + '€' : '-'}</td>
+                    <td style="color:#ef4444;">${p.discount || 0}%</td>
+                    <td><span class="${stockClass}">${stockNum}</span></td>
+                    <td style="text-align:right">
+                        <button onclick="editProd('${p.id}')" style="border:none; background:none; cursor:pointer; font-size:18px;">✏️</button>
+                        <button onclick="deleteProd('${p.id}')" style="border:none; background:none; cursor:pointer; font-size:18px;">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+        renderPagination(totalPages);
+    }
+
+    function saveProduct() {
+        const desc = document.getElementById('pDesc').value.trim();
+        const code = document.getElementById('pCode').value.trim();
+        if(!desc) return alert("Η περιγραφή είναι υποχρεωτική");
+
+        const db = JSON.parse(localStorage.getItem('triton_products') || '{}');
+        const id = editId || 'p_' + Date.now();
+        
+        db[id] = {
+            code: code || getNextAutoCode(),
+            desc: desc,
+            unit: document.getElementById('pUnit').value,
+            price: document.getElementById('pPrice').value,
+            price_wholesale: document.getElementById('pPriceWholesale').value,
+            discount: document.getElementById('pDisc').value,
+            vat: document.getElementById('pVat').value,
+            stock: document.getElementById('pStock').value
+        };
+
+        localStorage.setItem('triton_products', JSON.stringify(db));
+        closeModal();
+        renderProducts();
+    }
+
+    function handleFileUpload() {
+        const file = document.getElementById('excelUpload').files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            const db = JSON.parse(localStorage.getItem('triton_products') || '{}');
+            jsonData.forEach(item => {
+                const id = 'p_' + Date.now() + Math.random();
+                db[id] = {
+                    code: item.ΚΩΔΙΚΟΣ || item.Code || getNextAutoCode(),
+                    desc: item.ΠΕΡΙΓΡΑΦΗ || item.Description || 'Νέο Είδος',
+                    unit: item.ΜΟΝΑΔΑ || 'ΤΕΜ',
+                    price: item.ΤΙΜΗ || 0,
+                    price_wholesale: item.ΧΟΝΔΡΙΚΗ || 0,
+                    discount: item.ΕΚΠΤΩΣΗ || 0,
+                    vat: item.ΦΠΑ || 24,
+                    stock: item.STOCK || item.ΑΠΟΘΕΜΑ || 0
+                };
+            });
+            localStorage.setItem('triton_products', JSON.stringify(db));
+            renderProducts();
+            alert("✅ Η εισαγωγή ολοκληρώθηκε!");
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function renderPagination(total) {
+        const cont = document.getElementById('pagination');
+        cont.innerHTML = '';
+        if(total <= 1) return;
+        for(let i=1; i<=total; i++) {
+            cont.innerHTML += `<button class="pg-btn ${i===currentPage?'active':''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+    }
+
+    function editProd(id) {
+        const p = JSON.parse(localStorage.getItem('triton_products'))[id];
+        editId = id;
+        document.getElementById('pCode').value = p.code;
+        document.getElementById('pDesc').value = p.desc;
+        document.getElementById('pUnit').value = p.unit;
+        document.getElementById('pPrice').value = p.price;
+        document.getElementById('pPriceWholesale').value = p.price_wholesale || '0.00';
+        document.getElementById('pDisc').value = p.discount || 0;
+        document.getElementById('pVat').value = p.vat;
+        document.getElementById('pStock').value = p.stock || 0;
+        document.getElementById('modalTitle').innerText = "Επεξεργασία Είδους";
+        document.getElementById('prodModal').style.display = 'block';
+    }
+
+    function deleteProd(id) {
+        if(confirm("Διαγραφή προϊόντος;")) {
+            const db = JSON.parse(localStorage.getItem('triton_products') || '{}');
+            delete db[id];
+            localStorage.setItem('triton_products', JSON.stringify(db));
+            renderProducts();
+        }
+    }
+
+    function openModal() { 
+        editId = null; 
+        document.getElementById('pCode').value = getNextAutoCode();
+        document.getElementById('pDesc').value = '';
+        document.getElementById('pPrice').value = '0.00';
+        document.getElementById('pPriceWholesale').value = '0.00';
+        document.getElementById('pStock').value = '0';
+        document.getElementById('modalTitle').innerText = "Νέο Προϊόν";
+        document.getElementById('prodModal').style.display = 'block'; 
+    }
+    function closeModal() { document.getElementById('prodModal').style.display = 'none'; }
+    function goToPage(p) { currentPage = p; renderProducts(); }
+    function filterProds() { currentPage = 1; renderProducts(); }
+    document.addEventListener('DOMContentLoaded', renderProducts);
+</script>
+</body>
+</html>

@@ -916,6 +916,7 @@ function fakeGoogleLogin() {
     }
 }
 // Φύλακας κατά το φόρτωμα της σελίδας
+// Φύλακας κατά το φόρτωμα της σελίδας
 document.addEventListener('DOMContentLoaded', () => {
     const isUnlocked = localStorage.getItem('triton_gate_unlocked');
     const isLoggedIn = localStorage.getItem('triton_is_logged_in');
@@ -926,14 +927,18 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.style.display = 'none';
         } else {
             overlay.style.display = 'flex';
+            // Αν είχε ήδη βάλει το TRITON2026 παλιότερα, πήγαινέ τον κατευθείαν στο Email
             if (isUnlocked === 'true') {
                 document.getElementById('masterGate').style.display = 'none';
                 document.getElementById('authGate').style.display = 'block';
-                initGoogleAuth(); // Φόρτωσε το κουμπί αν είναι ήδη στο 2ο βήμα
             }
         }
     }
-    loadStats();
+    
+    // Φόρτωση στατιστικών (αν η συνάρτηση υπάρχει στον υπόλοιπο κώδικα)
+    if (typeof loadStats === "function") {
+        loadStats();
+    }
 });
 
 // --- 2. ΛΕΙΤΟΥΡΓΙΕΣ DASHBOARD & BACKUP ---

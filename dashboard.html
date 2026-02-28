@@ -1,0 +1,175 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triton ERP - Dashboard Κερδοφορίας</title>
+    <style>
+        /* 1. ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
+        #navbar-iframe, .navbar, .header-outer, .footer-outer, .base-cms-navbar { 
+            display: none !important; 
+            visibility: hidden !important; 
+            height: 0 !important; 
+        }
+
+        :root { 
+            --triton-blue: #0ea5e9; 
+            --triton-dark-blue: #000080;
+            --triton-bg: #f8fafc; 
+            --triton-border: #e2e8f0; 
+        }
+        
+        body { 
+            top: 0 !important;
+            position: relative;
+            background: #e2e8f0; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 100; 
+            padding: 0; 
+        }
+
+        /* Navigation Bar */
+        .nav-header {
+            background: var(--triton-dark-blue);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 5px 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .dashboard-container { 
+            max-width: 1100px; 
+            margin: 30px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
+
+        .dash-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--triton-blue); 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+        }
+
+        /* Υπόλοιπα Styles */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--triton-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--triton-border); border-bottom: 4px solid var(--triton-blue); }
+        .stat-card label { display: block; font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-card .value { font-size: 26px; font-weight: 900; color: #0f172a; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 12px; color: #475569; border-bottom: 2px solid #cbd5e1; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .btn-clear { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="nav-header">
+    <a href="index.html" class="back-btn">⬅ Επιστροφή στο Μενού</a>
+    <span style="color: white; font-weight: bold;">TRITON ERP - Statistics</span>
+</div>
+
+<div class="dashboard-container">
+    <div class="dash-header">
+        <h1>📊 Οικονομική Εικόνα Μήνα</h1>
+        <div class="btn-group">
+            <button class="btn-clear" onclick="clearHistory()">Καθαρισμός</button>
+            <button class="btn-clear" style="background: #059669; color: white; border: none;" onclick="exportToExcel()">📥 Excel</button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <label>Τζίρος (Προ ΦΠΑ)</label>
+            <div id="totalSales" class="value">0.00 €</div>
+        </div>
+        <div class="stat-card">
+            <label style="color: #059669;">Πραγματικό Κέρδος</label>
+            <div id="totalProfit" class="value" style="color: #059669;">0.00 €</div>
+        </div>
+        <div class="stat-card">
+            <label>Margin (%)</label>
+            <div id="avgMargin" class="value">0.0%</div>
+        </div>
+    </div>
+
+    <h3>📜 Ιστορικό Πωλήσεων</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Ημερομηνία</th>
+                <th>Πελάτης</th>
+                <th>Καθαρή Αξία</th>
+                <th>Κέρδος</th>
+                <th>%</th>
+            </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    // Ο κώδικας JavaScript παραμένει ο ίδιος όπως πριν
+    function loadDashboard() {
+        const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+        const tableBody = document.getElementById('historyTableBody');
+        let sumSales = 0, sumProfit = 0;
+        tableBody.innerHTML = '';
+        [...history].reverse().forEach(sale => {
+            sumSales += (sale.totalNet || 0);
+            sumProfit += (sale.profit || 0);
+            const margin = sale.totalNet > 0 ? (sale.profit / sale.totalNet * 100).toFixed(1) : 0;
+            tableBody.innerHTML += `<tr>
+                <td>${new Date(sale.date).toLocaleDateString('el-GR')}</td>
+                <td>${sale.customer || 'Λιανική'}</td>
+                <td>${(sale.totalNet || 0).toFixed(2)} €</td>
+                <td style="color: #059669; font-weight:bold;">${(sale.profit || 0).toFixed(2)} €</td>
+                <td>${margin}%</td>
+            </tr>`;
+        });
+        document.getElementById('totalSales').innerText = sumSales.toFixed(2) + " €";
+        document.getElementById('totalProfit').innerText = sumProfit.toFixed(2) + " €";
+        document.getElementById('avgMargin').innerText = (sumSales > 0 ? (sumProfit / sumSales * 100).toFixed(1) : 0) + "%";
+    }
+
+    function clearHistory() {
+        if (confirm("Διαγραφή ιστορικού;")) {
+            localStorage.setItem('triton_sales_history', '[]');
+            loadDashboard();
+        }
+    }
+
+    function exportToExcel() {
+        const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFFΗμερομηνία,Πελάτης,Καθαρή Αξία,Κέρδος\n";
+        history.forEach(sale => {
+            csvContent += `${new Date(sale.date).toLocaleDateString('el-GR')},${(sale.customer || "Λιανική")},${sale.totalNet.toFixed(2)},${sale.profit.toFixed(2)}\n`;
+        });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", "Triton_Report.csv");
+        link.click();
+    }
+    window.onload = loadDashboard;
+</script>
+</body>
+</html>

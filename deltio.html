@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triton ERP - Δελτίο Αποστολής</title>
+    <style>
+        /* ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
+        #navbar-iframe, .navbar, .header-outer, .footer-outer { display: none !important; }
+
+        :root { 
+            --triton-blue: #0ea5e9; 
+            --triton-bg: #f1f5f9; 
+            --triton-border: #cbd5e1; 
+            --triton-dark: #0f172a; 
+            --triton-dark-blue: #000080;
+        }
+
+        body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+        /* Navigation Bar */
+        .nav-header {
+            background: var(--triton-dark-blue);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 5px 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+
+        #triton-app { 
+            width: 1000px; 
+            margin: 80px auto 40px auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 8px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            min-height: 1100px;
+            position: relative;
+        }
+
+        input, select, textarea { border: none; outline: none; background: transparent; font-family: inherit; width: 100%; }
+        
+        .header-top-grid { display: grid; grid-template-columns: 200px 1fr 150px; gap: 25px; align-items: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 25px; }
+        .company-info-area h1 { margin: 0; font-size: 22px; text-transform: uppercase; color: var(--triton-dark); }
+        .company-info-area p { margin: 2px 0; font-size: 13px; font-weight: 600; color: #475569; }
+        
+        .triton-info-bar { display: flex; background: var(--triton-bg); border-radius: 4px; border: 1px solid var(--triton-border); margin-bottom: 25px; }
+        .bar-cell { flex: 1; padding: 12px 15px; border-right: 1px solid var(--triton-border); }
+        .bar-cell:last-child { border-right: none; }
+        .bar-cell label { display: block; font-size: 10px; color: var(--triton-blue); font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+        .bar-cell span, .bar-cell input { font-size: 15px; font-weight: 700; color: var(--triton-dark); }
+
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .info-card { background: var(--triton-bg); padding: 18px; border-radius: 8px; border-left: 6px solid var(--triton-blue); }
+        .info-card label { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+        .info-card input { border-bottom: 1px solid var(--triton-border); padding: 5px 0; font-size: 14px; margin-bottom: 10px; font-weight: 700; color: var(--triton-dark); }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background: #f8fafc; padding: 12px 8px; font-size: 11px; border-bottom: 2px solid black; text-transform: uppercase; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        
+        .qty-cell { text-align: center !important; }
+        .triangular-btn { background: var(--triton-blue); color: white; padding: 6px 12px; border-radius: 4px; font-size: 10px; cursor: pointer; border: none; font-weight: 800; margin-bottom: 5px; }
+        .btn-print { float: right; padding: 15px 35px; background: var(--triton-dark); color: white; border-radius: 8px; font-weight: 800; cursor: pointer; border: none; margin-top: 20px; }
+
+        @media print { 
+            .no-print, .btn-print, .triangular-btn, .nav-header { display: none !important; } 
+            #triton-app { margin: 0; box-shadow: none; width: 100%; padding: 0; } 
+            body { background: white; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav-header no-print">
+    <a href="index.html" class="back-btn">⬅ Επιστροφή στο Μενού</a>
+    <span style="color: white; font-weight: bold;">TRITON DELIVERY NOTE</span>
+</div>
+
+<div id="triton-app">
+    <div class="header-top-grid">
+        <div id="idxLogo" class="logo-area"></div>
+        <div class="company-info-area">
+            <h1 id="idxCompName">ΦΟΡΤΩΣΗ...</h1>
+            <p id="idxActivity">-</p>
+            <p id="idxAddress">-</p>
+            <p>ΑΦΜ: <span id="idxTaxId" style="margin-right:25px;">-</span> ΔΟΥ: <span id="idxTaxOffice">-</span></p>
+        </div>
+        <div style="width:120px; height:120px; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; font-size:9px; text-align:center; color:#94a3b8;">QR CODE<br/>myDATA</div>
+    </div>
+
+    <div class="triton-info-bar">
+        <div class="bar-cell"><label>Ημερομηνία</label><span id="dtDisplay">--/--/----</span></div>
+        <div class="bar-cell"><label>Αρ. Παραστατικού</label><input type="text" id="docNum" value="ΔΔ001"/></div>
+        <div class="bar-cell"><label>Σκοπός Διακίνησης</label>
+            <select style="font-weight:bold;"><option>ΠΩΛΗΣΗ</option><option>ΤΡΙΓΩΝΙΚΗ ΠΩΛΗΣΗ</option><option>ΔΕΙΓΜΑΤΙΣΜΟΣ</option><option>ΕΠΙΣΤΡΟΦΗ</option></select>
+        </div>
+        <div class="bar-cell"><label>Ώρα Έναρξης</label><input type="text" id="timeDisplay"/></div>
+    </div>
+
+    <div class="grid-info">
+        <div class="info-card">
+            <label>Στοιχεία Παραλήπτη (Ενδιάμεσος)</label>
+            <input id="cName" list="custData" placeholder="Αναζήτηση Πελάτη..." onchange="autoFillCustomer()"/>
+            <input id="cTax" placeholder="ΑΦΜ - ΔΟΥ" readonly/>
+            <input id="cAddr" placeholder="Διεύθυνση Έδρας" readonly/>
+            <datalist id="custData"></datalist>
+        </div>
+        <div class="info-card">
+            <label>Τόπος Παράδοσης (Τελικός Παραλήπτης)</label>
+            <input id="deliveryPlace" list="branchData" placeholder="Διεύθυνση Παράδοσης..."/>
+            <datalist id="branchData"></datalist>
+            <label style="margin-top:10px;">Μεταφορικό Μέσο</label>
+            <input placeholder="Ι.Χ. ΦΟΡΤΗΓΟ" value="Ι.Χ. ΦΟΡΤΗΓΟ"/>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:70%">ΠΕΡΙΓΡΑΦΗ ΕΙΔΟΥΣ</th>
+                <th style="width:10%; text-align:center;">Μ.Μ.</th>
+                <th style="width:20%; text-align:center;">ΠΟΣΟΤΗΤΑ</th>
+            </tr>
+        </thead>
+        <tbody id="rowsBody"></tbody>
+    </table>
+
+    <div class="footer-area">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+            <label style="font-size:10px; font-weight:800; color:var(--triton-dark);">ΠΑΡΑΤΗΡΗΣΕΙΣ</label>
+            <button class="triangular-btn no-print" onclick="setTriangular()">+ ΤΡΙΓΩΝΙΚΗ ΛΕΖΑΝΤΑ</button>
+        </div>
+        <textarea id="inpRemarks" style="height:60px; border:1px solid var(--triton-border); border-radius:6px; padding:10px; width:100%; margin-top:5px; background:white;" placeholder="Σημειώσεις..."></textarea>
+    </div>
+
+    <button class="btn-print no-print" onclick="processDelivery()">ΚΑΤΑΧΩΡΗΣΗ & ΕΚΤΥΠΩΣΗ (F10)</button>
+</div>
+
+<script>
+    let count = parseInt(localStorage.getItem('triton_dd_count')) || 1;
+
+    function loadData() {
+        const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
+        document.getElementById('idxCompName').innerText = s.companyName || "TRITON ERP";
+        document.getElementById('idxActivity').innerText = s.activity || "";
+        document.getElementById('idxAddress').innerText = s.address || "";
+        document.getElementById('idxTaxId').innerText = s.taxId || "-";
+        document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
+        if (s.logoUrl) document.getElementById('idxLogo').innerHTML = `<img src="${s.logoUrl}" style="max-width:100%; max-height:80px;"/>`;
+        
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const dl = document.getElementById('custData');
+        Object.keys(db).sort().forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            dl.appendChild(opt);
+        });
+
+        document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
+        document.getElementById('timeDisplay').value = new Date().toLocaleTimeString('el-GR', {hour: '2-digit', minute:'2-digit'});
+        document.getElementById('docNum').value = "ΔΔ" + count.toString().padStart(3, '0');
+    }
+
+    function autoFillCustomer() {
+        const name = document.getElementById('cName').value;
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const branchDl = document.getElementById('branchData');
+        branchDl.innerHTML = "";
+        
+        if (db[name]) {
+            document.getElementById('cTax').value = (db[name].taxId || "") + " - " + (db[name].taxOffice || "");
+            document.getElementById('cAddr').value = db[name].address || "";
+            document.getElementById('deliveryPlace').value = db[name].address || "";
+            
+            if (db[name].branches) {
+                db[name].branches.forEach(b => {
+                    let opt = document.createElement('option');
+                    opt.value = b;
+                    branchDl.appendChild(opt);
+                });
+            }
+        }
+    }
+
+    function addRow(isFirst = false) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="prod-name" onkeydown="nav(event, 'prod')"></td>
+            <td><input type="text" value="ΤΕΜ" style="text-align:center;"></td>
+            <td><input type="number" class="qty" style="text-align:center;" onkeydown="nav(event, 'qty')"></td>
+        `;
+        document.getElementById('rowsBody').appendChild(tr);
+        return tr;
+    }
+
+    function nav(e, field) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const row = e.target.closest('tr');
+            if (field === 'prod') row.querySelector('.qty').focus();
+            else if (field === 'qty') {
+                const nextRow = addRow();
+                nextRow.querySelector('.prod-name').focus();
+            }
+        }
+    }
+
+    function setTriangular() {
+        const name = document.getElementById('cName').value || "ΠΕΛΑΤΗ";
+        document.getElementById('inpRemarks').value = "Τριγωνική πώληση κατ' εντολή και για λογαριασμό του πελάτη " + name + ".";
+    }
+
+    function processDelivery() {
+        if (!document.getElementById('cName').value) { alert("⚠️ Επιλέξτε Παραλήπτη!"); return; }
+        window.print();
+        count++;
+        localStorage.setItem('triton_dd_count', count);
+        setTimeout(() => { location.reload(); }, 500);
+    }
+
+    document.addEventListener('keydown', e => { if(e.key === "F10") { e.preventDefault(); processDelivery(); } });
+    window.onload = () => { loadData(); addRow(true); };
+</script>
+
+</body>
+</html>

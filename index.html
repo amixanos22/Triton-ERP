@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -282,23 +282,24 @@
         <a href="#" class="nav-item">☄️ <span class="translate" data-el="Συνοπτική Κατάσταση" data-en="Summary">Συνοπτική Κατάσταση</span></a>
         <a href="#" class="nav-item">📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span></a>
         
-        <div class="nav-item-container">
-            <a href="#" class="nav-item">💎 <span class="translate" data-el="Πληρωμές" data-en="Payments">Πληρωμές</span></a>
-            <div class="submenu">
-                <a href="#" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
-                <a href="#" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
-            </div>
-        </div>
-
+       <div class="nav-item-container">
+    <a href="#" class="nav-item">💎 <span class="translate" data-el="Πληρωμές" data-en="Payments">Πληρωμές</span></a>
+    <div class="submenu">
+        <a href="eispraxi.html" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
+        <a href="pliromi.html" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
+    </div>
+</div>
+      
    <a href="customers.html" class="nav-item">
     <span>🛸</span> 
     <span class="translate" data-el="Πελάτες" data-en="Customers">Πελάτες</span>
 </a>
 
-<a href="shoppingtriton.html" class="nav-item" style="border-left: 4px solid #0ea5e9; margin-top: 5px;">
+<a href="shopping.html" class="nav-item" style="border-left: 4px solid #0ea5e9; margin-top: 5px;">
     <span>🛒</span> 
     <span class="translate" data-el="ShoppingTriton (Αγορές)" data-en="ShoppingTriton (Purchases)">ShoppingTriton (Αγορές)</span>
 </a>
+       
       <a href="recipes.html" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">
     <span>🧪</span> 
     <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
@@ -412,30 +413,41 @@
   
    
 <script>
-// --- 1. ΕΛΕΓΧΟΣ LOGIN ---
+// --- ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΕΝΟΙΚΙΑΣΗΣ TRITON ---
 function checkLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
     const errorMsg = document.getElementById('loginError');
 
-    // Χρήση demo στοιχείων
-    if (email === "demo@iceplanet.gr" && pass === "123456") {
+    // 1. Έλεγχος αν ο χρήστης έβαλε τον Master Κωδικό TRITON2026
+    if (pass === "TRITON2026") { 
+        // Αποθηκεύουμε στη μνήμη ότι το πρόγραμμα ξεκλείδωσε
+        localStorage.setItem('isLoggedIn', 'true');
+        // Αποθηκεύουμε και το email του χρήστη αν θέλουμε να τον θυμόμαστε
+        if(email) localStorage.setItem('triton_user_email', email);
+
+        // Εφέ εξαφάνισης της "πόρτας"
         document.getElementById('loginOverlay').style.opacity = "0";
         setTimeout(() => {
             document.getElementById('loginOverlay').style.display = "none";
-            localStorage.setItem('isLoggedIn', 'true');
         }, 500);
     } else {
+        // Αν ο κωδικός είναι λάθος
         errorMsg.style.display = "block";
-        alert("Στοιχεία εισόδου: demo@iceplanet.gr / 123456");
+        errorMsg.innerText = "❌ Λάθος Κωδικός Ενοικίασης. Παρακαλώ εισάγετε TRITON2026";
     }
 }
 
 function loginWithGoogle() {
-    // Προσομοίωση
-    document.getElementById('loginEmail').value = "demo@iceplanet.gr";
-    document.getElementById('loginPass').value = "123456";
-    checkLogin();
+    // Στο Google Login, ελέγχουμε αν έχει γραφτεί ο κωδικός στο πεδίο
+    const pass = document.getElementById('loginPass').value;
+    
+    if (pass === "TRITON2026") {
+        alert("✅ Ο λογαριασμός Google συνδέθηκε επιτυχώς με τον κωδικό ενοικίασης!");
+        checkLogin();
+    } else {
+        alert("⚠️ Για να συνδεθείτε μέσω Google, πρέπει πρώτα να πληκτρολογήσετε τον Κωδικό Ενοικίασης (TRITON2026) στο πεδίο του κωδικού.");
+    }
 }
 
 // --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ ---

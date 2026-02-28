@@ -3,249 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Triton Recipes - Κοστολόγηση</title>
+    <title>Triton ERP - Απόδειξη Είσπραξης</title>
     <style>
-        /* ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
+        /* 1. ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
         #navbar-iframe, .navbar, .header-outer, .footer-outer, .base-cms-navbar { 
             display: none !important; visibility: hidden !important; height: 0 !important; 
         }
 
         :root { 
+            --triton-dark: #0f172a; 
             --triton-blue: #0ea5e9; 
-            --triton-dark: #0f172a;
-            --triton-bg: #f8fafc; 
-            --triton-border: #e2e8f0; 
+            --triton-light: #f8fafc;
+            --triton-border: #e2e8f0;
         }
-        
+
         body { 
             background: #e2e8f0; 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
             margin: 0; 
             padding: 20px; 
-            color: #1e293b; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            color: #1e293b;
         }
 
-        /* Η ΦΟΡΜΑ ΚΑΤΕΒΑΙΝΕΙ 100px ΑΠΟ ΤΗΝ ΚΟΡΥΦΗ */
-        .container { 
-            max-width: 1000px; 
-            margin: 100px auto 50px auto; /* 100px ΠΑΝΩ, AUTO ΔΕΞΙΑ-ΑΡΙΣΤΕΡΑ */
-            background: white; 
-            padding: 30px; 
+        /* 📐 Η ΦΟΡΜΑ ΚΑΤΕΒΑΙΝΕΙ 100px ΑΠΟ ΤΗΝ ΚΟΡΥΦΗ */
+        #triton-receipt-box { 
+            max-width: 800px; 
+            margin: 100px auto 50px auto; 
+            background: #fff; 
             border-radius: 15px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            border-top: 5px solid var(--triton-blue); 
-            position: relative;
+            border: 1px solid var(--triton-border); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            overflow: hidden;
         }
 
-        h1 { color: var(--triton-blue); display: flex; align-items: center; gap: 10px; margin-top: 0; font-size: 1.8rem; }
-        .recipe-card { border: 1px solid #cbd5e1; border-radius: 12px; padding: 25px; margin-bottom: 25px; background: #f8fafc; }
+        .company-info { padding: 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: flex-start; }
+        .company-details h1 { margin: 0; color: var(--triton-dark); font-size: 22px; text-transform: uppercase; letter-spacing: -0.5px; }
+        .company-details p { margin: 4px 0; color: #64748b; font-size: 13px; }
         
-        .grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr 45px; gap: 12px; margin-top: 10px; align-items: center; }
-        .header-row { font-weight: 800; font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+        .logo-area { max-width: 150px; }
+        .logo-area img { max-width: 100%; height: auto; border-radius: 8px; }
         
-        input, select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; width: 100%; background: white; font-size: 14px; transition: 0.2s; }
+        .triton-header { background: var(--triton-dark); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--triton-blue); }
+        .counter-badge { background: var(--triton-blue); color: #fff; padding: 6px 15px; border-radius: 8px; font-weight: 900; font-size: 14px; }
         
-        .btn-add { background: var(--triton-dark); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-del { background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; height: 40px; width: 40px; font-weight: bold; font-size: 18px; }
+        .form-container { padding: 30px; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+        .field-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        .field-group label { font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .field-group input, .field-group select, .field-group textarea { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; }
+        .field-group input:focus { border-color: var(--triton-blue); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
         
-        .total-cost { font-size: 26px; font-weight: 900; color: var(--triton-blue); text-align: right; margin-top: 20px; border-top: 2px solid #e2e8f0; padding-top: 15px; }
+        #cheque-area { background: #f0f9ff; border: 1px solid #bae6fd; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: none; }
         
-        .extra-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; background: #f1f5f9; padding: 20px; border-radius: 10px; }
-        .extra-inputs label { font-size: 12px; font-weight: bold; color: #64748b; display: block; margin-bottom: 8px; }
+        .amount-panel { background: #f8fafc; border: 2px dashed var(--triton-blue); border-radius: 15px; padding: 20px; text-align: center; margin-top: 10px; }
+        .big-amount-input { font-size: 36px; font-weight: 900; border: none; background: transparent; width: 180px; text-align: center; color: var(--triton-dark); outline: none; }
+        
+        .btn-main { background: var(--triton-dark); color: white; border: none; padding: 18px; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 20px; transition: 0.3s; font-size: 16px; }
+        .btn-main:hover { background: var(--triton-blue); transform: translateY(-1px); }
+        
+        #balance-info { font-size: 13px; color: #ef4444; font-weight: bold; margin-top: 6px; display: block; }
 
-        .nav-header { display: none; }
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white; padding: 0; }
+            #triton-receipt-box { margin: 0; border: none; box-shadow: none; width: 100%; } 
+            .triton-header { background: #eee !important; color: black !important; border-bottom: 2px solid #000; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1><span>🧪</span> Triton Recipes</h1>
-    <p style="margin-bottom: 25px; color: #64748b;">Κοστολόγηση παραγωγής και σύνδεση υλικών.</p> 
-    
-    <div class="recipe-card">
-        <div style="display: flex; gap: 25px; align-items: flex-start; flex-wrap: wrap;">
-            <div style="flex: 2; min-width: 250px;">
-                <label><strong>Τελικό Προϊόν:</strong></label>
-                <select id="finalProductSelect" onchange="loadRecipeData(this.value)" style="margin-top:8px;">
-                    <option value="">-- Επιλέξτε από την Αποθήκη --</option>
+<div id="triton-receipt-box">
+    <div class="company-info">
+        <div class="company-details">
+            <h1 id="viewCompName">TRITON ERP</h1>
+            <p id="viewCompActivity">Φορτώνεται...</p>
+            <p id="viewCompAddress">-</p>
+            <p>ΑΦΜ: <span id="viewCompTaxId">-</span> | ΔΟΥ: <span id="viewCompTaxOffice">-</span></p>
+        </div>
+        <div class="logo-area" id="logoContainer"></div>
+    </div>
+
+    <div class="triton-header">
+        <h2 style="margin:0; font-size:18px; letter-spacing: 1px;">ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ</h2>
+        <div id="displayCounter" class="counter-badge">ΕΕ001</div>
+    </div>
+
+    <div class="form-container">
+        <div class="field-row">
+            <div class="field-group">
+                <label>Ημερομηνία</label>
+                <input type="date" id="inpDate" />
+            </div>
+            <div class="field-group">
+                <label>Τρόπος Πληρωμής</label>
+                <select id="inpMethod" onchange="toggleCheque()">
+                    <option value="ΜΕΤΡΗΤΑ">ΜΕΤΡΗΤΑ</option>
+                    <option value="ΕΠΙΤΑΓΗ">ΕΠΙΤΑΓΗ</option>
+                    <option value="ΤΡΑΠΕΖΑ">ΤΡΑΠΕΖΑ (E-Banking)</option>
                 </select>
             </div>
-            <div id="quickHistory" style="flex: 1; background: #f0f9ff; padding: 15px; border-radius: 12px; border: 1px dashed #0ea5e9; min-width: 200px;">
-                <div style="font-size: 11px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; margin-bottom: 6px;">🕒 Στατιστικά</div>
-                <div id="historyContent" style="font-size: 14px; color: #1e293b; font-weight: 600;">-</div>
-            </div>
         </div>
-        
-        <hr style="margin:25px 0; border:0; border-top:1px solid #e2e8f0;">
-        
-        <div class="header-row grid">
-            <div>Υλικό / Συστατικό</div>
-            <div>Ποσότητα</div>
-            <div>Κόστος Μον.</div>
-            <div>Σύνολο</div>
-            <div></div>
-        </div>
-        
-        <div id="ingredientsList"></div>
-        
-        <button class="btn-add" onclick="addIngredientRow()" style="margin-top:20px; background: #64748b;">+ Προσθήκη Συστατικού</button>
 
-        <div class="extra-inputs">
-            <div>
-                <label>Φύρα (%)</label>
-                <input type="number" id="wastePercent" value="0" oninput="calculateRecipeTotal()">
+        <div id="cheque-area">
+            <div class="field-row">
+                <div class="field-group"><label>Αρ. Επιταγής</label><input type="text" id="chequeNo" placeholder="00000000" /></div>
+                <div class="field-group"><label>Ημ. Λήξης</label><input type="date" id="chequeDate" /></div>
             </div>
-            <div>
-                <label>Λοιπά Έξοδα (€)</label>
-                <input type="number" id="overheadCost" value="0" oninput="calculateRecipeTotal()">
-            </div>
+            <div class="field-group"><label>Εκδότρια Τράπεζα</label><select id="chequeBank"></select></div>
+        </div>
+
+        <div class="field-group">
+            <label>Πελάτης / Επωνυμία</label>
+            <input id="inpCustomer" list="custData" placeholder="Αναζήτηση πελάτη..." onchange="checkBalance()"/>
+            <span id="balance-info"></span>
+            <datalist id="custData"></datalist>
+        </div>
+
+        <div class="field-group">
+            <label>Αιτιολογία</label>
+            <textarea id="inpNote" rows="1" placeholder="π.χ. Έναντι τιμολογίου ΤΔΑ-502">ΕΝΑΝΤΙ ΛΟΓΑΡΙΑΣΜΟΥ</textarea>
         </div>
         
-        <div class="total-cost">Κόστος Παραγωγής: <span id="recipeTotal">0.00</span> €</div>
-    </div>
-    
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-        <button class="btn-add" style="background:var(--triton-blue); font-size:18px; padding:18px;" onclick="saveRecipe()">💾 ΑΠΟΘΗΚΕΥΣΗ ΣΥΝΤΑΓΗΣ</button>
-    </div>
-   
-    <div class="recipe-card" style="margin-top: 40px; border-top: 5px solid #64748b;">
-        <h3 style="color: #64748b; margin-top: 0; font-size: 1.2rem;">📋 Αρχείο Συνταγών</h3>
-        <div id="savedRecipesList"></div>
+        <div class="amount-panel">
+            <label style="font-size: 10px; color: var(--triton-blue); font-weight: 900; display: block; margin-bottom: 5px;">ΠΟΣΟ ΕΙΣΠΡΑΞΗΣ</label>
+            <input type="number" id="inpAmount" class="big-amount-input" value="0.00" step="0.01" />
+            <span style="font-size: 32px; font-weight: 900; color: var(--triton-dark);">€</span>
+        </div>
+        
+        <button type="button" class="btn-main no-print" onclick="processAll()">ΚΑΤΑΧΩΡΗΣΗ & ΕΚΤΥΠΩΣΗ (F10)</button>
     </div>
 </div>
 
 <script>
-    // Ανίχνευση Iframe - Αν είμαστε μέσα στην Index, το background γίνεται διαφανές
-    if (window.self !== window.top) {
-        document.body.style.background = "transparent";
+    const TRITON_CONFIG = {
+        banks: ["ΠΕΙΡΑΙΩΣ", "ΕΘΝΙΚΗ", "ALPHA BANK", "EUROBANK", "ATTICA BANK", "OPTIMA", "VIVA", "REVOLUT"]
+    };
+
+    function setupBanks() {
+        const sel = document.getElementById('chequeBank');
+        if(sel) {
+            sel.innerHTML = '<option value="">--- Επιλέξτε Τράπεζα ---</option>';
+            TRITON_CONFIG.banks.forEach(b => { sel.innerHTML += `<option value="${b}">${b}</option>`; });
+        }
     }
 
-    const productsDB = JSON.parse(localStorage.getItem('triton_products') || '[]');
+    function toggleCheque() {
+        document.getElementById('cheque-area').style.display = (document.getElementById('inpMethod').value === "ΕΠΙΤΑΓΗ") ? "block" : "none";
+    }
+
+    function checkBalance() {
+        const name = document.getElementById('inpCustomer').value;
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const info = document.getElementById('balance-info');
+        if(db[name]) {
+            const bal = db[name].balance || 0;
+            info.innerText = "Τρέχον Υπόλοιπο: " + bal.toFixed(2) + "€";
+        } else {
+            info.innerText = "";
+        }
+    }
+
+    function loadFromSystem() {
+        const s = JSON.parse(localStorage.getItem('triton_settings'));
+        if (s) {
+            document.getElementById('viewCompName').innerText = s.companyName || "ΕΠΩΝΥΜΙΑ";
+            document.getElementById('viewCompActivity').innerText = s.activity || "";
+            document.getElementById('viewCompAddress').innerText = s.address || "";
+            document.getElementById('viewCompTaxId').innerText = s.taxId || "-";
+            document.getElementById('viewCompTaxOffice').innerText = s.taxOffice || "-";
+            if (s.logoUrl) document.getElementById('logoContainer').innerHTML = `<img src="${s.logoUrl}" alt="Logo">`;
+        }
+        
+        const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const dl = document.getElementById('custData');
+        dl.innerHTML = "";
+        Object.keys(customers).sort().forEach(name => {
+            let opt = document.createElement('option');
+            opt.value = name;
+            dl.appendChild(opt);
+        });
+    }
+
+    let count = parseInt(localStorage.getItem('triton_count_ee')) || 1;
 
     function init() {
-        const select = document.getElementById('finalProductSelect');
-        productsDB.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.name || p.desc;
-            opt.textContent = p.name || p.desc;
-            select.appendChild(opt);
-        });
+        setupBanks();
+        loadFromSystem();
+        document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('displayCounter').innerText = "ΕΕ" + count.toString().padStart(3, '0');
     }
 
-    function addIngredientRow() {
-        const div = document.createElement('div');
-        div.className = 'grid';
-        let options = '<option value="">-- Υλικό --</option>';
-        productsDB.forEach(p => {
-            const pName = p.name || p.desc;
-            const pCost = p.price || 0; 
-            options += `<option value="${pName}" data-cost="${pCost}">${pName}</option>`;
-        });
+    function processAll() {
+        const customerName = document.getElementById('inpCustomer').value;
+        const amount = parseFloat(document.getElementById('inpAmount').value) || 0;
+        
+        if (!customerName || amount <= 0) { 
+            alert("⚠️ Παρακαλώ επιλέξτε Πελάτη και εισάγετε έγκυρο Ποσό!"); 
+            return; 
+        }
 
-        div.innerHTML = `
-            <select class="ing-name" onchange="updateRowCost(this)">${options}</select>
-            <input type="number" class="ing-qty" value="1" step="0.01" oninput="updateRowCost(this)">
-            <input type="text" class="ing-unit-cost" readonly value="0.00">
-            <input type="text" class="ing-total-cost" readonly value="0.00">
-            <button class="btn-del" onclick="this.parentElement.remove(); calculateRecipeTotal();">×</button>
-        `;
-        document.getElementById('ingredientsList').appendChild(div);
-    }
+        let db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        
+        if(db[customerName]) {
+            if (db[customerName].balance === undefined) db[customerName].balance = 0;
+            if (!db[customerName].history) db[customerName].history = [];
 
-    function updateRowCost(input) {
-        const row = input.closest('.grid');
-        const select = row.querySelector('.ing-name');
-        const qty = parseFloat(row.querySelector('.ing-qty').value) || 0;
-        const unitCost = parseFloat(select.options[select.selectedIndex].getAttribute('data-cost')) || 0;
-        row.querySelector('.ing-unit-cost').value = unitCost.toFixed(2);
-        row.querySelector('.ing-total-cost').value = (unitCost * qty).toFixed(2);
-        calculateRecipeTotal();
-    }
-
-    function calculateRecipeTotal() {
-        let subtotal = 0;
-        document.querySelectorAll('.ing-total-cost').forEach(el => {
-            subtotal += parseFloat(el.value) || 0;
-        });
-        const waste = parseFloat(document.getElementById('wastePercent').value) || 0;
-        const overhead = parseFloat(document.getElementById('overheadCost').value) || 0;
-        let total = subtotal + (subtotal * waste / 100) + overhead;
-        document.getElementById('recipeTotal').innerText = total.toFixed(2);
-    }
-
-    function saveRecipe() {
-        const finalProductName = document.getElementById('finalProductSelect').value;
-        if (!finalProductName) return alert("⚠️ Επιλέξτε προϊόν!");
-        const ingredients = [];
-        document.querySelectorAll('#ingredientsList .grid').forEach(row => {
-            const name = row.querySelector('.ing-name').value;
-            const qty = row.querySelector('.ing-qty').value;
-            if (name && qty) ingredients.push({ name, qty });
-        });
-        const recipes = JSON.parse(localStorage.getItem('triton_recipes') || '{}');
-        recipes[finalProductName] = {
-            totalCost: document.getElementById('recipeTotal').innerText,
-            ingredients: ingredients,
-            waste: document.getElementById('wastePercent').value,
-            overhead: document.getElementById('overheadCost').value
-        };
-        localStorage.setItem('triton_recipes', JSON.stringify(recipes));
-        alert("✅ Αποθηκεύτηκε!");
-        displaySavedRecipes(); 
-    }
-
-    function loadRecipeData(productName) {
-        if (!productName) return;
-        const recipes = JSON.parse(localStorage.getItem('triton_recipes') || '{}');
-        const recipe = recipes[productName];
-        if (recipe) {
-            document.getElementById('wastePercent').value = recipe.waste || 0;
-            document.getElementById('overheadCost').value = recipe.overhead || 0;
-            document.getElementById('ingredientsList').innerHTML = '';
-            recipe.ingredients.forEach(ing => {
-                addIngredientRow();
-                const rows = document.querySelectorAll('#ingredientsList .grid');
-                const lastRow = rows[rows.length - 1];
-                const selectEl = lastRow.querySelector('.ing-name');
-                selectEl.value = ing.name;
-                lastRow.querySelector('.ing-qty').value = ing.qty;
-                updateRowCost(selectEl);
+            // Αφαίρεση ποσού από το υπόλοιπο (Είσπραξη)
+            db[customerName].balance -= amount; 
+            db[customerName].history.push({
+                date: new Date().toLocaleDateString('el-GR'),
+                type: 'ΕΙΣΠΡΑΞΗ ' + document.getElementById('displayCounter').innerText,
+                amount: -amount,
+                newBalance: db[customerName].balance
             });
+            localStorage.setItem('customersDB', JSON.stringify(db));
         }
-        calculateRecipeTotal();
+
+        window.print();
+        
+        count++;
+        localStorage.setItem('triton_count_ee', count);
+        
+        setTimeout(() => { 
+            if(window.parent && window.parent.closeForm) window.parent.closeForm();
+            location.reload(); 
+        }, 500);
     }
 
-    function displaySavedRecipes() {
-        const recipes = JSON.parse(localStorage.getItem('triton_recipes') || '{}');
-        const container = document.getElementById('savedRecipesList');
-        if (Object.keys(recipes).length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8; font-size:0.9rem; padding:10px;">Κενό αρχείο.</p>';
-            return;
+    // Shortcut F10
+    document.addEventListener('keydown', e => { 
+        if(e.key === "F10") { e.preventDefault(); processAll(); } 
+    });
+    
+    window.addEventListener('load', () => {
+        init();
+        // Αν η κλήση έγινε από την καρτέλα πελάτη
+        const auto = localStorage.getItem('auto_select_customer');
+        if (auto) {
+            document.getElementById('inpCustomer').value = auto;
+            checkBalance();
+            localStorage.removeItem('auto_select_customer');
         }
-        let html = '<table style="width:100%; border-collapse: collapse;">';
-        Object.keys(recipes).forEach(name => {
-            html += `<tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding:15px; font-weight:bold; color:#334155;">${name}</td>
-                <td style="padding:15px; color:var(--triton-blue); font-weight:800; text-align:right;">${recipes[name].totalCost} €</td>
-                <td style="padding:15px; text-align:right;">
-                    <button onclick="deleteFullRecipe('${name}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">Διαγραφή</button>
-                </td>
-            </tr>`;
-        });
-        html += '</table>';
-        container.innerHTML = html;
-    }
-
-    function deleteFullRecipe(name) {
-        if (confirm(`Διαγραφή;`)) {
-            const recipes = JSON.parse(localStorage.getItem('triton_recipes') || '{}');
-            delete recipes[name];
-            localStorage.setItem('triton_recipes', JSON.stringify(recipes));
-            displaySavedRecipes();
-        }
-    }
-
-    window.onload = function() { init(); displaySavedRecipes(); };
+    });
 </script>
+
 </body>
 </html>

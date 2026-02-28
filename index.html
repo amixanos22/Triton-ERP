@@ -860,10 +860,8 @@ document.addEventListener('DOMContentLoaded', refreshDashboardMetrics);
 </div>
 
 <script>
-// --- 1. ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ TRITON ---
+// --- 1. ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ & ΕΙΣΟΔΟΥ (TRITON AUTH) ---
 
-// Βήμα Α: Έλεγχος Master Key
-// Βήμα Α: Έλεγχος Master Key (TRITON2026)
 function unlockTriton() {
     const key = document.getElementById('masterKey').value;
     const error = document.getElementById('unlockError');
@@ -872,7 +870,6 @@ function unlockTriton() {
         localStorage.setItem('triton_gate_unlocked', 'true');
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
-        // Δεν καλούμε πια το initGoogleAuth() γιατί δεν έχουμε API
     } else {
         if(error) {
             error.style.display = 'block';
@@ -881,68 +878,94 @@ function unlockTriton() {
     }
 }
 
-// Βήμα Β: Χειροκίνητη Είσοδος (Από το κουμπί ΕΚΚΙΝΗΣΗ)
 function completeLogin() {
     const email = document.getElementById('userEmail').value;
-    
-    // Έλεγχος αν συμπληρώθηκε email
     if (!email || !email.includes('@')) {
         alert("⚠️ Παρακαλώ εισάγετε ένα έγκυρο Email Επιχείρησης.");
         return;
     }
-
     localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
-    
+    executeFinalEntry();
+}
+
+function fakeGoogleLogin() {
+    let email = prompt("Εισάγετε το Google Email σας για ταυτοποίηση:");
+    if (email && email.includes("@")) {
+        localStorage.setItem('triton_user_email', email);
+        localStorage.setItem('triton_is_logged_in', 'true');
+        executeFinalEntry();
+    }
+}
+
+function executeFinalEntry() {
     const overlay = document.getElementById('loginOverlay');
     if(overlay) {
         overlay.style.opacity = "0";
         setTimeout(() => {
             overlay.style.display = 'none';
-            // Έλεγχος για άνοιγμα ρυθμίσεων αν είναι η πρώτη φορά
+            // Έλεγχος: Αν δεν έχει φτιάξει κατάστημα, άνοιξε τις ρυθμίσεις
             if (!localStorage.getItem('bizSettings')) {
-                if (typeof openSettings === "function") openSettings();
+                openSettings();
             }
+            if (typeof loadStats === "function") loadStats();
         }, 500);
     }
+    alert("🔱 Καλωσήρθατε στο Triton ERP!");
 }
 
-// Βήμα Γ: Η "Ψεύτικη" Σύνδεση Google (Για το άσπρο κουμπί)
-function fakeGoogleLogin() {
-    let email = prompt("Εισάγετε το Google Email σας:");
-    if (email && email.includes("@")) {
-        document.getElementById('userEmail').value = email;
-        completeLogin();
+// --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (PROFILE) ---
+
+function openSettings() {
+    const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
+    // Αυτόματο γέμισμα των πεδίων της φόρμας
+    if(document.getElementById('setName')) {
+        document.getElementById('setName').value = saved.name || '';
+        document.getElementById('setJob').value = saved.job || '';
+        document.getElementById('setAfm').value = saved.afm || '';
+        document.getElementById('setDoy').value = saved.doy || '';
+        document.getElementById('setAddress').value = saved.address || '';
+        document.getElementById('setCity').value = saved.city || '';
+        document.getElementById('setTk').value = saved.tk || '';
+        document.getElementById('setPhone').value = saved.phone || '';
+        document.getElementById('setGemi').value = saved.gemi || '';
+        document.getElementById('setMyDataUser').value = saved.mu || '';
+        document.getElementById('setMyDataKey').value = saved.mk || '';
     }
+    document.getElementById('settingsModal').style.display = 'flex';
 }
-// Φύλακας κατά το φόρτωμα της σελίδας
-// Φύλακας κατά το φόρτωμα της σελίδας
-document.addEventListener('DOMContentLoaded', () => {
-    const isUnlocked = localStorage.getItem('triton_gate_unlocked');
-    const isLoggedIn = localStorage.getItem('triton_is_logged_in');
-    const overlay = document.getElementById('loginOverlay');
 
-    if (overlay) {
-        if (isLoggedIn === 'true') {
-            overlay.style.display = 'none';
-        } else {
-            overlay.style.display = 'flex';
-            // Αν είχε ήδη βάλει το TRITON2026 παλιότερα, πήγαινέ τον κατευθείαν στο Email
-            if (isUnlocked === 'true') {
-                document.getElementById('masterGate').style.display = 'none';
-                document.getElementById('authGate').style.display = 'block';
-            }
-        }
-    }
-    
-    // Φόρτωση στατιστικών (αν η συνάρτηση υπάρχει στον υπόλοιπο κώδικα)
-    if (typeof loadStats === "function") {
-        loadStats();
-    }
-});
+function closeSettings() {
+    document.getElementById('settingsModal').style.display = 'none';
+}
 
-// --- 2. ΛΕΙΤΟΥΡΓΙΕΣ DASHBOARD & BACKUP ---
-// (Οι συναρτήσεις σου παραμένουν ως έχουν)
+function saveSettings() {
+    const settings = {
+        name: document.getElementById('setName').value,
+        job: document.getElementById('setJob').value,
+        afm: document.getElementById('setAfm').value,
+        doy: document.getElementById('setDoy').value,
+        address: document.getElementById('setAddress').value,
+        city: document.getElementById('setCity').value,
+        tk: document.getElementById('setTk').value,
+        phone: document.getElementById('setPhone').value,
+        gemi: document.getElementById('setGemi').value,
+        mu: document.getElementById('setMyDataUser').value,
+        mk: document.getElementById('setMyDataKey').value
+    };
+
+    if(!settings.afm || !settings.name) {
+        alert("⚠️ Το ΑΦΜ και η Επωνυμία είναι υποχρεωτικά!");
+        return;
+    }
+
+    localStorage.setItem('bizSettings', JSON.stringify(settings));
+    alert('Τα στοιχεία αποθηκεύτηκαν! 🚀');
+    closeSettings();
+    location.reload(); 
+}
+
+// --- 3. ΔΙΑΧΕΙΡΙΣΗ ΤΙΜΟΛΟΓΙΩΝ & ΣΤΑΤΙΣΤΙΚΑ ---
 
 function finalizeInvoice() {
     const customer = document.getElementById('invCustomer').value;
@@ -973,8 +996,8 @@ function loadStats() {
     const statsCards = document.querySelectorAll('.stats-grid h2');
     const lowStockList = document.getElementById('lowStockList');
 
-    if (history.length > 0 && tbody) {
-        tbody.innerHTML = ''; 
+    if (tbody) {
+        tbody.innerHTML = history.length > 0 ? '' : '<tr><td colspan="4" style="text-align:center; padding:20px;">Δεν υπάρχουν δεδομένα</td></tr>';
         let totalMonthly = 0;
         history.slice(0, 5).forEach(inv => { 
             totalMonthly += inv.amount;
@@ -1003,6 +1026,8 @@ function loadStats() {
     }
 }
 
+// --- 4. BACKUP & INITIALIZATION ---
+
 function downloadBackup() {
     const allData = {
         bizSettings: JSON.parse(localStorage.getItem('bizSettings') || '{}'),
@@ -1011,31 +1036,36 @@ function downloadBackup() {
         invoiceHistory: JSON.parse(localStorage.getItem('invoiceHistory') || '[]')
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 4));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "TRITON_BACKUP.json");
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", "TRITON_BACKUP.json");
+    dlAnchor.click();
+    alert("✅ Το Backup αποθηκεύτηκε!");
 }
-  function fakeGoogleLogin() {
-    let email = prompt("Εισάγετε το Google Email σας για ταυτοποίηση:");
-    
-    if (email && email.includes("@")) {
-        // Αποθηκεύουμε το email για να φαίνεται στο προφίλ του
-        localStorage.setItem('triton_user_email', email);
-        localStorage.setItem('triton_is_logged_in', 'true');
-        
-        // Κλείνουμε το overlay
-        const overlay = document.getElementById('loginOverlay');
-        overlay.style.opacity = "0";
-        setTimeout(() => { 
-            overlay.style.display = 'none'; 
-            if (typeof loadStats === "function") loadStats();
-        }, 500);
-        
-        alert("🔱 Καλωσήρθατε στο Triton ERP!");
+
+document.addEventListener('DOMContentLoaded', () => {
+    const isUnlocked = localStorage.getItem('triton_gate_unlocked');
+    const isLoggedIn = localStorage.getItem('triton_is_logged_in');
+    const overlay = document.getElementById('loginOverlay');
+
+    if (overlay) {
+        if (isLoggedIn === 'true') {
+            overlay.style.display = 'none';
+            loadStats();
+        } else if (isUnlocked === 'true') {
+            document.getElementById('masterGate').style.display = 'none';
+            document.getElementById('authGate').style.display = 'block';
+        }
     }
-}
+
+    // Quick Add Button Logic
+    const quickBtn = document.getElementById('quickAddBtn');
+    const quickDropdown = document.getElementById('quickAddDropdown');
+    if(quickBtn) {
+        quickBtn.onclick = (e) => { e.stopPropagation(); quickDropdown.classList.toggle('active'); };
+        document.onclick = () => quickDropdown.classList.remove('active');
+    }
+});
 </script>
  
 </body>

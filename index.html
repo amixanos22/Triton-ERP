@@ -1048,86 +1048,67 @@ function importBackup(event) {
     document.getElementById('dailySales').innerText = totalToday.toFixed(2) + '€';
     document.getElementById('invoiceCount').innerText = countToday + ' Παραστατικά σήμερα';
 }  
-  // ΣΥΝΑΡΤΗΣΗ 1: Ξεκλείδωμα Πύλης
+ // --- ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ TRITON ---
+
+// 1. Ξεκλείδωμα πρώτης πύλης (Master Key)
 function unlockTriton() {
     const key = document.getElementById('masterKey').value;
     const error = document.getElementById('unlockError');
 
     if (key === "TRITON2026") {
-        localStorage.setItem('triton_gate_unlocked', 'true'); // Αποθήκευση στη μνήμη
-        document.getElementById('masterGate').style.display = 'none';
-        document.getElementById('authGate').style.display = 'block';
-    } else {
-        error.style.display = 'block';
-        setTimeout(() => { error.style.display = 'none'; }, 3000);
-    }
-}
-
-// ΣΥΝΑΡΤΗΣΗ 2: Σύνδεση με Google
-function loginWithGoogle() {
-    localStorage.setItem('triton_is_logged_in', 'true'); // Τελική έγκριση
-    document.getElementById('loginOverlay').style.display = 'none';
-    
-    // Αν είναι η πρώτη φορά, άνοιξε τις ρυθμίσεις καταστήματος
-    if (!localStorage.getItem('bizSettings')) {
-        if(typeof openSettings === "function") openSettings();
-    }
-}
-
-// ΣΥΝΑΡΤΗΣΗ 3: Ο "Φύλακας" κατά το άνοιγμα της σελίδας
-document.addEventListener('DOMContentLoaded', () => {
-    const gateUnlocked = localStorage.getItem('triton_gate_unlocked');
-    const userLoggedIn = localStorage.getItem('triton_is_logged_in');
-    const overlay = document.getElementById('loginOverlay');
-
-    if (userLoggedIn === 'true') {
-        // Αν έχει κάνει και τα δύο, εξαφάνισε το banner αμέσως
-        overlay.style.display = 'none';
-    } else if (gateUnlocked === 'true') {
-        // Αν έχει ξεκλειδώσει την πύλη αλλά όχι το Google
-        document.getElementById('masterGate').style.display = 'none';
-        document.getElementById('authGate').style.display = 'block';
-        overlay.style.display = 'flex';
-    } else {
-        // Αν είναι ολότελα νέος, δείξε την πρώτη πύλη
-        overlay.style.display = 'flex';
-    }
-});
-  function unlockTriton() {
-    const key = document.getElementById('masterKey').value;
-    if (key === "TRITON2026") {
         localStorage.setItem('triton_gate_unlocked', 'true');
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
     } else {
-        document.getElementById('unlockError').style.display = 'block';
+        if(error) {
+            error.style.display = 'block';
+            setTimeout(() => { error.style.display = 'none'; }, 3000);
+        } else {
+            alert("Λάθος Κωδικός Ενοικίασης!");
+        }
     }
 }
 
+// 2. Ολοκλήρωση σύνδεσης (Email ή Google)
 function completeLogin() {
     localStorage.setItem('triton_is_logged_in', 'true');
     const overlay = document.getElementById('loginOverlay');
+    
     overlay.style.opacity = "0";
     setTimeout(() => {
         overlay.style.display = 'none';
-        // Αυτόματο άνοιγμα ρυθμίσεων αν είναι η πρώτη φορά
+        
+        // Αυτόματο άνοιγμα ρυθμίσεων αν το κατάστημα είναι "άδειο"
         if (!localStorage.getItem('bizSettings')) {
             const settingsModal = document.getElementById('settingsModal');
-            if(settingsModal) settingsModal.style.display = 'flex';
+            if(settingsModal) {
+                settingsModal.style.display = 'flex';
+            } else if (typeof openSettings === "function") {
+                openSettings();
+            }
         }
     }, 500);
 }
 
+// 3. Σύνδεση με Google (καλεί την ίδια λειτουργία)
+function loginWithGoogle() {
+    completeLogin();
+}
+
+// 4. Ο Φύλακας που ελέγχει τη μνήμη κατά το φόρτωμα
 document.addEventListener('DOMContentLoaded', () => {
     const isUnlocked = localStorage.getItem('triton_gate_unlocked');
     const isLoggedIn = localStorage.getItem('triton_is_logged_in');
     const overlay = document.getElementById('loginOverlay');
 
     if (isLoggedIn === 'true') {
-        overlay.style.display = 'none';
+        if(overlay) overlay.style.display = 'none';
     } else if (isUnlocked === 'true') {
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
+        if(overlay) overlay.style.display = 'flex';
+    } else {
+        if(overlay) overlay.style.display = 'flex';
     }
 });
 </script>

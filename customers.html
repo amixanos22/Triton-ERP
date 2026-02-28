@@ -1,0 +1,309 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Triton Billing - Πλήρες Πελατολόγιο</title>
+    <style>
+        /* ΚΑΘΑΡΙΣΜΟΣ BLOGGER & ΒΑΣΙΚΑ */
+        #navbar-iframe { display: none !important; }
+        :root { 
+            --triton-blue: #0ea5e9; 
+            --triton-dark: #1e293b; 
+            --triton-bg: #f1f5f9; 
+            --triton-border: #cbd5e1; 
+            --triton-nav: #000080; /* Το βαθύ μπλε του Triton */
+        }
+        
+        body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: #1e293b; }
+
+        /* TRITON NAVBAR */
+        .triton-navbar {
+            background: var(--triton-nav);
+            color: white;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 10000;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .nav-brand { font-weight: 800; font-size: 18px; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 25px; }
+        .nav-links a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--triton-blue); }
+        .nav-links a.active { border-bottom: 2px solid var(--triton-blue); padding-bottom: 5px; }
+
+        /* CONTAINER */
+        .container { 
+            max-width: 1200px; 
+            margin: 100px auto 50px auto; /* Περιθώριο για τη μπάρα */
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
+
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; }
+        .search-box { padding: 12px; width: 300px; border: 1px solid var(--triton-border); border-radius: 8px; outline: none; }
+        .btn-add { background: var(--triton-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* TABLE */
+        .customers-table { width: 100%; border-collapse: collapse; }
+        .customers-table th { background: var(--triton-bg); color: #475569; padding: 15px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--triton-border); }
+        .customers-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+
+        /* MODAL & ELEMENTS */
+        .modal { display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background: white; width: 850px; margin: 40px auto; padding: 30px; border-radius: 15px; max-height: 85vh; overflow-y: auto; }
+        .section-title { font-size: 12px; color: var(--triton-blue); border-bottom: 1px solid #e0f2fe; padding-bottom: 5px; margin: 25px 0 15px 0; font-weight: 800; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--triton-border); border-radius: 6px; font-weight: 600; box-sizing: border-box; margin-bottom: 10px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; }
+        
+        .email-chip { display: inline-flex; align-items: center; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; margin: 4px; font-size: 12px; font-weight: bold; }
+        .branch-row { background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 40px; gap: 10px; }
+        
+        .type-btn { flex:1; padding:10px; border:1px solid var(--triton-border); background:white; border-radius:8px; cursor:pointer; font-weight:bold; }
+        .type-btn.active { border:2px solid var(--triton-blue); background:#e0f2fe; color:#0369a1; }
+
+        @media print { .triton-navbar, .no-print { display: none !important; } .container { margin-top: 20px !important; } }
+    </style>
+</head>
+<body>
+
+<nav class="triton-navbar no-print">
+    <div class="nav-brand">✦ TRITON ERP</div>
+    <div class="nav-links">
+        <a href="index.html">ΑΡΧΙΚΗ</a>
+        <a href="delivery_note.html">ΔΕΛΤΙΑ</a>
+        <a href="customers.html" class="active">ΠΕΛΑΤΕΣ</a>
+        <a href="inventory.html">ΑΠΟΘΗΚΗ</a>
+        <a href="settings.html">⚙️ ΣΥΣΤΗΜΑ</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header-actions">
+        <div>
+            <h1 style="margin:0; font-size: 28px; color: var(--triton-blue);">Πελατολόγιο</h1>
+            <p style="margin:5px 0 0; color: #64748b;">Διαχείριση στοιχείων και υποκαταστημάτων</p>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <input type="text" id="customerSearch" class="search-box" placeholder="Αναζήτηση..." onkeyup="filterCustomers()">
+            <button class="btn-add" onclick="openModal()">+ ΝΕΟΣ ΠΕΛΑΤΗΣ</button>
+        </div>
+    </div>
+
+    <table class="customers-table">
+        <thead>
+            <tr>
+                <th>ΕΠΩΝΥΜΙΑ / ΟΝΟΜΑ</th>
+                <th>ΑΦΜ</th>
+                <th>ΠΟΛΗ</th>
+                <th>ΤΗΛΕΦΩΝΟ</th>
+                <th style="text-align:right">ΕΝΕΡΓΕΙΕΣ</th>
+            </tr>
+        </thead>
+        <tbody id="customersBody"></tbody>
+    </table>
+</div>
+
+<div id="customerModal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+            <h2 style="margin:0;">Καρτέλα Πελάτη</h2>
+            <button onclick="closeModal()" style="background:none; border:none; font-size:30px; cursor:pointer; color:#cbd5e1;">&times;</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button id="typeBusiness" class="type-btn active" onclick="setCustomerType('business')">🏢 Επαγγελματίας</button>
+            <button id="typePrivate" class="type-btn" onclick="setCustomerType('private')">👤 Ιδιώτης</button>
+        </div>
+        <input type="hidden" id="mCustType" value="business">
+
+        <div class="section-title">Στοιχεία Ταυτοποίησης</div>
+        <div style="display: grid; grid-template-columns: 1.2fr 2fr 1.2fr; gap: 15px;">
+            <div>
+                <label>ΑΦΜ</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="mCustAfm" maxlength="9">
+                    <button type="button" onclick="searchMyData()" style="background:var(--triton-blue); color:white; border:none; border-radius:6px; height:38px; padding:0 12px; cursor:pointer;">🔍</button>
+                </div>
+            </div>
+            <div><label id="labelName">ΕΠΩΝΥΜΙΑ</label><input type="text" id="mCustName"></div>
+            <div><label>ΔΟΥ</label><input type="text" id="mCustDoy"></div>
+        </div>
+
+        <div class="section-title">Διεύθυνση Έδρας</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr 0.8fr; gap: 10px;">
+            <div><label>ΟΔΟΣ & ΑΡ.</label><input type="text" id="mCustAddress"></div>
+            <div><label>ΠΟΛΗ</label><input type="text" id="mCustCity"></div>
+            <div><label>Τ.Κ.</label><input type="text" id="mCustZip"></div>
+        </div>
+
+        <div class="section-title">Εμπορική Πολιτική & Επικοινωνία</div>
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr 2fr; gap: 10px;">
+            <div><label>ΕΚΠΤΩΣΗ %</label><input type="number" id="mCustDiscount" value="0"></div>
+            <div><label>ΤΗΛΕΦΩΝΟ</label><input type="text" id="mCustPhone"></div>
+            <div>
+                <label>EMAILS (Enter για προσθήκη)</label>
+                <input type="email" id="mCustEmailInput" onkeydown="if(event.key==='Enter') addEmailToList()">
+                <div id="emailListContainer"></div>
+            </div>
+        </div>
+
+        <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Υποκαταστήματα / Σημεία Παράδοσης</span>
+            <button type="button" onclick="addBranchRow()" style="background:var(--triton-blue); color:white; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:10px;">+ ΠΡΟΣΘΗΚΗ</button>
+        </div>
+        <div id="branchesContainer"></div>
+
+        <div style="margin-top:40px; display:flex; justify-content:flex-end; gap:15px; border-top:1px solid #eee; padding-top:20px;">
+            <button onclick="closeModal()" style="padding:12px 30px; background:#f1f5f9; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">ΑΚΥΡΩΣΗ</button>
+            <button onclick="saveChanges()" style="padding:12px 40px; background:var(--triton-blue); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">ΑΠΟΘΗΚΕΥΣΗ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editingName = null;
+    let currentEmailList = [];
+
+    function setCustomerType(type) {
+        document.getElementById('mCustType').value = type;
+        const isBus = type === 'business';
+        document.getElementById('typeBusiness').className = isBus ? 'type-btn active' : 'type-btn';
+        document.getElementById('typePrivate').className = !isBus ? 'type-btn active' : 'type-btn';
+        document.getElementById('labelName').innerText = isBus ? "ΕΠΩΝΥΜΙΑ ΕΠΙΧΕΙΡΗΣΗΣ" : "ΟΝΟΜΑΤΕΠΩΝΥΜΟ";
+    }
+
+    function addBranchRow(val = '') {
+        const cont = document.getElementById('branchesContainer');
+        const div = document.createElement('div');
+        div.className = 'branch-row';
+        div.innerHTML = `<input type="text" class="b-addr" value="${val}" placeholder="Διεύθυνση Παράδοσης"><button onclick="this.parentElement.remove()" style="border:none; background:none; color:red; cursor:pointer; font-size:20px;">&times;</button>`;
+        cont.appendChild(div);
+    }
+
+    function addEmailToList() {
+        const input = document.getElementById('mCustEmailInput');
+        if (input.value && !currentEmailList.includes(input.value)) {
+            currentEmailList.push(input.value);
+            renderEmailChips();
+            input.value = '';
+        }
+    }
+
+    function renderEmailChips() {
+        const cont = document.getElementById('emailListContainer');
+        cont.innerHTML = '';
+        currentEmailList.forEach((e, i) => {
+            cont.innerHTML += `<div class="email-chip">${e}<button style="background:none; border:none; color:red; cursor:pointer; margin-left:5px;" onclick="currentEmailList.splice(${i},1);renderEmailChips()">×</button></div>`;
+        });
+    }
+
+    function renderCustomers() {
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const tbody = document.getElementById('customersBody');
+        tbody.innerHTML = '';
+        Object.keys(db).sort().forEach(name => {
+            const c = db[name];
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:bold; color:var(--triton-blue);">${name}</td>
+                <td>${c.afm || '-'}</td>
+                <td>${c.city || '-'}</td>
+                <td>${c.phone || '-'}</td>
+                <td style="text-align:right">
+                    <button onclick="editCustomer('${name.replace(/'/g, "\\'")}')" style="border:none; background:none; cursor:pointer; font-size:18px;">✏️</button>
+                    <button onclick="deleteCustomer('${name.replace(/'/g, "\\'")}')" style="border:none; background:none; cursor:pointer; font-size:18px;">🗑️</button>
+                </td>
+            </tr>`;
+        });
+    }
+
+    function saveChanges() {
+        const name = document.getElementById('mCustName').value.trim();
+        if(!name) return alert("Το όνομα είναι υποχρεωτικό");
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        if (editingName && editingName !== name) delete db[editingName];
+
+        const branches = [];
+        document.querySelectorAll('.b-addr').forEach(i => { if(i.value) branches.push(i.value); });
+
+        db[name] = {
+            type: document.getElementById('mCustType').value,
+            afm: document.getElementById('mCustAfm').value,
+            doy: document.getElementById('mCustDoy').value,
+            address: document.getElementById('mCustAddress').value,
+            city: document.getElementById('mCustCity').value,
+            zip: document.getElementById('mCustZip').value,
+            phone: document.getElementById('mCustPhone').value,
+            discount: document.getElementById('mCustDiscount').value,
+            emails: currentEmailList,
+            branches: branches
+        };
+        localStorage.setItem('customersDB', JSON.stringify(db));
+        closeModal();
+        renderCustomers();
+    }
+
+    function editCustomer(name) {
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const c = db[name];
+        editingName = name;
+        openModal();
+        document.getElementById('mCustName').value = name;
+        document.getElementById('mCustAfm').value = c.afm || '';
+        document.getElementById('mCustDoy').value = c.doy || '';
+        document.getElementById('mCustAddress').value = c.address || '';
+        document.getElementById('mCustCity').value = c.city || '';
+        document.getElementById('mCustZip').value = c.zip || '';
+        document.getElementById('mCustPhone').value = c.phone || '';
+        document.getElementById('mCustDiscount').value = c.discount || 0;
+        currentEmailList = c.emails || [];
+        renderEmailChips();
+        document.getElementById('branchesContainer').innerHTML = '';
+        if(c.branches) c.branches.forEach(b => addBranchRow(b));
+        setCustomerType(c.type || 'business');
+    }
+
+    function deleteCustomer(name) {
+        if(confirm(`Διαγραφή του ${name};`)) {
+            const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+            delete db[name];
+            localStorage.setItem('customersDB', JSON.stringify(db));
+            renderCustomers();
+        }
+    }
+
+    function openModal() { document.getElementById('customerModal').style.display = 'block'; }
+    function closeModal() { 
+        editingName = null;
+        document.getElementById('customerModal').style.display = 'none';
+        document.querySelectorAll('.modal-content input').forEach(i => i.value = '');
+        document.getElementById('branchesContainer').innerHTML = '';
+        currentEmailList = [];
+        renderEmailChips();
+    }
+
+    function filterCustomers() {
+        const val = document.getElementById('customerSearch').value.toLowerCase();
+        document.querySelectorAll('#customersBody tr').forEach(tr => {
+            tr.style.display = tr.innerText.toLowerCase().includes(val) ? '' : 'none';
+        });
+    }
+
+    function searchMyData() { alert("Αναζήτηση ΑΦΜ: Σύντομα διαθέσιμο μέσω Index API."); }
+    document.addEventListener('DOMContentLoaded', renderCustomers);
+</script>
+</body>
+</html>

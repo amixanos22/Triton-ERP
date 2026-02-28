@@ -1,0 +1,253 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShoppingTriton - Smart Purchases</title>
+    <style>
+        /* 1. ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
+        #navbar-iframe, .navbar, .header-outer, .footer-outer, .base-cms-navbar { 
+            display: none !important; 
+            visibility: hidden !important; 
+            height: 0 !important; 
+        }
+
+        :root { 
+            --triton-blue: #0ea5e9; 
+            --triton-dark-blue: #000080;
+            --triton-bg: #f8fafc; 
+            --triton-border: #e2e8f0; 
+        }
+
+        body { 
+            background: #e2e8f0; 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif; 
+            color: #1e293b; 
+        }
+
+        /* Navigation Bar */
+        .nav-header {
+            background: var(--triton-dark-blue);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 5px 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+
+        .container { 
+            max-width: 1100px; 
+            margin: 80px auto 40px auto; /* Απόσταση από την κορυφή */
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            border-top: 5px solid var(--triton-blue); 
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9; }
+        .logo-area h1 { color: var(--triton-blue); margin: 0; font-size: 28px; letter-spacing: -1px; }
+        
+        .form-top { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; background: #f8fafc; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
+        label { display: block; font-size: 11px; font-weight: 800; color: #475569; margin-bottom: 8px; text-transform: uppercase; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; font-size: 14px; }
+        
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th { background: #f1f5f9; color: #475569; padding: 15px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+        .items-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        
+        .row-input-name { width: 100%; border: none; background: transparent; font-weight: 600; color: #1e293b; font-size: 15px; }
+        .row-input-num { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; text-align: center; }
+        
+        .btn-add-row { background: #1e293b; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        
+        .summary-area { margin-top: 30px; padding: 25px; background: var(--triton-blue); color: white; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .total-amount { font-size: 36px; font-weight: 800; }
+        
+        .btn-complete { background: white; color: var(--triton-blue); border: none; padding: 15px 40px; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 18px; transition: 0.3s; }
+        .btn-complete:hover { background: #f1f5f9; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+<div class="nav-header">
+    <a href="index.html" class="back-btn">⬅ Επιστροφή στο Μενού</a>
+    <span style="color: white; font-weight: bold;">SHOPPING TRITON</span>
+</div>
+
+<datalist id="productsData"></datalist>
+
+<div class="container">
+    <div class="header">
+        <div class="logo-area">
+            <h1>🛸 Shopping<span>Triton</span></h1>
+            <p style="margin:5px 0 0; color:#64748b; font-size:13px;">Έξυπνη Καταχώρηση Αγορών & Ενημέρωση Κόστους</p>
+        </div>
+    </div>
+
+    <div class="form-top">
+        <div>
+            <label>Προμηθευτής</label>
+            <select id="supSelect"><option value="">-- Επιλέξτε --</option></select>
+        </div>
+        <div><label>Αρ. Τιμολογίου</label><input type="text" id="invDoc"></div>
+        <div><label>Ημερομηνία</label><input type="date" id="invDate"></div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width:40%">Προϊόν / Υλικό</th>
+                <th style="width:15%">Ποσότητα</th>
+                <th style="width:20%">Τιμή Αγοράς (€)</th>
+                <th style="width:20%; text-align:right">Σύνολο (€)</th>
+                <th style="width:5%"></th>
+            </tr>
+        </thead>
+        <tbody id="cartBody"></tbody>
+    </table>
+
+    <button class="btn-add-row" onclick="addNewLine()">+ Προσθήκη Γραμμής (F2)</button>
+
+    <div class="summary-area">
+        <div>
+            <div style="font-size:12px; text-transform:uppercase; font-weight:bold; opacity:0.8;">Σύνολο Αγοράς</div>
+            <div class="total-amount"><span id="grandTotal">0.00</span> €</div>
+        </div>
+        <button class="btn-complete" onclick="finalizePurchase()">ΑΠΟΘΗΚΕΥΣΗ & ΕΝΗΜΕΡΩΣΗ</button>
+    </div>
+</div>
+
+<script>
+    // Ο κώδικας JavaScript παραμένει ο ίδιος όπως τον έστειλες για να διατηρηθεί η λειτουργικότητα
+    document.addEventListener('DOMContentLoaded', () => {
+        const sups = JSON.parse(localStorage.getItem('suppliersDB') || '{}');
+        const sSelect = document.getElementById('supSelect');
+        Object.keys(sups).sort().forEach(s => sSelect.add(new Option(s, s)));
+
+        const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+        const dList = document.getElementById('productsData');
+        Object.keys(products).forEach(p => {
+            let opt = document.createElement('option');
+            opt.value = p;
+            dList.appendChild(opt);
+        });
+
+        document.getElementById('invDate').valueAsDate = new Date();
+        addNewLine();
+    });
+
+    function handleEnter(event, fieldType) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const tr = event.target.closest('tr');
+            const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+            const pName = tr.querySelector('.row-input-name').value;
+
+            if (fieldType === 'name') {
+                if(products[pName]) {
+                    const lastCost = products[pName].lastPurchasePrice || 0;
+                    const priceInp = tr.querySelector('.price');
+                    priceInp.value = lastCost;
+                    priceInp.dataset.oldPrice = lastCost;
+                }
+                tr.querySelector('.qty').focus();
+            } 
+            else if (fieldType === 'qty') {
+                tr.querySelector('.price').focus();
+            } 
+            else if (fieldType === 'price') {
+                const newCost = parseFloat(event.target.value);
+                const oldCost = parseFloat(event.target.dataset.oldPrice || 0);
+                
+                if (newCost > oldCost && oldCost > 0) {
+                    const targetMargin = 0.40; 
+                    const suggestedSalePrice = (newCost / (1 - targetMargin)).toFixed(2);
+                    const currentSalePrice = products[pName].price || 0;
+
+                    const confirmChange = confirm(
+                        `⚠️ ΑΝΑΤΙΜΗΣΗ ΚΟΣΤΟΥΣ ΣΤΟ: ${pName}\n` +
+                        `--------------------------------------\n` +
+                        `Νέο Κόστος: ${newCost}€ (Παλιό: ${oldCost}€)\n\n` +
+                        `Τρέχουσα Τιμή Πώλησης: ${currentSalePrice}€\n` +
+                        `Πρόταση για νέα τιμή (40% Margin): ${suggestedSalePrice}€\n\n` +
+                        `Θέλετε να ενημερώσετε τον Τιμοκατάλογο;`
+                    );
+
+                    if (confirmChange) {
+                        products[pName].price = suggestedSalePrice;
+                        products[pName].lastPurchasePrice = newCost;
+                        localStorage.setItem('productsDB', JSON.stringify(products));
+                        alert("✅ Ο Τιμοκατάλογος ενημερώθηκε!");
+                    }
+                }
+                addNewLine();
+            }
+        }
+    }
+
+    function addNewLine() {
+        const tbody = document.getElementById('cartBody');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="text" class="row-input-name" list="productsData" placeholder="Αναζήτηση υλικού..." onkeydown="handleEnter(event, 'name')"></td>
+            <td><input type="number" class="row-input-num qty" value="1" oninput="updateRow(this)" onkeydown="handleEnter(event, 'qty')"></td>
+            <td><input type="number" class="row-input-num price" step="0.0001" placeholder="0.00" oninput="updateRow(this)" onkeydown="handleEnter(event, 'price')"></td>
+            <td style="text-align:right; font-weight:bold;"><span class="row-total">0.00</span>€</td>
+            <td style="text-align:right"><button onclick="this.closest('tr').remove(); calcGrandTotal();" style="color:#ef4444; border:none; background:none; cursor:pointer; font-size:18px;">&times;</button></td>
+        `;
+        tbody.appendChild(row);
+        row.querySelector('.row-input-name').focus();
+    }
+
+    function updateRow(input) {
+        const tr = input.closest('tr');
+        const q = tr.querySelector('.qty').value || 0;
+        const p = tr.querySelector('.price').value || 0;
+        tr.querySelector('.row-total').innerText = (q * p).toFixed(2);
+        calcGrandTotal();
+    }
+
+    function calcGrandTotal() {
+        let total = 0;
+        document.querySelectorAll('.row-total').forEach(td => total += parseFloat(td.innerText));
+        document.getElementById('grandTotal').innerText = total.toFixed(2);
+    }
+
+    function finalizePurchase() {
+        const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+        let updateCount = 0;
+        document.querySelectorAll('#cartBody tr').forEach(row => {
+            const name = row.querySelector('.row-input-name').value;
+            const newCost = parseFloat(row.querySelector('.price').value);
+            if(name && products[name]) {
+                products[name].lastPurchasePrice = newCost;
+                updateCount++;
+            }
+        });
+
+        if(updateCount > 0) {
+            localStorage.setItem('productsDB', JSON.stringify(products));
+            alert("✅ Η αγορά αποθηκεύτηκε!");
+            window.location.href = "index.html";
+        } else {
+            alert("⚠️ Συμπληρώστε τουλάχιστον ένα προϊόν.");
+        }
+    }
+</script>
+</body>
+</html>

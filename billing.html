@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -227,18 +227,15 @@
 
 <script>
 <script>
-    // 1. ΑΡΧΙΚΟΠΟΙΗΣΗ ΣΕΛΙΔΑΣ
+ // 1. ΑΡΧΙΚΟΠΟΙΗΣΗ ΣΕΛΙΔΑΣ
     document.addEventListener('DOMContentLoaded', () => {
         loadData();
-        // Βάζουμε τη σημερινή ημερομηνία
         const today = new Date().toLocaleDateString('el-GR');
         document.getElementById('dtDisplay').innerText = today;
-        // Ξεκινάμε με μια κενή γραμμή
         addRow();
     });
 
     function loadData() {
-        // Στοιχεία Εταιρείας από Settings
         const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
         document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
         document.getElementById('idxActivity').innerText = s.activity || "ΒΙΟΤΕΧΝΙΑ ΧΗΜΙΚΩΝ";
@@ -246,7 +243,6 @@
         document.getElementById('idxTaxId').innerText = s.taxId || "-";
         document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
         
-        // Φόρτωση Πελατών στο Datalist
         const dl = document.getElementById('custData');
         dl.innerHTML = '';
         const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
@@ -256,7 +252,6 @@
             dl.appendChild(opt);
         });
 
-        // Φόρτωση Προϊόντων στο Datalist
         const pdl = document.getElementById('prodData');
         pdl.innerHTML = ''; 
         const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
@@ -267,154 +262,116 @@
         });
     }
 
-    // 2. ΠΕΛΑΤΗΣ AUTOFILL
     function autoFillCustomer() {
         const name = document.getElementById('cName').value;
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const found = db[name]; 
-        
         if (found) {
             document.getElementById('cTax').value = found.afm || "";
             document.getElementById('cTaxOffice').value = found.doy || found.taxOffice || "";
             document.getElementById('cAddr').value = found.address || "";
-            
-            // Πολιτική Τιμών Πελάτη
             window.currentCustomerPriceList = found.priceList || 'retail';
             window.currentCustomerDiscount = parseFloat(found.discount) || 0;
-
-            updateEmailRecipients(name);
-            console.log("✦ Triton Policy: " + window.currentCustomerPriceList + " / Disc: " + window.currentCustomerDiscount + "%");
         }
     }
 
-    // 3. ΠΡΟΣΘΗΚΗ ΓΡΑΜΜΗΣ
     function addRow() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="col-input prod-name" list="prodData" 
-                onchange="checkProduct(this); validateTritonProfit(this.closest('tr').querySelector('.prc'))" 
-                onkeydown="nav(event, 'prod')"></td>
-            <td><input type="number" class="col-input qty" value="1" 
-                oninput="checkStockAvailability(this); recalc();" 
-                onkeydown="nav(event, 'qty')"></td>
+            <td><input type="text" class="col-input prod-name" list="prodData" onchange="checkProduct(this)"></td>
+            <td><input type="number" class="col-input qty" value="1" oninput="recalc()"></td>
             <td><input type="text" class="col-input unit-cell readonly-cell" value="ΤΕΜ" readonly></td>
-            <td><input type="number" class="col-input prc" step="0.01" 
-                oninput="recalc(); validateTritonProfit(this)" 
-                onkeydown="nav(event, 'prc')"></td>
+            <td><input type="number" class="col-input prc" step="0.01" oninput="recalc(); validateTritonProfit(this)"></td>
             <td><input type="text" class="col-input raw-val readonly-cell" readonly value="0.00"></td>
-            <td><input type="number" class="col-input dsc" oninput="recalc(); validateTritonProfit(this.closest('tr').querySelector('.prc'))"></td>
-            <td><input type="number" class="col-input tax-p" oninput="recalc()"></td>
+            <td><input type="number" class="col-input dsc" value="0" oninput="recalc()"></td>
+            <td><input type="number" class="col-input tax-p" value="24" oninput="recalc()"></td>
             <td><input type="text" class="col-input line-total readonly-cell" readonly value="0.00"></td>
         `;
         document.getElementById('rowsBody').appendChild(tr);
-        return tr;
     }
 
-    // 
-
-    // 4. ΕΛΕΓΧΟΣ ΠΡΟΪΟΝΤΟΣ & ΤΙΜΗΣ
     function checkProduct(input) {
         const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
         const found = Object.values(products).find(p => p.desc === input.value);
-        
         if (found) {
             const row = input.closest('tr');
-            
-            // Επιλογή Τιμής (Wholesale vs Retail)
-            let selectedPrice = (window.currentCustomerPriceList === 'wholesale') 
-                                ? (found.price_wholesale || found.price || 0) 
-                                : (found.price || 0);
-
-            // Επιλογή Έκπτωσης (Πελάτη vs Προϊόντος)
-            let selectedDiscount = (window.currentCustomerDiscount > 0) 
-                                   ? window.currentCustomerDiscount 
-                                   : (found.discount || 0);
-
+            let selectedPrice = (window.currentCustomerPriceList === 'wholesale') ? (found.price_wholesale || found.price || 0) : (found.price || 0);
+            let selectedDiscount = (window.currentCustomerDiscount > 0) ? window.currentCustomerDiscount : (found.discount || 0);
             row.querySelector('.prc').value = selectedPrice;
             row.querySelector('.dsc').value = selectedDiscount;
             row.querySelector('.tax-p').value = found.vat || 24;
             row.querySelector('.unit-cell').value = found.unit || "ΤΕΜ";
-            
             recalc();
+            validateTritonProfit(row.querySelector('.prc'));
         }
     }
 
-    // 5. Triton Profit Guard: Υπολογισμός Live Κέρδους
+    function recalc() {
+        let totalNet = 0; let totalTax = 0; let totalDisc = 0;
+        document.querySelectorAll('#rowsBody tr').forEach(row => {
+            const q = parseFloat(row.querySelector('.qty').value) || 0;
+            const p = parseFloat(row.querySelector('.prc').value) || 0;
+            const d = parseFloat(row.querySelector('.dsc').value) || 0;
+            const t = parseFloat(row.querySelector('.tax-p').value) || 0;
+            
+            const lineRaw = q * p;
+            const lineDisc = lineRaw * (d / 100);
+            const lineNet = lineRaw - lineDisc;
+            const lineTax = lineNet * (t / 100);
+            
+            row.querySelector('.raw-val').value = lineNet.toFixed(2);
+            row.querySelector('.line-total').value = (lineNet + lineTax).toFixed(2);
+            
+            totalNet += lineNet; totalTax += lineTax; totalDisc += lineDisc;
+        });
+        document.getElementById('sumNet').innerText = totalNet.toFixed(2) + " €";
+        document.getElementById('sumTax').innerText = totalTax.toFixed(2) + " €";
+        document.getElementById('sumDisc').innerText = totalDisc.toFixed(2) + " €";
+        document.getElementById('sumGrand').innerText = (totalNet + totalTax).toFixed(2) + " €";
+    }
+
     function validateTritonProfit(priceInput) {
-        if (!priceInput) return;
         const tr = priceInput.closest('tr');
         const pName = tr.querySelector('.prod-name').value;
         const recipes = JSON.parse(localStorage.getItem('tritonRecipes') || '{}');
         const allProducts = JSON.parse(localStorage.getItem('triton_products') || '{}');
         const recipe = recipes[pName];
-
         if (recipe && recipe.ingredients) {
             let liveCost = 0;
             recipe.ingredients.forEach(ing => {
                 const material = Object.values(allProducts).find(p => p.desc === ing.name);
-                if (material) {
-                    liveCost += (parseFloat(material.cost) || 0) * parseFloat(ing.qty);
-                }
+                if (material) liveCost += (parseFloat(material.cost) || 0) * parseFloat(ing.qty);
             });
-
-            const sellingPrice = parseFloat(priceInput.value || 0);
-            const discount = parseFloat(tr.querySelector('.dsc').value || 0);
-            const finalPrice = sellingPrice * (1 - discount / 100);
-
-            if (finalPrice < liveCost && finalPrice > 0) {
-                priceInput.style.backgroundColor = "#fee2e2"; 
-                priceInput.style.color = "#ef4444";
-                priceInput.style.border = "2px solid #ef4444";
-            } else {
-                priceInput.style.backgroundColor = ""; 
-                priceInput.style.color = "";
-                priceInput.style.border = "";
-            }
+            const finalPrice = parseFloat(priceInput.value || 0) * (1 - (parseFloat(tr.querySelector('.dsc').value) || 0) / 100);
+            priceInput.className = (finalPrice < liveCost && finalPrice > 0) ? "col-input prc price-alert" : "col-input prc";
         }
     }
-    
-    // ... οι υπόλοιπες συναρτήσεις recalc, handlePrint παραμένουν ως έχουν ...
-  
-   function handlePrint() {
-    // 1. Στοιχεία Εταιρείας & Πελάτη
-    document.getElementById('p-compName').innerText = document.getElementById('idxCompName').innerText;
-    document.getElementById('p-compDetails').innerText = document.getElementById('idxActivity').innerText + " | " + document.getElementById('idxAddress').innerText;
-    document.getElementById('p-date').innerText = document.getElementById('dtDisplay').innerText;
-    document.getElementById('p-invId').innerText = document.querySelector('.bar-cell input').value;
-    
-    document.getElementById('p-custName').innerText = document.getElementById('cName').value;
-    document.getElementById('p-custInfo').innerText = "ΑΦΜ: " + document.getElementById('cTax').value + " - ΔΟΥ: " + document.getElementById('cTaxOffice').value;
-    document.getElementById('p-custAddr').innerText = "Διεύθυνση: " + document.getElementById('cAddr').value;
 
-    // 2. Μεταφορά Προϊόντων
-    const pBody = document.getElementById('p-items');
-    pBody.innerHTML = '';
-    const rows = document.querySelectorAll('#rowsBody tr');
-    
-    rows.forEach(row => {
-        const desc = row.querySelector('.prod-name').value;
-        if(desc) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${desc}</td>
-                <td style="text-align:center">${row.querySelector('.qty').value}</td>
-                <td style="text-align:center">${row.querySelector('.prc').value}€</td>
-                <td style="text-align:center">${row.querySelector('.dsc').value}%</td>
-                <td style="text-align:center">${row.querySelector('.tax-p').value}%</td>
-                <td style="text-align:right">${row.querySelector('.line-total').value}€</td>
-            `;
-            pBody.appendChild(tr);
-        }
-    });
+    function handlePrint() {
+        document.getElementById('p-compName').innerText = document.getElementById('idxCompName').innerText;
+        document.getElementById('p-compDetails').innerText = document.getElementById('idxActivity').innerText + " | " + document.getElementById('idxAddress').innerText;
+        document.getElementById('p-date').innerText = document.getElementById('dtDisplay').innerText;
+        document.getElementById('p-invId').innerText = document.querySelector('.bar-cell input').value;
+        document.getElementById('p-custName').innerText = document.getElementById('cName').value;
+        document.getElementById('p-custInfo').innerText = "ΑΦΜ: " + document.getElementById('cTax').value + " - ΔΟΥ: " + document.getElementById('cTaxOffice').value;
+        document.getElementById('p-custAddr').innerText = "Διεύθυνση: " + document.getElementById('cAddr').value;
 
-    // 3. Σύνολα
-    document.getElementById('p-net').innerText = document.getElementById('sumNet').innerText;
-    document.getElementById('p-tax').innerText = document.getElementById('sumTax').innerText;
-    document.getElementById('p-grand').innerText = document.getElementById('sumGrand').innerText;
+        const pBody = document.getElementById('p-items');
+        pBody.innerHTML = '';
+        document.querySelectorAll('#rowsBody tr').forEach(row => {
+            const desc = row.querySelector('.prod-name').value;
+            if(desc) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${desc}</td><td style="text-align:center">${row.querySelector('.qty').value}</td><td style="text-align:center">${row.querySelector('.prc').value}€</td><td style="text-align:center">${row.querySelector('.dsc').value}%</td><td style="text-align:center">${row.querySelector('.tax-p').value}%</td><td style="text-align:right">${row.querySelector('.line-total').value}€</td>`;
+                pBody.appendChild(tr);
+            }
+        });
 
-    // 4. Εκτύπωση
-    window.print();
-}
+        document.getElementById('p-net').innerText = document.getElementById('sumNet').innerText;
+        document.getElementById('p-tax').innerText = document.getElementById('sumTax').innerText;
+        document.getElementById('p-grand').innerText = document.getElementById('sumGrand').innerText;
+        window.print();
+    }
 </script>
   <div class="print-only-invoice" id="printableInvoice">
     <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #1e3a8a; padding-bottom: 20px;">

@@ -1429,7 +1429,23 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
+// ΑΥΤΗ Η ΣΥΝΑΡΤΗΣΗ ΛΕΙΠΕΙ ΚΑΙ ΓΙ' ΑΥΤΟ ΔΕΝ ΑΝΟΙΓΟΥΝ ΟΙ ΣΥΝΔΕΣΜΟΙ
+function createNewWindow(url, title, width, height) {
+    console.log("🔱 Triton: Άνοιγμα παραθύρου -> " + title);
+    
+    // Υπολογισμός για να ανοίγει το παράθυρο ακριβώς στο κέντρο της οθόνης
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    // Η εντολή που ανοίγει το νέο popup παράθυρο
+    const newWin = window.open(url, '_blank', 
+        `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
 
+    if (!newWin) {
+        alert("⚠️ Το πρόγραμμα περιήγησης μπλόκαρε το παράθυρο. Παρακαλώ επιτρέψτε τα αναδυόμενα παράθυρα (popups) για το Triton.");
+    }
+}
 // Συνάρτηση Πλοήγησης (Redirects)
 function openCustomerModal() { window.location.href = 'customers.html'; }
 function openShoppingModal() { window.location.href = 'suppliers.html'; }

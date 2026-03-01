@@ -871,37 +871,44 @@ function loginWithGoogle() {
     }
 }
 
-// --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ ---
+// --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (FIXED) ---
 function openSettings() {
+    // 1. Φορτώνουμε τα υπάρχοντα στοιχεία στα πεδία
     const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
-    document.getElementById('setName').value = saved.name || '';
-    document.getElementById('setJob').value = saved.job || '';
-    document.getElementById('setAfm').value = saved.afm || '';
-    document.getElementById('setDoy').value = saved.doy || '';
-    document.getElementById('setAddress').value = saved.address || '';
-    document.getElementById('setCity').value = saved.city || '';
-    document.getElementById('setTk').value = saved.tk || '';
-    document.getElementById('setPhone').value = saved.phone || '';
-    document.getElementById('setGemi').value = saved.gemi || '';
-    document.getElementById('setMyDataUser').value = saved.mu || '';
-    document.getElementById('setMyDataKey').value = saved.mk || '';
+    if(document.getElementById('setName')) document.getElementById('setName').value = saved.name || '';
+    if(document.getElementById('setJob')) document.getElementById('setJob').value = saved.job || '';
+    if(document.getElementById('setAfm')) document.getElementById('setAfm').value = saved.afm || '';
+    if(document.getElementById('setDoy')) document.getElementById('setDoy').value = saved.doy || '';
+    if(document.getElementById('setAddress')) document.getElementById('setAddress').value = saved.address || '';
+    if(document.getElementById('setCity')) document.getElementById('setCity').value = saved.city || '';
+    if(document.getElementById('setTk')) document.getElementById('setTk').value = saved.tk || '';
+    if(document.getElementById('setPhone')) document.getElementById('setPhone').value = saved.phone || '';
+    if(document.getElementById('setGemi')) document.getElementById('setGemi').value = saved.gemi || '';
+    if(document.getElementById('setMyDataUser')) document.getElementById('setMyDataUser').value = saved.mu || '';
+    if(document.getElementById('setMyDataKey')) document.getElementById('setMyDataKey').value = saved.mk || '';
     
-    document.getElementById('settingsModal').style.display = 'flex';
+    // 2. Εμφανίζουμε το παράθυρο
+    const modal = document.getElementById('settingsModal');
+    if(modal) modal.style.display = 'flex';
 }
 
 function closeSettings() {
-    // 1. Κλείνουμε το παράθυρο
-    document.getElementById('settingsModal').style.display = 'none';
+    // 1. Κλείνουμε το παράθυρο (Χρησιμοποιούμε το ΙΔΙΟ ID: settingsModal)
+    const modal = document.getElementById('settingsModal'); 
     
-    // 2. Ελέγχουμε το ΣΩΣΤΟ κλειδί (triton_settings)
-    const savedData = localStorage.getItem('triton_settings');
+    if (modal) {
+        modal.style.display = 'none';
+        console.log("🔱 Triton: Η φόρμα έκλεισε με επιτυχία.");
+    }
     
-    // 3. ΑΝ δεν υπάρχει τίποτα αποθηκευμένο, δείξε το σύννεφο
+    // 2. Έλεγχος για το Hint (Συννεφάκι)
+    const savedData = localStorage.getItem('bizSettings');
     if (!savedData) {
-        showTritonHint();
+        if (typeof showTritonHint === "function") {
+            showTritonHint();
+        }
     }
 }
-
 function showTritonHint() {
     const banner = document.getElementById('triton-welcome-banner');
     if (banner) {
@@ -1316,7 +1323,23 @@ function saveSettings() {
     localStorage.setItem('bizSettings', JSON.stringify(settings));
     location.reload();
 }
+function closeSettings() {
+    // Χρησιμοποιούμε το ID 'settingsModal' γιατί αυτό ανοίγει η openSettings
+    const modal = document.getElementById('settingsModal');
+    
+    if (modal) {
+        modal.style.display = 'none'; // Εδώ γίνεται η "μαγεία" και κλείνει!
+        console.log("✅ Triton: Η φόρμα έκλεισε επιτυχώς.");
+    }
 
+    // Αν δεν έχουν σωθεί στοιχεία, δείξε το συννεφάκι (Hint)
+    const savedData = localStorage.getItem('bizSettings');
+    if (!savedData || savedData === '{}') {
+        if (typeof showTritonHint === "function") {
+            showTritonHint();
+        }
+    }
+}
 // --- 3. DASHBOARD & STATISTICS ---
 function refreshTritonDashboard() {
     const invoices = JSON.parse(localStorage.getItem('triton_invoices') || '[]');
@@ -2104,31 +2127,43 @@ function makeDraggable(modalId, headerId) {
 </div>
           <script>
 // ==========================================
-// 1. ΕΝΑΡΞΗ & ΕΛΕΓΧΟΣ (FIXED ONBOARDING)
+// 1. ΕΝΑΡΞΗ & ΕΛΕΓΧΟΣ (ΕΛΕΥΘΕΡΟ ONBOARDING)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const biz = localStorage.getItem('bizSettings');
     
     if (!biz) {
-        // ΑΝΤΙ ΓΙΑ ΑΥΤΟΜΑΤΟ ΑΝΟΙΓΜΑ: 
-        // Εμφανίζουμε το Hint (Συννεφάκι) αν υπάρχει η συνάρτηση
-        if (typeof showTritonHint === "function") {
-            showTritonHint(); 
-        } else {
-            // Εναλλακτικά, γράφουμε απλά στο Header για να ξέρεις ότι λείπουν στοιχεία
-            const nameElem = document.getElementById('displayCompanyName');
-            if(nameElem) nameElem.innerText = "🔱 Triton (Εκκρεμεί Ρύθμιση)";
-        }
+        // ΝΑΙ, την ανοίγουμε αυτόματα για να σε ενημερώσουμε...
+        setTimeout(() => {
+            if (typeof openSettings === "function") {
+                openSettings(); 
+                console.log("🔱 Triton: Άνοιγμα ρυθμίσεων (Onboarding)");
+            }
+        }, 1500); // Δίνουμε 1.5 δευτερόλεπτο να δεις το Dashboard πρώτα
     } else {
         const data = JSON.parse(biz);
         const nameElem = document.getElementById('displayCompanyName');
         if(nameElem) nameElem.innerText = data.name;
     }
 
-    // Εκκίνηση Dashboard & Γραφήματος (Πάντα τρέχουν)
+    // Στατιστικά
     if(typeof refreshDashboardMetrics === "function") refreshDashboardMetrics();
     if(typeof initMainChart === "function") initMainChart();
 });
+
+// Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΣΟΥ ΔΙΝΕΙ ΤΟΝ ΕΛΕΓΧΟ (ΤΟ "Χ")
+function closeTritonModal() {
+    // Βρίσκουμε το Modal (βεβαιώσου ότι το ID είναι σωστό, π.χ. 'tritonGlobalModal')
+    const modal = document.getElementById('tritonGlobalModal'); 
+    if (modal) {
+        modal.style.display = 'none'; // ΤΟ ΚΛΕΙΝΟΥΜΕ
+        
+        // Μόλις το κλείσεις, εμφάνισε το "Συννεφάκι" για να ξέρεις πού να πατήσεις μετά
+        if (typeof showTritonHint === "function") showTritonHint();
+        
+        console.log("🔱 Triton: Ο χρήστης επέλεξε παράκαμψη ρυθμίσεων.");
+    }
+}
 // ==========================================
 // 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (BIZ & myDATA)
 // ==========================================

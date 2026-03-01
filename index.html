@@ -1558,7 +1558,41 @@ window.addEventListener('load', () => {
     updateDashboardStats();
     console.log("🔱 Triton ERP: Dashboard Sync Complete");
 });
+  function openModule(pageUrl, title) {
+    const modal = document.getElementById('tritonGlobalModal');
+    const frame = document.getElementById('modalFrame');
+    const titleText = document.getElementById('modalTitleText');
+
+    // 1. Ορίζουμε τον τίτλο και τη σελίδα
+    titleText.innerText = title;
+    frame.src = pageUrl;
+
+    // 2. Εμφανίζουμε το modal
+    modal.style.display = 'block';
+
+    // 3. Ενεργοποιούμε το Drag (με τη συνάρτηση που φτιάξαμε πριν)
+    makeElementDraggable(modal, document.getElementById('tritonModalHeader'));
+}
+
+function closeTritonModal() {
+    const modal = document.getElementById('tritonGlobalModal');
+    const frame = document.getElementById('modalFrame');
+    modal.style.display = 'none';
+    frame.src = ""; // Καθαρίζουμε το iframe για ταχύτητα
+}
 </script>
-           
+   <div id="tritonGlobalModal" class="triton-modal">
+    <div id="tritonModalHeader" class="modal-header">
+        <div class="header-title">
+            <span id="modalIcon">🔱</span>
+            <span id="modalTitleText">Triton ERP</span>
+        </div>
+        <button class="close-x" onclick="closeTritonModal()">&times;</button>
+    </div>
+
+    <div class="modal-content-area" style="overflow: hidden;">
+        <iframe id="modalFrame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+</div>        
 </body>
 </html>    

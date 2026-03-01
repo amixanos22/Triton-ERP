@@ -2296,10 +2296,15 @@ function closeModal(id) {
     if (modal) modal.style.display = 'none';
 }
            // ==========================================
-// ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΟ HINT BANNER (ΣΥΝΝΕΦΑΚΙ)
-// ==========================================
 function showTritonHint() {
-    // Δημιουργία του στοιχείου
+    // 1. Έλεγχος: Αν υπάρχει ήδη το συννεφάκι στην οθόνη, μην κάνεις τίποτα
+    if (document.getElementById('tritonSetupHint')) return;
+
+    // 2. Έλεγχος: Αν έχουν ήδη σωθεί τα στοιχεία, σταμάτα τελείως
+    const biz = localStorage.getItem('bizSettings');
+    if (biz && biz !== '{}') return;
+
+    // 3. Δημιουργία του στοιχείου (Όπως το είχες)
     const hint = document.createElement('div');
     hint.id = 'tritonSetupHint';
     hint.style.cssText = `
@@ -2316,6 +2321,7 @@ function showTritonHint() {
         max-width: 300px;
         font-size: 14px;
         line-height: 1.5;
+        transition: opacity 0.5s ease;
         animation: fadeInRight 0.5s ease-out;
     `;
 
@@ -2329,14 +2335,20 @@ function showTritonHint() {
 
     document.body.appendChild(hint);
 
-    // Αυτόματο κλείσιμο μετά από 10 δευτερόλεπτα (προαιρετικό)
+    // 4. Αυτόματο κλείσιμο μετά από 10 δευτερόλεπτα
     setTimeout(() => {
-        if(document.getElementById('tritonSetupHint')) {
-            document.getElementById('tritonSetupHint').style.opacity = '0';
-            setTimeout(() => document.getElementById('tritonSetupHint').remove(), 500);
+        const existingHint = document.getElementById('tritonSetupHint');
+        if(existingHint) {
+            existingHint.style.opacity = '0';
+            setTimeout(() => {
+                if(existingHint.parentNode) existingHint.remove();
+                
+                // 5. ΕΠΑΝΕΜΦΑΝΙΣΗ: Προγραμμάτισε την επόμενη εμφάνιση σε 15 δευτερόλεπτα
+                setTimeout(showTritonHint, 15000);
+            }, 500);
         }
     }, 10000);
-} 
+}
 </script>
 </body>
 </html>

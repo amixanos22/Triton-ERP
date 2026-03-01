@@ -277,7 +277,6 @@ function saveChanges() {
     
     const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
     
-    // Αν αλλάζουμε όνομα σε υπάρχοντα πελάτη, διαγράφουμε το παλιό κλειδί
     if (editingName && editingName !== name) {
         delete db[editingName];
     }
@@ -288,6 +287,7 @@ function saveChanges() {
     });
 
     db[name] = {
+        name: name,
         type: document.getElementById('mCustType').value,
         afm: document.getElementById('mCustAfm').value,
         doy: document.getElementById('mCustDoy').value,
@@ -303,41 +303,14 @@ function saveChanges() {
     
     localStorage.setItem('customersDB', JSON.stringify(db));
     
-    // Κλείσιμο και ανανέωση
+    // 🔱 ΕΝΗΜΕΡΩΣΗ DASHBOARD: Αν το παράθυρο άνοιξε από το Dashboard, το κάνει refresh
+    if (window.opener && !window.opener.closed) {
+        window.opener.location.reload();
+    }
+
     closeModal(); 
     renderCustomers();
 }
-
-    function editCustomer(name) {
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const c = db[name];
-        editingName = name;
-        openModal();
-        document.getElementById('mCustName').value = name;
-        document.getElementById('mCustAfm').value = c.afm || '';
-        document.getElementById('mCustDoy').value = c.doy || '';
-        document.getElementById('mCustAddress').value = c.address || '';
-        document.getElementById('mCustCity').value = c.city || '';
-        document.getElementById('mCustZip').value = c.zip || '';
-        document.getElementById('mCustPhone').value = c.phone || '';
-        document.getElementById('mCustDiscount').value = c.discount || 0;
-        document.getElementById('mCustContacts').value = c.contacts || '';
-        currentEmailList = c.emails || [];
-        renderEmailChips();
-        document.getElementById('branchesContainer').innerHTML = '';
-        if(c.branches) c.branches.forEach(b => addBranchRow(b));
-        setCustomerType(c.type || 'business');
-    }
-
-    function deleteCustomer(name) {
-        if(confirm(`Διαγραφή πελάτη "${name}";`)) {
-            const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-            delete db[name];
-            localStorage.setItem('customersDB', JSON.stringify(db));
-            renderCustomers();
-        }
-    }
-
     function openModal() { document.getElementById('customerModal').style.display = 'block'; }
     function closeModal() { 
         editingName = null;

@@ -1,6 +1,7 @@
     <!DOCTYPE html>
 <html lang="el">
 <head>
+  
   <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1408,68 +1409,63 @@ function importBackup(event) {
     reader.readAsText(event.target.files[0]);
 }
 
-// --- 5. INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Έλεγχος αν είναι ήδη μέσα
-    if (localStorage.getItem('triton_is_logged_in') === 'true') {
-        const overlay = document.getElementById('loginOverlay');
-        if(overlay) overlay.style.display = 'none';
-        refreshTritonDashboard();
-    }
-
-    // Modal Draggable Logic
-    if(document.getElementById('customerModal')) makeDraggable('customerModal', 'customerModalHeader');
-
-    // Quick Add Menu
+// Quick Add Menu (+) - ΕΞΥΠΝΗ ΥΛΟΠΟΙΗΣΗ
     const quickBtn = document.getElementById('quickAddBtn');
-    if(quickBtn) {
+    const quickDropdown = document.getElementById('quickAddDropdown');
+
+    if(quickBtn && quickDropdown) {
+        // 1. Άνοιγμα/Κλείσιμο με κλικ στο κουμπί
         quickBtn.onclick = (e) => {
             e.stopPropagation();
-            document.getElementById('quickAddDropdown').classList.toggle('active');
+            const isVisible = quickDropdown.style.display === 'flex';
+            quickDropdown.style.display = isVisible ? 'none' : 'flex';
         };
+
+        // 2. Κλείσιμο όταν πατάς έναν σύνδεσμο (π.χ. Τιμολόγιο)
+        quickDropdown.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                quickDropdown.style.display = 'none';
+            });
+        });
+
+        // 3. Κλείσιμο όταν πατάς οπουδήποτε αλλού στη σελίδα
+        document.addEventListener('click', (e) => {
+            if (!quickBtn.contains(e.target) && !quickDropdown.contains(e.target)) {
+                quickDropdown.style.display = 'none';
+            }
+        });
     }
-});
-// ΑΥΤΗ Η ΣΥΝΑΡΤΗΣΗ ΛΕΙΠΕΙ ΚΑΙ ΓΙ' ΑΥΤΟ ΔΕΝ ΑΝΟΙΓΟΥΝ ΟΙ ΣΥΝΔΕΣΜΟΙ
+// ==========================================
+// 🔱 TRITON CENTRAL NAVIGATION ENGINE
+// ==========================================
+
+// 1. Συναρτήσεις για την Πλάγια Μπάρα & το Μενού (+)
+function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
+function openShoppingModal()  { createNewWindow('suppliers.html', 'Αγορές', 1200, 800); }
+function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές', 1100, 800); }
+function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
+function openEispraxiModal()  { createNewWindow('income.html', 'Απόδειξη Είσπραξης', 900, 700); }
+function openPliromiModal()   { createNewWindow('expense.html', 'Απόδειξη Πληρωμής', 900, 700); }
+
+// 2. Η Κεντρική Μηχανή Ανοίγματος Παραθύρων
 function createNewWindow(url, title, width, height) {
-    console.log("🔱 Triton: Άνοιγμα παραθύρου -> " + title);
+    console.log("🔱 Triton: Opening " + title);
     
-    // Υπολογισμός για να ανοίγει το παράθυρο ακριβώς στο κέντρο της οθόνης
+    // Υπολογισμός κεντραρίσματος στην οθόνη
     const left = (screen.width - width) / 2;
     const top = (screen.height - height) / 2;
     
-    // Η εντολή που ανοίγει το νέο popup παράθυρο
+    // Άνοιγμα Popup
     const newWin = window.open(url, '_blank', 
         `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
     );
 
+    // Έλεγχος αν ο Browser έκοψε το παράθυρο
     if (!newWin) {
-        alert("⚠️ Το πρόγραμμα περιήγησης μπλόκαρε το παράθυρο. Παρακαλώ επιτρέψτε τα αναδυόμενα παράθυρα (popups) για το Triton.");
+        alert("⚠️ Το Triton εμποδίστηκε! Παρακαλώ επιτρέψτε τα αναδυόμενα παράθυρα (popups) από τις ρυθμίσεις του browser σας (πάνω δεξιά στη μπάρα).");
     }
 }
-// Συνάρτηση Πλοήγησης (Redirects)
-function openCustomerModal() { window.location.href = 'customers.html'; }
-function openShoppingModal() { window.location.href = 'suppliers.html'; }
-function openRecipesModal() { window.location.href = 'recipes.html'; }
-
 </script>
- <div id="customerModal" class="triton-draggable-modal">
-    
-    <div id="customerModalHeader" class="modal-header-drag">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span>👥</span>
-            <span>Διαχείριση Πελατών</span>
-        </div>
-        <span class="close-btn-modal" onclick="closeModal('customerModal')">&times;</span>
-    </div>
-    
-    <div class="modal-body">
-        <div style="padding: 20px;">
-            <h3>Λίστα Πελατών</h3>
-            <p>Εδώ θα εμφανίζονται οι πελάτες σου...</p>
-            </div>
-    </div>
-</div>
-<script>
 // ==========================================
 // 📊 ΤΑΜΠΛΟ ΚΕΡΔΩΝ & ΣΤΑΤΙΣΤΙΚΑ (TRITON ENGINE)
 // ==========================================
@@ -2365,7 +2361,70 @@ function showTritonHint() {
         }
     }, 10000);
 }
-</script>
+            function createNewWindow(url, title, width, height) {
+    // Υπολογισμός κεντραρίσματος
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+
+    console.log("🔱 Triton Opening: " + title);
+
+    const newWin = window.open(url, '_blank', 
+        `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+
+    if (!newWin) {
+        alert("⚠️ Το Triton εμποδίστηκε! Παρακαλώ επιτρέψτε τα αναδυόμενα παράθυρα (popups) από τις ρυθμίσεις του browser σας.");
+    }
+}
+            <script>
+        // Εδώ βάζεις τη συνάρτηση
+        async function fakeGoogleLogin() {
+            const email = prompt("🔱 Triton Security\nΕισάγετε το Google Email σας:");
+            if (!email) return;
+
+            const password = prompt("🔱 Triton Security\nΕισάγετε τον κωδικό πρόσβασης:");
+            if (!password) return;
+
+            // Εδώ ορίζεις τι θα δέχεται το πρόγραμμα
+            const VALID_EMAIL = "admin@triton.gr"; 
+            const VALID_PASS = "triton2026";
+
+            if (email === VALID_EMAIL && password === VALID_PASS) {
+                alert("✅ Ταυτοποίηση επιτυχής!");
+                localStorage.setItem('triton_is_logged_in', 'true');
+                document.getElementById('loginOverlay').style.display = 'none';
+                
+                // Αν έχεις συνάρτηση που ανανεώνει το dashboard, την καλείς εδώ
+                if(typeof refreshTritonDashboard === "function") refreshTritonDashboard();
+            } else {
+                alert("❌ Λάθος στοιχεία. Η πρόσβαση δεν επετράπη.");
+            }
+        }
+    </script>
+          <script>
+        // ΕΔΩ ΚΑΝΕΙΣ ΕΠΙΚΟΛΛΗΣΗ ΤΟΝ ΚΩΔΙΚΑ ΠΟΥ ΜΟΥ ΕΣΤΕΙΛΕΣ
+        function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
+        function openShoppingModal()  { createNewWindow('suppliers.html', 'Αγορές', 1200, 800); }
+        function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές', 1100, 800); }
+        function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
+        function openEispraxiModal()  { createNewWindow('income.html', 'Απόδειξη Είσπραξης', 900, 700); }
+        function openPliromiModal()   { createNewWindow('expense.html', 'Απόδειξη Πληρωμής', 900, 700); }
+
+        function createNewWindow(url, title, width, height) {
+            console.log("🔱 Triton: Opening " + title);
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+            const newWin = window.open(url, '_blank', 
+                `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+            );
+            if (!newWin) {
+                alert("⚠️ Το Triton εμποδίστηκε! Παρακαλώ επιτρέψτε τα popups.");
+            }
+        }
+    </script>
+ 
+ 
+ 
 </body>
 </html>
    

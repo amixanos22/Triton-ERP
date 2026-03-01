@@ -203,78 +203,110 @@
         cont.appendChild(div);
     }
 
-    function addEmailToList() {
-        const input = document.getElementById('mCustEmailInput');
-        const val = input.value.trim();
-        if (val && !currentEmailList.includes(val)) {
+   function addEmailToList() {
+    const input = document.getElementById('mCustEmailInput');
+    const val = input.value.trim();
+    
+    // Προσθήκη ελέγχου για έγκυρο format email
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (val && emailPattern.test(val)) {
+        if (!currentEmailList.includes(val)) {
             currentEmailList.push(val);
             renderEmailChips();
             input.value = '';
+        } else {
+            alert("Το email υπάρχει ήδη στη λίστα.");
         }
+    } else if (val) {
+        alert("⚠️ Παρακαλώ εισάγετε ένα έγκυρο email.");
+    }
+}
+
+function renderEmailChips() {
+    const cont = document.getElementById('emailListContainer');
+    cont.innerHTML = '';
+    currentEmailList.forEach((e, i) => {
+        cont.innerHTML += `
+            <div class="email-chip">
+                ${e}
+                <span style="margin-left:8px; cursor:pointer; color:#ef4444; font-weight:bold;" 
+                      onclick="currentEmailList.splice(${i},1); renderEmailChips();">×</span>
+            </div>`;
+    });
+}
+
+function renderCustomers() {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const tbody = document.getElementById('customersBody');
+    if (!tbody) return; // Αποφυγή σφάλματος αν δεν υπάρχει το στοιχείο
+    
+    tbody.innerHTML = '';
+    const sortedKeys = Object.keys(db).sort();
+    
+    if (sortedKeys.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">Δεν βρέθηκαν πελάτες.</td></tr>';
+        return;
     }
 
-    function renderEmailChips() {
-        const cont = document.getElementById('emailListContainer');
-        cont.innerHTML = '';
-        currentEmailList.forEach((e, i) => {
-            cont.innerHTML += `<div class="email-chip">${e}<span style="margin-left:8px; cursor:pointer; color:#ef4444;" onclick="currentEmailList.splice(${i},1);renderEmailChips()">×</span></div>`;
-        });
-    }
-
-    function renderCustomers() {
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const tbody = document.getElementById('customersBody');
-        tbody.innerHTML = '';
-        const sortedKeys = Object.keys(db).sort();
-        
-        if (sortedKeys.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">Δεν βρέθηκαν πελάτες.</td></tr>';
-            return;
-        }
-
-        sortedKeys.forEach(name => {
-            const c = db[name];
-            tbody.innerHTML += `<tr>
+    sortedKeys.forEach(name => {
+        const c = db[name];
+        tbody.innerHTML += `
+            <tr>
                 <td class="cust-name-cell">${name}</td>
-                <td><code style="background:#f1f5f9; padding:3px 6px; border-radius:4px;">${c.afm || '-'}</code></td>
+                <td><code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; color:#0f172a;">${c.afm || '-'}</code></td>
                 <td>${c.city || '-'}</td>
                 <td>${c.phone || '-'}</td>
                 <td style="text-align:right">
-                    <button class="action-icon" onclick="editCustomer('${name.replace(/'/g, "\\'")}')">✏️</button>
-                    <button class="action-icon" onclick="deleteCustomer('${name.replace(/'/g, "\\'")}')">🗑️</button>
+                    <button class="action-icon" onclick="editCustomer('${name.replace(/'/g, "\\'")}')" title="Επεξεργασία">✏️</button>
+                    <button class="action-icon" onclick="deleteCustomer('${name.replace(/'/g, "\\'")}')" title="Διαγραφή">🗑️</button>
                 </td>
             </tr>`;
-        });
+    });
+}
+
+function saveChanges() {
+    const nameInput = document.getElementById('mCustName');
+    const name = nameInput.value.trim();
+    
+    if(!name) {
+        alert("⚠️ Το όνομα είναι υποχρεωτικό!");
+        nameInput.focus();
+        return;
+    }
+    
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    
+    // Αν αλλάζουμε όνομα σε υπάρχοντα πελάτη, διαγράφουμε το παλιό κλειδί
+    if (editingName && editingName !== name) {
+        delete db[editingName];
     }
 
-    function saveChanges() {
-        const name = document.getElementById('mCustName').value.trim();
-        if(!name) return alert("⚠️ Το όνομα είναι υποχρεωτικό!");
-        
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        if (editingName && editingName !== name) delete db[editingName];
+    const branches = [];
+    document.querySelectorAll('.b-addr').forEach(i => { 
+        if(i.value.trim()) branches.push(i.value.trim()); 
+    });
 
-        const branches = [];
-        document.querySelectorAll('.b-addr').forEach(i => { if(i.value.trim()) branches.push(i.value.trim()); });
-
-        db[name] = {
-            type: document.getElementById('mCustType').value,
-            afm: document.getElementById('mCustAfm').value,
-            doy: document.getElementById('mCustDoy').value,
-            address: document.getElementById('mCustAddress').value,
-            city: document.getElementById('mCustCity').value,
-            zip: document.getElementById('mCustZip').value,
-            phone: document.getElementById('mCustPhone').value,
-            discount: document.getElementById('mCustDiscount').value,
-            contacts: document.getElementById('mCustContacts').value,
-            emails: currentEmailList,
-            branches: branches
-        };
-        
-        localStorage.setItem('customersDB', JSON.stringify(db));
-        closeModal();
-        renderCustomers();
-    }
+    db[name] = {
+        type: document.getElementById('mCustType').value,
+        afm: document.getElementById('mCustAfm').value,
+        doy: document.getElementById('mCustDoy').value,
+        address: document.getElementById('mCustAddress').value,
+        city: document.getElementById('mCustCity').value,
+        zip: document.getElementById('mCustZip').value,
+        phone: document.getElementById('mCustPhone').value,
+        discount: document.getElementById('mCustDiscount').value,
+        contacts: document.getElementById('mCustContacts').value,
+        emails: currentEmailList,
+        branches: branches
+    };
+    
+    localStorage.setItem('customersDB', JSON.stringify(db));
+    
+    // Κλείσιμο και ανανέωση
+    closeModal(); 
+    renderCustomers();
+}
 
     function editCustomer(name) {
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');

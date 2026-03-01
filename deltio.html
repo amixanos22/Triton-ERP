@@ -130,7 +130,7 @@
 <script>
     let count = parseInt(localStorage.getItem('triton_dd_count')) || 1;
 
-    function loadData() {
+   function loadData() {
         const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
         document.getElementById('idxCompName').innerText = s.companyName || "TRITON ERP";
         document.getElementById('idxActivity').innerText = s.activity || "";
@@ -139,8 +139,20 @@
         document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
         if (s.logoUrl) document.getElementById('idxLogo').innerHTML = `<img src="${s.logoUrl}" style="max-width:100%; max-height:80px;"/>`;
         
+        // 🔱 ΠΡΟΣΘΗΚΗ: Διάβασμα τύπου από το URL (π.χ. ?type=ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ)
+        const params = new URLSearchParams(window.location.search);
+        const typeFromUrl = params.get('type') || "ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
+        document.title = "Triton ERP - " + typeFromUrl;
+        
+        // Αν θέλεις να φαίνεται ο τίτλος και μέσα στη σελίδα, 
+        // βεβαιώσου ότι έχεις ένα <h2> ή <div> με id="mainDocTitle"
+        if (document.getElementById('mainDocTitle')) {
+            document.getElementById('mainDocTitle').innerText = typeFromUrl;
+        }
+
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const dl = document.getElementById('custData');
+        dl.innerHTML = ""; // Καθαρισμός για να μην διπλασιάζονται
         Object.keys(db).sort().forEach(name => {
             const opt = document.createElement('option');
             opt.value = name;

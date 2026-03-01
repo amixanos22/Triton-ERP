@@ -1,0 +1,219 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triton ERP - Πωλήσεις & Stock</title>
+  <style>
+        #navbar-iframe { display: none !important; }
+        :root { --triton-blue: #0ea5e9; --triton-dark: #0f172a; --triton-border: #e2e8f0; }
+        
+        /* Φόντο σε όλη τη σελίδα */
+        body { background: #e2e8f0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        
+        /* ΜΑΖΕΜΑ ΤΟΥ CONTAINER */
+        .sales-container { 
+            max-width: 850px; /* Από 98% το κάναμε 850px για να μην απλώνει */
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Προσθήκη σκιάς για βάθος */
+        }
+
+        .header-info { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            margin-bottom: 30px; 
+            padding: 20px; 
+            background: #f8fafc; 
+            border-radius: 8px; 
+            border: 1px solid var(--triton-border); 
+        }
+
+        /* ΣΤΕΝΕΜΑ ΤΩΝ ΣΤΗΛΩΝ */
+        .item-row { 
+            display: grid; 
+            grid-template-columns: 2.5fr 0.8fr 1fr 1fr 40px; /* Πιο ισορροπημένες στήλες */
+            gap: 12px; 
+            margin-bottom: 12px; 
+            align-items: center; 
+        }
+
+        input, select { 
+            padding: 10px; 
+            border: 1px solid var(--triton-border); 
+            border-radius: 6px; 
+            width: 100%; 
+            font-size: 14px; 
+            background: white;
+        }
+
+        input:focus, select:focus { border-color: var(--triton-blue); outline: none; }
+        
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: var(--triton-dark); color: white; margin-top: 10px; }
+        .btn-add:hover { background: #1e293b; }
+        
+        .btn-save { 
+            background: var(--triton-blue); 
+            color: white; 
+            width: 100%; 
+            font-size: 18px; 
+            margin-top: 30px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        .btn-save:hover { background: #0284c7; }
+        
+        .totals { 
+            text-align: right; 
+            margin-top: 25px; 
+            border-top: 2px solid var(--triton-blue); 
+            padding-top: 15px; 
+        }
+        .total-val { font-size: 24px; font-weight: 900; color: var(--triton-dark); }
+    </style>
+</head>
+<body>
+
+<div class="sales-container">
+    <h2 style="margin-top:0; color:var(--triton-dark);">🛒 Νέα Πώληση / Επιστροφή</h2>
+    
+    <div class="header-info">
+        <div>
+            <label style="font-size:11px; font-weight:800; color:#64748b;">ΠΕΛΑΤΗΣ</label>
+            <select id="saleCustomer"><option value="">-- Λιανική Πώληση --</option></select>
+        </div>
+        <div>
+            <label style="font-size:11px; font-weight:800; color:#64748b;">ΤΥΠΟΣ ΚΙΝΗΣΗΣ</label>
+            <select id="saleType">
+                <option value="sale">Πώληση ( - Stock )</option>
+                <option value="return">Επιστροφή ( + Stock )</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="itemsHeader" class="item-row" style="font-weight: bold; font-size: 11px; color: #64748b; text-transform: uppercase;">
+        <div>Προϊόν</div>
+        <div>Ποσ.</div>
+        <div>Τιμή</div>
+        <div>Σύνολο</div>
+        <div></div>
+    </div>
+    
+    <div id="itemsList"></div>
+    <button class="btn btn-add" onclick="addItemRow()">+ Προσθήκη Είδους</button>
+
+    <div class="totals">
+        <div style="color:#64748b; font-weight:600;">Καθαρή Αξία: <span id="netTotal">0.00</span> €</div>
+        <div class="total-val">Πληρωτέο (με ΦΠΑ): <span id="grossTotal">0.00</span> €</div>
+    </div>
+
+    <button class="btn btn-save" onclick="processSale()">💾 Ολοκλήρωση & Ενημέρωση ERP</button>
+</div>
+
+<script>
+    // Φορτώνουμε τα δεδομένα από το LocalStorage
+    const productsObj = JSON.parse(localStorage.getItem('triton_products') || '{}');
+    const customersDB = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const recipes = JSON.parse(localStorage.getItem('triton_recipes') || '{}');
+
+    function init() {
+        const cSelect = document.getElementById('saleCustomer');
+        Object.keys(customersDB).sort().forEach(c => {
+            cSelect.add(new Option(c, c));
+        });
+        addItemRow(); 
+    }
+
+    function addItemRow() {
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        let options = '<option value="">-- Επιλέξτε --</option>';
+        Object.values(productsObj).forEach(p => {
+            options += `<option value="${p.desc}" data-price="${p.price}">${p.desc}</option>`;
+        });
+
+        div.innerHTML = `
+            <select class="i-name" onchange="updateRow(this)">${options}</select>
+            <input type="number" class="i-qty" value="1" oninput="updateRow(this)">
+            <input type="number" class="i-price" step="0.01" oninput="updateRow(this)">
+            <input type="text" class="i-total" readonly value="0.00" style="background:#f1f5f9; font-weight:bold;">
+            <button onclick="this.parentElement.remove(); calcTotals();" style="border:none; background:none; color:#ef4444; cursor:pointer; font-size:18px;">&times;</button>
+        `;
+        document.getElementById('itemsList').appendChild(div);
+    }
+
+    function updateRow(el) {
+        const row = el.parentElement;
+        const select = row.querySelector('.i-name');
+        const priceInput = row.querySelector('.i-price');
+        
+        if (el.classList.contains('i-name')) {
+            const selectedPrice = select.options[select.selectedIndex].getAttribute('data-price');
+            priceInput.value = selectedPrice || 0;
+        }
+
+        const qty = parseFloat(row.querySelector('.i-qty').value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        row.querySelector('.i-total').value = (qty * price).toFixed(2);
+        calcTotals();
+    }
+
+    function calcTotals() {
+        let net = 0;
+        document.querySelectorAll('.i-total').forEach(t => net += parseFloat(t.value) || 0);
+        document.getElementById('netTotal').innerText = net.toFixed(2);
+        document.getElementById('grossTotal').innerText = (net * 1.24).toFixed(2);
+    }
+
+    function processSale() {
+        const type = document.getElementById('saleType').value;
+        const customer = document.getElementById('saleCustomer').value;
+        const items = document.querySelectorAll('#itemsList .item-row');
+        let totalProfit = 0;
+        let totalNet = 0;
+
+        if (items.length === 0) return alert("Προσθέστε τουλάχιστον ένα προϊόν!");
+
+        items.forEach(row => {
+            const name = row.querySelector('.i-name').value;
+            const qty = parseFloat(row.querySelector('.i-qty').value);
+            const price = parseFloat(row.querySelector('.i-price').value);
+
+            if (name && qty) {
+                // 1. Ενημέρωση Stock στην Αποθήκη
+                if (productsObj[name]) {
+                    if (type === 'sale') productsObj[name].stock -= qty;
+                    else productsObj[name].stock += qty;
+                }
+
+                // 2. Υπολογισμός Κέρδους βάσει συνταγής
+                const cost = recipes[name] ? parseFloat(recipes[name].totalCost) : 0;
+                totalProfit += (price - cost) * qty;
+                totalNet += (price * qty);
+            }
+        });
+
+        localStorage.setItem('triton_products', JSON.stringify(productsObj));
+
+        const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+        history.push({
+            date: new Date().toISOString(),
+            customer: customer || 'Λιανική',
+            totalNet: totalNet,
+            profit: totalProfit,
+            type: type
+        });
+        localStorage.setItem('triton_sales_history', JSON.stringify(history));
+
+        alert("✅ Το ERP ενημερώθηκε! (Stock & Κέρδος)");
+        location.reload();
+    }
+
+    init();
+</script>
+</body>
+</html>

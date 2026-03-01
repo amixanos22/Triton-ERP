@@ -159,6 +159,26 @@
     }
 
     window.onload = loadDashboard;
+  function exportToExcel() {
+        const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+        if(history.length === 0) { alert("Δεν υπάρχουν δεδομένα για εξαγωγή."); return; }
+        
+        // Χρησιμοποιούμε το \uFEFF για να καταλάβει το Excel ότι είναι UTF-8 με Ελληνικά
+        let csvContent = "\uFEFFΗμερομηνία;Πελάτης;Καθαρή Αξία;Κέρδος;Margin%\n";
+        history.forEach(sale => {
+            const margin = sale.totalNet > 0 ? (sale.profit / sale.totalNet * 100).toFixed(1) : 0;
+            // Χρησιμοποιούμε ερωτηματικό (;) γιατί το ελληνικό Excel το προτιμά από το κόμμα
+            csvContent += `${new Date(sale.date).toLocaleDateString('el-GR')};${(sale.customer || "Λιανική")};${sale.totalNet.toFixed(2)};${sale.profit.toFixed(2)};${margin}%\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-16' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Triton_Profit_Report_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 </script>
 </body>
 </html>

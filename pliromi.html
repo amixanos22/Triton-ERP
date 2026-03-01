@@ -193,11 +193,21 @@
 
     let count = parseInt(localStorage.getItem('triton_pay_count')) || 1;
 
-    function init() {
+   function init() {
         setupBanks();
         loadFromSystem();
         document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('displayCounter').innerText = "ΠΛ" + count.toString().padStart(3, '0');
+
+        // 🔱 ΠΡΟΣΘΗΚΗ: Διάβασμα τύπου παραστατικού από το URL
+        const params = new URLSearchParams(window.location.search);
+        const typeFromUrl = params.get('type');
+        if (typeFromUrl) {
+            // Ενημερώνει τον τίτλο στην μπλε/κόκκινη μπάρα
+            document.querySelector('.triton-header h2').innerText = typeFromUrl;
+            // Ενημερώνει και το όνομα στην καρτέλα του browser
+            document.title = "Triton ERP - " + typeFromUrl;
+        }
         
         const auto = localStorage.getItem('auto_select_customer');
         if (auto) {

@@ -345,7 +345,8 @@
         }
     }
 
-    function handlePrint() {
+   function handlePrint() {
+        // 1. Προετοιμασία Στοιχείων Εκτύπωσης
         document.getElementById('p-compName').innerText = document.getElementById('idxCompName').innerText;
         document.getElementById('p-compDetails').innerText = document.getElementById('idxActivity').innerText + " | " + document.getElementById('idxAddress').innerText;
         document.getElementById('p-date').innerText = document.getElementById('dtDisplay').innerText;
@@ -356,11 +357,29 @@
 
         const pBody = document.getElementById('p-items');
         pBody.innerHTML = '';
+        
+        let totalSalesNet = 0;
+        let totalCost = 0; // Για το Dashboard
+
         document.querySelectorAll('#rowsBody tr').forEach(row => {
             const desc = row.querySelector('.prod-name').value;
             if(desc) {
+                const qty = parseFloat(row.querySelector('.qty').value) || 0;
+                const prc = parseFloat(row.querySelector('.prc').value) || 0;
+                const dsc = parseFloat(row.querySelector('.dsc').value) || 0;
+                const lineNet = (qty * prc) * (1 - dsc / 100);
+                
+                totalSalesNet += lineNet;
+
+                // 🔱 ΥΠΟΛΟΓΙΣΜΟΣ ΚΟΣΤΟΥΣ: Αν υπάρχει PriceA (Κόστος) στο προϊόν
+                // Αναζητάμε το προϊόν στη βάση σου (productsDB)
+                const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+                const productData = products[desc];
+                const unitCost = productData && productData.priceA ? parseFloat(productData.priceA) : (prc * 0.7); 
+                totalCost += (unitCost * qty);
+
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${desc}</td><td style="text-align:center">${row.querySelector('.qty').value}</td><td style="text-align:center">${row.querySelector('.prc').value}€</td><td style="text-align:center">${row.querySelector('.dsc').value}%</td><td style="text-align:center">${row.querySelector('.tax-p').value}%</td><td style="text-align:right">${row.querySelector('.line-total').value}€</td>`;
+                tr.innerHTML = `<td>${desc}</td><td style="text-align:center">${qty}</td><td style="text-align:center">${prc}€</td><td style="text-align:center">${dsc}%</td><td style="text-align:center">${row.querySelector('.tax-p').value}%</td><td style="text-align:right">${lineNet.toFixed(2)}€</td>`;
                 pBody.appendChild(tr);
             }
         });
@@ -368,6 +387,19 @@
         document.getElementById('p-net').innerText = document.getElementById('sumNet').innerText;
         document.getElementById('p-tax').innerText = document.getElementById('sumTax').innerText;
         document.getElementById('p-grand').innerText = document.getElementById('sumGrand').innerText;
+
+        // 🔱 ΑΠΟΣΤΟΛΗ ΣΤΟ DASHBOARD ΙΣΤΟΡΙΚΟΥ
+        const saleRecord = {
+            date: new Date().toISOString(),
+            customer: document.getElementById('cName').value || 'Λιανική',
+            totalNet: totalSalesNet,
+            profit: totalSalesNet - totalCost
+        };
+        const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+        history.push(saleRecord);
+        localStorage.setItem('triton_sales_history', JSON.stringify(history));
+
+        // 🖨️ ΕΚΤΥΠΩΣΗ
         window.print();
     }
 </script>

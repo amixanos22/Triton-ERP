@@ -228,20 +228,41 @@
         }
         .add-btn:hover { transform: rotate(180deg) scale(1.1); box-shadow: 0 0 25px rgba(125, 211, 252, 0.8); }
 
-        .actions-dropdown {
-            position: absolute; top: 60px; right: 0; width: 260px;
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
-            border: 1px solid #e0f2fe; border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: none;
-            flex-direction: column; overflow: hidden; z-index: 1100;
-        }
-        .actions-dropdown.active { display: flex; animation: slideDown 0.3s ease-out; }
-        .actions-dropdown a {
-            padding: 14px 20px; text-decoration: none; color: #1e293b; font-weight: 500;
-            border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px;
-        }
-        .actions-dropdown a:hover { background: rgba(125, 211, 252, 0.15); color: #0369a1; }
+     /* 1. Σιγουρέψου ότι το Wrapper "κρατάει" το dropdown */
+.quick-actions-wrapper {
+    position: relative; /* ΚΡΙΣΙΜΟ: Το dropdown θα ευθυγραμμιστεί με αυτό το κουμπί */
+    display: inline-block;
+}
 
+.actions-dropdown {
+    position: absolute; 
+    top: 50px; /* Ρύθμισέ το ανάλογα με το ύψος της μπάρας σου */
+    right: 0; 
+    width: 260px;
+    background: rgba(255, 255, 255, 0.95); 
+    backdrop-filter: blur(10px);
+    border: 1px solid #e0f2fe; 
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+    display: none; /* Το ελέγχουμε με την class .active */
+    flex-direction: column; 
+    overflow: hidden; 
+    z-index: 1100;
+}
+
+/* 2. Όταν είναι ενεργό, εμφανίζεται ως flex */
+.actions-dropdown.active { 
+    display: flex !important; 
+    animation: slideDown 0.3s ease-out; 
+}
+
+/* 3. Για να μην σπρώχνει τα γράμματα αν είναι μεγάλα */
+.actions-dropdown a {
+    white-space: nowrap; 
+    padding: 14px 20px;
+    /* ... τα υπόλοιπα που ήδη έχεις ... */
+}
+      
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- STATUS BADGES --- */
@@ -299,7 +320,8 @@
     70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 212, 255, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
 }
-      <style>
+      
+       <style>
 .triton-modal {
     display: none; /* Κρυφό αρχικά */
     position: fixed;
@@ -413,8 +435,71 @@
     justify-content: center;
     font-size: 12px;
 }
+      .nav-link.highlight-gold {
+    border-left: 4px solid #f59e0b; /* Χρυσό/Πορτοκαλί της Triton για τα οικονομικά */
+    background: rgba(245, 158, 11, 0.05);
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.nav-link.highlight-gold:hover {
+    background: rgba(245, 158, 11, 0.1);
+}
+      /* Triton Financial Link Style */
+.financial-link {
+    /* Αλλάζουμε το background σε πολύ σκούρο γκρι/ανθρακί */
+    background: #1e293b !important; 
+    /* Επιβάλλουμε λευκό χρώμα στα γράμματα */
+    color: #ffffff !important;
+    border-radius: 8px;
+    margin: 8px 10px;
+    padding: 12px 15px !important;
+    transition: all 0.3s ease;
+    /* Το border-left να είναι το χρυσό/πορτοκαλί για να ξεχωρίζει το οικονομικό */
+    border-left: 4px solid #f59e0b !important; 
+    text-decoration: none !important;
+    display: flex;
+}
+
+.financial-link:hover {
+    /* Στο hover γίνεται λίγο πιο ανοιχτό γκρι */
+    background: #334155 !important;
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Εξασφαλίζουμε ότι και τα εσωτερικά span είναι λευκά */
+.financial-link span {
+    color: #ffffff !important;
+}
+      /* Η εμφάνιση της γωνίας Resize */
+.floating-window::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    cursor: nwse-resize;
+    /* Δημιουργία τριών διαγώνιων γραμμών (Triton Style) */
+    background: linear-gradient(135deg, 
+        transparent 50%, 
+        #cbd5e1 50%, #cbd5e1 60%, 
+        transparent 60%, transparent 70%, 
+        #cbd5e1 70%, #cbd5e1 80%, 
+        transparent 80%, transparent 90%, 
+        #cbd5e1 90%);
+    background-size: 10px 10px;
+    border-radius: 0 0 12px 0;
+    pointer-events: none; /* Για να μην εμποδίζει το κλικ στο resizer */
+}
+
+/* Εφέ όταν το παράθυρο είναι Maximize: Κρύβουμε το Resize */
+.floating-window[style*="width: calc(100% - 260px)"]::after {
+    display: none;
+}
 </style>
-    </style>
+    
 </head>
 <body>
    
@@ -500,7 +585,7 @@
         <span class="logo-text">InvoicePro</span>
     </div>
     <nav class="nav-group">
-        <a href="#" class="nav-item">🪐 <span class="translate" data-el="Reports" data-en="Reports">Reports</span></a>
+        
         <a href="#" class="nav-item">☄️ <span class="translate" data-el="Συνοπτική Κατάσταση" data-en="Summary">Συνοπτική Κατάσταση</span></a>
         <a href="#" class="nav-item">📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span></a>
         
@@ -524,12 +609,21 @@
     <span class="translate" data-el="ShoppingTriton (Αγορές)" data-en="ShoppingTriton (Purchases)">ShoppingTriton (Αγορές)</span>
 </a>
 
-<a href="javascript:void(0)" onclick="openRecipesModal()" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">
+<a href="javascript:void(0)" onclick="openRecipesModal()" class="nav-item" style="border-left: 4px solid #ffffff; margin-top: 5px;">
     <span>🧪</span> 
     <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
 </a>
-    </nav>
-  <div style="margin-top: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #1e293b;">
+      <a href="dashboard.html" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">  
+    📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
+</a> 
+      <a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #f59e0b; margin-top: 5px;">
+    <span>📊</span> 
+    <span class="translate" data-el="Οικονομικό Πλάνο (Κέρδη/Έξοδα)" data-en="Financial Plan (Profit/Expenses)">
+        Οικονομικό Πλάνο (Κέρδη/Έξοδα)
+    </span>
+</a>
+</nav>
+   <div style="margin-top: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #1e293b;">
     
     <button onclick="downloadBackup()" style="cursor:pointer; width:100%; border:none; background: linear-gradient(135deg, #0ea5e9, #1e40af); padding: 14px; border-radius: 12px; color: white; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2); transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 20px rgba(14, 165, 233, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(14, 165, 233, 0.2)'">
         💾 ΛΗΨΗ BACKUP
@@ -561,13 +655,34 @@
             <div class="top-navbar-right">
                 <div class="quick-actions-wrapper">
                     <button class="add-btn" id="quickAddBtn">＋</button>
-                   <div class="actions-dropdown" id="quickAddDropdown">
-   <a href="invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ"><span>📄</span> Τιμολόγιο Πώλησης</a>
-<a href="delivery_note.html"><span>🚚</span> Δελτίο Αποστολής</a>
-<a href="invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ"><span>🔄</span> Πιστωτικό Τιμολόγιο</a>
-<a href="invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ"><span>🔗</span> Πιστωτικό Συσχετιζόμενο</a>
-<a href="finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ"><span>💰</span> Απόδειξη Είσπραξης</a>
-<a href="finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ"><span>💸</span> Απόδειξη Πληρωμής</a>
+                  <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
+    
+    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ', '📄 Τιμολόγιο Πώλησης', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>📄</span> Τιμολόγιο Πώλησης
+    </a>
+
+    <a href="javascript:void(0)" onclick="createNewWindow('delivery_note.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>🚚</span> Δελτίο Αποστολής
+    </a>
+
+    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ', '🔄 Πιστωτικό Τιμολόγιο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>🔄</span> Πιστωτικό Τιμολόγιο
+    </a>
+
+    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ', '🔗 Πιστωτικό Συσχετιζόμενο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>🔗</span> Πιστωτικό Συσχετιζόμενο
+    </a>
+
+    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>💰</span> Απόδειξη Είσπραξης
+    </a>
+
+    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>💸</span> Απόδειξη Πληρωμής
+    </a>
+
+</div>
+                  
 </div></div>
   
                  
@@ -583,7 +698,7 @@
 </div>
             </div>
         </header>
-
+  
   <main class="content-body">
     <div class="stats-grid">
         <div class="invoice-card" style="border-top: 4px solid #7dd3fc;">
@@ -695,14 +810,29 @@ function openSettings() {
 }
 
 function closeSettings() {
+    // 1. Κλείνουμε το παράθυρο
     document.getElementById('settingsModal').style.display = 'none';
     
-    // ΑΝ ο χρήστης έκλεισε το παράθυρο χωρίς να έχει σώσει ποτέ στοιχεία
-    if (!localStorage.getItem('bizSettings')) {
+    // 2. Ελέγχουμε το ΣΩΣΤΟ κλειδί (triton_settings)
+    const savedData = localStorage.getItem('triton_settings');
+    
+    // 3. ΑΝ δεν υπάρχει τίποτα αποθηκευμένο, δείξε το σύννεφο
+    if (!savedData) {
         showTritonHint();
     }
 }
 
+function showTritonHint() {
+    const banner = document.getElementById('triton-welcome-banner');
+    if (banner) {
+        banner.style.display = 'flex';
+        
+        // Το κρύβουμε αυτόματα μετά από 6 δευτερόλεπτα
+        setTimeout(() => {
+            banner.style.display = 'none';
+        }, 6000);
+    }
+}
 // Η νέα συνάρτηση που καθοδηγεί τον χρήστη στο "ανθρωπάκι"
 function showTritonHint() {
     // Δημιουργία ενός κομψού banner στα χρώματα του Triton
@@ -1931,8 +2061,235 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // Παράδειγμα χρήσης: 
 // Όταν ο χρήστης πατάει "Cancel" στο Modal των ρυθμίσεων, καλούμε την showTritonHint();
-</script>
+ function createNewWindow(url, title, width = 850, height = 600) {
+    const win = document.createElement('div');
+    win.className = 'floating-window';
+    win.id = 'win_' + Date.now();
+    
+    const leftPos = (window.innerWidth - width) / 2;
+    const topPos = (window.innerHeight - height) / 2;
 
+    // Προσθήκη Resize και Z-index
+    win.style.cssText = `
+        position: fixed; 
+        top: ${topPos}px; 
+        left: ${leftPos}px; 
+        width: ${width}px; 
+        height: ${height}px; 
+        background: white; 
+        border-radius: 12px; 
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+        z-index: 10000; 
+        display: flex; 
+        flex-direction: column; 
+        overflow: hidden; 
+        border: 1px solid #e2e8f0;
+        resize: both; 
+        min-width: 400px; 
+        min-height: 300px;
+    `;
+
+    const header = document.createElement('div');
+    header.style.cssText = `background: #0284c7; color: white; padding: 10px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none; flex-shrink: 0;`;
+    
+    // Προσθήκη Refresh κουμπιού στο HTML
+    header.innerHTML = `
+        <span>${title}</span>
+        <div style="display: flex; gap: 18px; align-items: center;">
+            <span class="ref-win" style="cursor:pointer; font-size:18px;" title="Ανανέωση">🔄</span>
+            <span class="min-win" style="cursor:pointer; font-size:22px; font-weight:bold; margin-top:-10px;" title="Ελαχιστοποίηση">_</span>
+            <span class="close-win" style="cursor:pointer; font-size:25px;" title="Κλείσιμο">&times;</span>
+        </div>
+    `;
+
+   const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = `flex: 1; border: none; width: 100%; height: 100%;`;
+    
+    // 1. Εδώ μπαίνει το pointerEvents για να λειτουργεί σωστά το περιεχόμενο
+    iframe.style.pointerEvents = "auto"; 
+
+    win.appendChild(header);
+    win.appendChild(iframe);
+    document.body.appendChild(win);
+
+    // ... (εδώ μεσολαβούν οι λειτουργίες των κουμπιών) ...
+
+    // 2. Εδώ προσθέτεις το userSelect μέσα στο onmousedown
+    win.onmousedown = () => {
+        win.style.userSelect = "none"; // Εμποδίζει το "μπλεδισμα" (επιλογή κειμένου) κατά το drag
+        document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = "10000");
+        win.style.zIndex = "10005";
+    };
+// --- ΣΥΝΕΧΕΙΑ ΤΟΥ ΚΩΔΙΚΑ ΣΟΥ ---
+
+    // 1. Λειτουργία Refresh (🔄)
+    header.querySelector('.ref-win').onclick = (e) => {
+        e.stopPropagation();
+        iframe.src = iframe.src;
+    };
+
+    // 2. Λειτουργία Μεγιστοποίησης (▢)
+    let isMaximized = false;
+    // Κρατάμε τις αρχικές θέσεις για να ξέρει πού να επιστρέψει
+    const originalPos = { 
+        t: topPos, l: leftPos, w: width, h: height 
+    };
+
+    header.querySelector('.max-win').onclick = (e) => {
+        e.stopPropagation();
+        if (!isMaximized) {
+            win.style.top = "0";
+            win.style.left = "260px"; // Χώρος για τη Sidebar σου
+            win.style.width = "calc(100% - 260px)";
+            win.style.height = "100vh";
+            win.style.borderRadius = "0";
+            isMaximized = true;
+        } else {
+            win.style.top = originalPos.t + "px";
+            win.style.left = originalPos.l + "px";
+            win.style.width = originalPos.w + "px";
+            win.style.height = originalPos.h + "px";
+            win.style.borderRadius = "12px";
+            isMaximized = false;
+        }
+    };
+
+    // 3. Λειτουργία Ελαχιστοποίησης (_)
+    header.querySelector('.min-win').onclick = (e) => {
+        e.stopPropagation();
+        win.style.display = 'none';
+        if (typeof createTaskbarTab === "function") {
+            createTaskbarTab(win.id, title);
+        }
+    };
+
+    // 4. Λειτουργία Κλεισίματος (X)
+    header.querySelector('.close-win').onclick = (e) => {
+        e.stopPropagation();
+        win.remove();
+        const tab = document.getElementById('tab_' + win.id);
+        if(tab) tab.remove();
+    };
+
+    // 5. Auto-Focus (Να έρχεται μπροστά στο κλικ)
+    win.onmousedown = () => {
+        document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = "10000");
+        win.style.zIndex = "10005";
+    };
+
+    // Κλείσιμο του μενού και ενεργοποίηση Drag
+    if (document.getElementById('quickAddDropdown')) {
+        document.getElementById('quickAddDropdown').style.display = 'none';
+    }
+    makeDraggable(win, header);
+}
+    // 1. Λειτουργία Refresh
+    header.querySelector('.ref-win').onclick = (e) => {
+        e.stopPropagation();
+        iframe.src = iframe.src;
+    };
+
+    // 2. Λειτουργία Κλεισίματος
+    header.querySelector('.close-win').onclick = (e) => {
+        e.stopPropagation();
+        win.remove();
+        const tab = document.getElementById('tab_' + win.id);
+        if(tab) tab.remove();
+    };
+
+    // 3. Λειτουργία Ελαχιστοποίησης
+    header.querySelector('.min-win').onclick = (e) => {
+        e.stopPropagation();
+        win.style.display = 'none';
+        if (typeof createTaskbarTab === "function") {
+            createTaskbarTab(win.id, title);
+        }
+    };
+
+    // 4. Auto-Focus (φέρνει το παράθυρο μπροστά στο κλικ)
+    win.onmousedown = () => {
+        document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = "10000");
+        win.style.zIndex = "10005";
+    };
+
+    // Κλείσιμο Dropdown
+    const dropdown = document.getElementById('quickAddDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+
+    // Ενεργοποίηση Drag
+    if (typeof makeDraggable === "function") {
+        makeDraggable(win, header);
+    }
+}
+
+    // ΚΛΕΙΣΙΜΟ
+    header.querySelector('.close-win').onclick = () => {
+        win.remove();
+        const tab = document.getElementById('tab_' + win.id);
+        if(tab) tab.remove();
+    };
+
+    // ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ
+    header.querySelector('.min-win').onclick = () => {
+        win.style.display = 'none';
+        createTaskbarTab(win.id, title);
+    };
+
+    const dropdown = document.getElementById('quickAddDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+
+    makeDraggable(win, header);
+}
+// Ο μηχανισμός για το σύρσιμο
+function makeDraggable(element, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    handle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+        // Φέρνουμε το παράθυρο μπροστά από τα άλλα όταν το πιάνουμε
+        element.style.zIndex = parseInt(element.style.zIndex) + 1;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+  function createTaskbarTab(winId, title) {
+    if (document.getElementById('tab_' + winId)) return; // Αν υπάρχει ήδη, μην το ξαναφτιάξεις
+
+    const bar = document.getElementById('minimizedBar');
+    const tab = document.createElement('div');
+    tab.id = 'tab_' + winId;
+    tab.style.cssText = `background: #1e293b; color: white; padding: 5px 15px; border-radius: 5px 5px 0 0; cursor: pointer; font-size: 12px; display: flex; align-items: center; border: 1px solid #334155; margin-top: 5px;`;
+    tab.innerHTML = `<span>${title}</span>`;
+    
+    tab.onclick = () => {
+        const win = document.getElementById(winId);
+        win.style.display = 'flex';
+        tab.remove();
+    };
+    
+    bar.appendChild(tab);
+}
+</script>
+<div id="minimizedBar" style="position: fixed; bottom: 0; left: 260px; right: 0; height: 40px; background: #0f172a; display: flex; gap: 10px; padding: 0 15px; z-index: 99999; border-top: 2px solid #0284c7;"></div>
 </body>
 </html>
    

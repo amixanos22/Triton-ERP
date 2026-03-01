@@ -122,16 +122,32 @@
 </div>
 <div id="triton-app">
    
-    <div class="header-top-grid">
-        <div id="idxLogo" class="logo-area"></div>
-        <div class="company-info-area">
-            <h1 id="idxCompName">ΦΟΡΤΩΣΗ...</h1>
-            <p id="idxActivity">-</p>
-            <p id="idxAddress">-</p>
-            <p>ΑΦΜ: <span id="idxTaxId" style="margin-right:25px;">-</span> ΔΟΥ: <span id="idxTaxOffice">-</span></p>
+   
+  
+  <div id="stockAlertContainer" class="no-print" style="display:none; margin-bottom: 20px; padding: 15px; background: #fff; border-left: 5px solid #ef4444; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h4 style="margin: 0 0 5px 0; color: #1e3a8a;">⚠️ Χαμηλό Απόθεμα</h4>
+    <ul id="lowStockList" style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;"></ul>
+</div>
+
+<div class="header-top-grid">
+    <div id="idxLogo" class="logo-area">
         </div>
-        <div style="width:115px; height:115px; border:1px solid #ddd; background:#fafafa; display:flex; align-items:center; justify-content:center; font-size:10px; text-align:center;">QR CODE<br>myData</div>
+    
+    <div class="company-info-area">
+        <h1 id="idxCompName">ΦΟΡΤΩΣΗ...</h1>
+        <p id="idxActivity">-</p>
+        <p id="idxAddress">-</p>
+        <p>ΑΦΜ: <span id="idxTaxId" style="margin-right:25px;">-</span> ΔΟΥ: <span id="idxTaxOffice">-</span></p>
     </div>
+
+    <div style="width:115px; height:115px; border:1px solid #ddd; background:#fafafa; display:flex; align-items:center; justify-content:center; font-size:10px; text-align:center;">
+        QR CODE<br>myData
+    </div>
+</div>
+  
+  
+  
+  
 
    <div class="triton-info-bar">
         <div class="bar-cell"><label>Ημερομηνία</label><span id="dtDisplay">--/--/----</span></div>
@@ -144,7 +160,8 @@
         <div class="info-card" style="flex: 1;">
             <label>Στοιχεία Πελάτη</label>
             <input id="cName" list="custData" placeholder="Αναζήτηση..." onchange="autoFillCustomer()">
-            
+            <input id="cName" list="custData" placeholder="Αναζήτηση..." onchange="autoFillCustomer()">
+<div id="balanceBadge" style="font-size: 12px; font-weight: bold; margin-top: 5px; display: none;"></div>
             <div style="display: flex; gap: 10px;">
                 <div style="flex: 2;">
                     <label style="font-size: 8px;">ΑΦΜ</label>
@@ -233,43 +250,86 @@
         addRow();
     });
 
-    function loadData() {
-        const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
-        document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
-        document.getElementById('idxActivity').innerText = s.activity || "ΒΙΟΤΕΧΝΙΑ ΧΗΜΙΚΩΝ";
-        document.getElementById('idxAddress').innerText = s.address || "-";
-        document.getElementById('idxTaxId').innerText = s.taxId || "-";
-        document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
-        
-        const dl = document.getElementById('custData');
-        dl.innerHTML = '';
-        const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        Object.keys(customers).forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            dl.appendChild(opt);
-        });
+   function loadData() {
+    const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
+    
+    // 1. Εμφάνιση Στοιχείων Εταιρείας
+    document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
+    document.getElementById('idxActivity').innerText = s.activity || "ΒΙΟΤΕΧΝΙΑ ΧΗΜΙΚΩΝ";
+    document.getElementById('idxAddress').innerText = s.address || "-";
+    document.getElementById('idxTaxId').innerText = s.taxId || "-";
+    document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
 
-        const pdl = document.getElementById('prodData');
-        pdl.innerHTML = ''; 
-        const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
-        Object.values(products).forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.desc;
-            pdl.appendChild(opt);
-        });
+    // 2. Εμφάνιση Logo (αν υπάρχει αποθηκευμένο)
+    const logoDiv = document.getElementById('idxLogo');
+    if (s.logoBase64) {
+        logoDiv.innerHTML = `<img src="${s.logoBase64}" alt="Logo">`;
+    } else {
+        logoDiv.innerHTML = `<div style="color:#cbd5e1; font-size:10px;">LOGO AREA</div>`;
     }
+    
+    // 3. Φόρτωση Πελατών (Datalist)
+    const dl = document.getElementById('custData');
+    dl.innerHTML = '';
+    const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    Object.keys(customers).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        dl.appendChild(opt);
+    });
 
-    function autoFillCustomer() {
+    // 4. Φόρτωση Προϊόντων (Datalist)
+    const pdl = document.getElementById('prodData');
+    pdl.innerHTML = ''; 
+    // ΣΗΜΑΝΤΙΚΟ: Χρησιμοποιούμε το productsDB που είναι η κύρια βάση σου
+    const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    Object.keys(products).forEach(key => {
+        const p = products[key];
+        const opt = document.createElement('option');
+        opt.value = key; // Το όνομα του προϊόντος
+        pdl.appendChild(opt);
+    });
+}
+
+   function autoFillCustomer() {
         const name = document.getElementById('cName').value;
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const found = db[name]; 
+        const badge = document.getElementById('balanceBadge'); // Το span/div που προσθέσαμε στο HTML
+        const inputField = document.getElementById('cName');
+
         if (found) {
+            // 1. Γέμισμα στοιχείων (κρατάμε τα δικά σου πεδία)
             document.getElementById('cTax').value = found.afm || "";
             document.getElementById('cTaxOffice').value = found.doy || found.taxOffice || "";
             document.getElementById('cAddr').value = found.address || "";
             window.currentCustomerPriceList = found.priceList || 'retail';
             window.currentCustomerDiscount = parseFloat(found.discount) || 0;
+
+            // 2. Έλεγχος Υπολοίπου & Πιστωτικού Ορίου
+            const balance = found.balance || 0;
+            const limit = 500; // Το όριο σε Ευρώ
+
+            if (badge) {
+                badge.style.display = "block";
+                badge.innerText = "Υπόλοιπο: " + Math.abs(balance).toFixed(2) + " €";
+                
+                // Αν το balance < -500 (δηλαδή οφειλή πάνω από 500€)
+                if (balance < -limit) {
+                    badge.style.color = "#ef4444"; // Triton Red για κίνδυνο
+                    inputField.style.border = "2px solid #ef4444";
+                    inputField.style.background = "#fef2f2";
+                    alert("⚠️ ΠΡΟΣΟΧΗ: Ο πελάτης " + name + " χρωστάει " + Math.abs(balance).toFixed(2) + " €");
+                } else {
+                    badge.style.color = "#0ea5e9"; // Triton Blue για ομαλότητα
+                    inputField.style.border = "1px solid #cbd5e1";
+                    inputField.style.background = "white";
+                }
+            }
+        } else {
+            if (badge) badge.style.display = "none";
+            inputField.style.border = "1px solid #cbd5e1";
+            inputField.style.background = "white";
         }
     }
 
@@ -345,63 +405,121 @@
         }
     }
 
-   function handlePrint() {
-        // 1. Προετοιμασία Στοιχείων Εκτύπωσης
-        document.getElementById('p-compName').innerText = document.getElementById('idxCompName').innerText;
-        document.getElementById('p-compDetails').innerText = document.getElementById('idxActivity').innerText + " | " + document.getElementById('idxAddress').innerText;
-        document.getElementById('p-date').innerText = document.getElementById('dtDisplay').innerText;
-        document.getElementById('p-invId').innerText = document.querySelector('.bar-cell input').value;
-        document.getElementById('p-custName').innerText = document.getElementById('cName').value;
-        document.getElementById('p-custInfo').innerText = "ΑΦΜ: " + document.getElementById('cTax').value + " - ΔΟΥ: " + document.getElementById('cTaxOffice').value;
-        document.getElementById('p-custAddr').innerText = "Διεύθυνση: " + document.getElementById('cAddr').value;
+ function handlePrint() {
+    const productsDB = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    let outOfStockItems = [];
 
-        const pBody = document.getElementById('p-items');
-        pBody.innerHTML = '';
+    // 1. Έλεγχος διαθεσιμότητας πριν την εκτέλεση
+    document.querySelectorAll('#rowsBody tr').forEach(row => {
+        const desc = row.querySelector('.prod-name').value;
+        const qty = parseFloat(row.querySelector('.qty').value) || 0;
         
-        let totalSalesNet = 0;
-        let totalCost = 0; // Για το Dashboard
-
-        document.querySelectorAll('#rowsBody tr').forEach(row => {
-            const desc = row.querySelector('.prod-name').value;
-            if(desc) {
-                const qty = parseFloat(row.querySelector('.qty').value) || 0;
-                const prc = parseFloat(row.querySelector('.prc').value) || 0;
-                const dsc = parseFloat(row.querySelector('.dsc').value) || 0;
-                const lineNet = (qty * prc) * (1 - dsc / 100);
-                
-                totalSalesNet += lineNet;
-
-                // 🔱 ΥΠΟΛΟΓΙΣΜΟΣ ΚΟΣΤΟΥΣ: Αν υπάρχει PriceA (Κόστος) στο προϊόν
-                // Αναζητάμε το προϊόν στη βάση σου (productsDB)
-                const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
-                const productData = products[desc];
-                const unitCost = productData && productData.priceA ? parseFloat(productData.priceA) : (prc * 0.7); 
-                totalCost += (unitCost * qty);
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${desc}</td><td style="text-align:center">${qty}</td><td style="text-align:center">${prc}€</td><td style="text-align:center">${dsc}%</td><td style="text-align:center">${row.querySelector('.tax-p').value}%</td><td style="text-align:right">${lineNet.toFixed(2)}€</td>`;
-                pBody.appendChild(tr);
+        if(desc && productsDB[desc]) {
+            const currentStock = parseFloat(productsDB[desc].stock) || 0;
+            if (qty > currentStock) {
+                outOfStockItems.push(`${desc} (Διαθέσιμο: ${currentStock})`);
             }
-        });
+        }
+    });
 
-        document.getElementById('p-net').innerText = document.getElementById('sumNet').innerText;
-        document.getElementById('p-tax').innerText = document.getElementById('sumTax').innerText;
-        document.getElementById('p-grand').innerText = document.getElementById('sumGrand').innerText;
-
-        // 🔱 ΑΠΟΣΤΟΛΗ ΣΤΟ DASHBOARD ΙΣΤΟΡΙΚΟΥ
-        const saleRecord = {
-            date: new Date().toISOString(),
-            customer: document.getElementById('cName').value || 'Λιανική',
-            totalNet: totalSalesNet,
-            profit: totalSalesNet - totalCost
-        };
-        const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
-        history.push(saleRecord);
-        localStorage.setItem('triton_sales_history', JSON.stringify(history));
-
-        // 🖨️ ΕΚΤΥΠΩΣΗ
-        window.print();
+    if (outOfStockItems.length > 0) {
+        const proceed = confirm("ΕΛΛΕΙΨΗ ΑΠΟΘΕΜΑΤΟΣ:\n\n" + outOfStockItems.join('\n') + "\n\nΘέλετε να προχωρήσετε στην πώληση;");
+        if (!proceed) return;
     }
+
+    // 2. Ενημέρωση Στοιχείων Εκτύπωσης (UI)
+    document.getElementById('p-compName').innerText = document.getElementById('idxCompName').innerText;
+    document.getElementById('p-compDetails').innerText = document.getElementById('idxActivity').innerText + " | " + document.getElementById('idxAddress').innerText;
+    document.getElementById('p-date').innerText = document.getElementById('dtDisplay').innerText;
+    document.getElementById('p-invId').innerText = document.querySelector('.bar-cell input').value;
+    document.getElementById('p-custName').innerText = document.getElementById('cName').value;
+    document.getElementById('p-custInfo').innerText = "ΑΦΜ: " + document.getElementById('cTax').value + " - ΔΟΥ: " + document.getElementById('cTaxOffice').value;
+    document.getElementById('p-custAddr').innerText = "Διεύθυνση: " + document.getElementById('cAddr').value;
+
+    const pBody = document.getElementById('p-items');
+    pBody.innerHTML = '';
+    
+    let totalSalesNet = 0;
+    let totalCost = 0;
+
+    // 3. Επεξεργασία γραμμών και ενημέρωση αποθήκης
+    document.querySelectorAll('#rowsBody tr').forEach(row => {
+        const desc = row.querySelector('.prod-name').value;
+        if(desc) {
+            const qty = parseFloat(row.querySelector('.qty').value) || 0;
+            const prc = parseFloat(row.querySelector('.prc').value) || 0;
+            const dsc = parseFloat(row.querySelector('.dsc').value) || 0;
+            const lineNet = (qty * prc) * (1 - dsc / 100);
+            
+            totalSalesNet += lineNet;
+
+            if (productsDB[desc]) {
+                // Ενημέρωση αποθέματος στη μνήμη
+                let currentStock = parseFloat(productsDB[desc].stock) || 0;
+                productsDB[desc].stock = currentStock - qty;
+                
+                // Υπολογισμός κόστους για το κέρδος
+                const unitCost = productsDB[desc].priceA ? parseFloat(productsDB[desc].priceA) : (prc * 0.7);
+                totalCost += (unitCost * qty);
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${desc}</td><td style="text-align:center">${qty}</td><td style="text-align:center">${prc}€</td><td style="text-align:center">${dsc}%</td><td style="text-align:center">${row.querySelector('.tax-p').value}%</td><td style="text-align:right">${lineNet.toFixed(2)}€</td>`;
+            pBody.appendChild(tr);
+        }
+    });
+
+    // 4. Οριστική αποθήκευση στη βάση (Local Storage)
+    localStorage.setItem('productsDB', JSON.stringify(productsDB));
+
+    // Ενημέρωση συνόλων εκτύπωσης
+    document.getElementById('p-net').innerText = document.getElementById('sumNet').innerText;
+    document.getElementById('p-tax').innerText = document.getElementById('sumTax').innerText;
+    document.getElementById('p-grand').innerText = document.getElementById('sumGrand').innerText;
+
+    // Καταγραφή στο ιστορικό πωλήσεων
+    const history = JSON.parse(localStorage.getItem('triton_sales_history') || '[]');
+    history.push({
+        date: new Date().toISOString(),
+        customer: document.getElementById('cName').value || 'Λιανική',
+        totalNet: totalSalesNet,
+        profit: totalSalesNet - totalCost
+    });
+    localStorage.setItem('triton_sales_history', JSON.stringify(history));
+
+    // 5. Εκτέλεση εκτύπωσης και ανανέωση alerts
+    window.print();
+    if (typeof checkLowStock === "function") checkLowStock();
+}
+  function checkLowStock() {
+    const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    const alertContainer = document.getElementById('stockAlertContainer');
+    const list = document.getElementById('lowStockList');
+    const lowLimit = 5; // Το όριο που θεωρείται "χαμηλό"
+    
+    list.innerHTML = ""; // Καθαρισμός
+    let foundLow = false;
+
+    Object.keys(products).forEach(name => {
+        const stock = parseFloat(products[name].stock) || 0;
+        if (stock <= lowLimit) {
+            foundLow = true;
+            const li = document.createElement('li');
+            li.innerHTML = `Το προϊόν <strong>${name}</strong> έχει μείνει με <strong>${stock}</strong> τεμάχια.`;
+            list.appendChild(li);
+        }
+    });
+
+    // Εμφάνισε το widget μόνο αν βρέθηκαν ελλείψεις
+    if (foundLow) {
+        alertContainer.style.display = "block";
+    } else {
+        alertContainer.style.display = "none";
+    }
+}
+
+// Κλήση κατά το άνοιγμα της σελίδας
+window.addEventListener('load', checkLowStock);
 </script>
   <div class="print-only-invoice" id="printableInvoice">
     <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #1e3a8a; padding-bottom: 20px;">
@@ -443,5 +561,7 @@
         <h2 style="color: #1e3a8a;">ΠΛΗΡΩΤΕΟ ΠΟΣΟ: <span id="p-grand"></span></h2>
     </div>
 </div>
+  
+    
 </body>
 </html>

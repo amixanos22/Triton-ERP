@@ -3,7 +3,7 @@
 <head>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title> index.html</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -359,6 +359,23 @@
     height: calc(800px - 60px); /* Όλο το υπόλοιπο ύψος */
     overflow-y: auto;
     background: #f8fafc;
+}
+      @media (max-width: 600px) {
+    .triton-modal {
+        width: 98% !important;
+        height: 95% !important;
+        top: 2.5% !important;
+        left: 1% !important;
+    }
+}
+      @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+      button[onclick="saveSettings()"]:hover {
+    background: #0284c7 !important; /* Λίγο πιο σκούρο μπλε */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
 }
 </style>
     </style>

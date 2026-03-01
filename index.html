@@ -299,6 +299,68 @@
     70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 212, 255, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
 }
+      <style>
+.triton-modal {
+    display: none; /* Κρυφό αρχικά */
+    position: fixed;
+    width: 1150px;
+    height: 800px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    z-index: 9999;
+    /* Αρχικό κεντράρισμα */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid #1e293b;
+    overflow: hidden;
+}
+
+.modal-header {
+    height: 60px;
+    background: #020617; /* Triton Dark */
+    color: #7dd3fc; /* Triton Light Blue */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    cursor: grab; /* Δείχνει ότι μετακινείται */
+    user-select: none;
+}
+
+.modal-header:active {
+    cursor: grabbing;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.close-x {
+    background: none;
+    border: none;
+    color: #ef4444; /* Κόκκινο για το Χ */
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+.close-x:hover {
+    transform: scale(1.2);
+}
+
+.modal-content-area {
+    height: calc(800px - 60px); /* Όλο το υπόλοιπο ύψος */
+    overflow-y: auto;
+    background: #f8fafc;
+}
+</style>
     </style>
 </head>
 <body>
@@ -431,9 +493,13 @@
        <div class="current-page translate" data-el="Επισκόπηση" data-en="Dashboard">Επισκόπηση</div>
           <div class="quick-actions-wrapper" style="display: flex; align-items: center; justify-content: flex-end; gap: 2px;">
           <div class="top-navbar-right">
-         <span style="font-size: 14px; color: #64748b; font-weight: bold; white-space: nowrap;">
-            ΝΕΑ ΕΓΓΡΑΦΗ
-        </span>
+        <span style="font-size: 14px; 
+             color: #64748b; 
+             font-weight: bold; 
+             white-space: nowrap; 
+             position: relative; 
+             left:  150px;"> ΝΕΑ ΕΓΓΡΑΦΗ
+</span>  
             <div class="top-navbar-right">
                 <div class="quick-actions-wrapper">
                     <button class="add-btn" id="quickAddBtn">＋</button>
@@ -444,9 +510,9 @@
 <a href="invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ"><span>🔗</span> Πιστωτικό Συσχετιζόμενο</a>
 <a href="finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ"><span>💰</span> Απόδειξη Είσπραξης</a>
 <a href="finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ"><span>💸</span> Απόδειξη Πληρωμής</a>
-</div>
-                </div>
+</div></div>
   
+                 
   
            
  
@@ -1580,6 +1646,63 @@ function closeTritonModal() {
     modal.style.display = 'none';
     frame.src = ""; // Καθαρίζουμε το iframe για ταχύτητα
 }
+  <script>
+// ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΑΝΟΙΓΜΑ
+function openTritonModal() {
+    const modal = document.getElementById('tritonModal');
+    modal.style.display = 'block';
+    // Ενεργοποίηση του Drag μόλις ανοίξει
+    makeElementDraggable(modal, document.getElementById('tritonModalHeader'));
+}
+
+// ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΚΛΕΙΣΙΜΟ
+function closeTritonModal() {
+    document.getElementById('tritonModal').style.display = 'none';
+}
+
+// ENGINE ΓΙΑ ΤΟ DRAGGING
+function makeElementDraggable(elmnt, header) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    header.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        
+        // Ακυρώνουμε το CSS translate για να μην μπερδεύεται το drag
+        if (elmnt.style.transform !== "none") {
+            const rect = elmnt.getBoundingClientRect();
+            elmnt.style.transform = "none";
+            elmnt.style.top = rect.top + "px";
+            elmnt.style.left = rect.left + "px";
+        }
+
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // Υπολογισμός νέας θέσης
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // Ορισμός θέσης
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+</script>
 </script>
    <div id="tritonGlobalModal" class="triton-modal">
     <div id="tritonModalHeader" class="modal-header">

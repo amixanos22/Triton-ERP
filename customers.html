@@ -369,7 +369,65 @@ function saveChanges() {
             }
         } catch (err) { console.warn("Holiday Sync Error"); }
     }
+// --- ΕΠΕΞΕΡΓΑΣΙΑ ΠΕΛΑΤΗ ---
+function editCustomer(name) {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const c = db[name];
+    if (!c) return;
 
+    editingName = name; // Κρατάμε το παλιό όνομα για την περίπτωση αλλαγής
+    
+    // Άνοιγμα modal και γέμισμα πεδίων
+    openModal();
+    setCustomerType(c.type || 'business');
+    
+    document.getElementById('mCustName').value = c.name;
+    document.getElementById('mCustAfm').value = c.afm || '';
+    document.getElementById('mCustDoy').value = c.doy || '';
+    document.getElementById('mCustAddress').value = c.address || '';
+    document.getElementById('mCustCity').value = c.city || '';
+    document.getElementById('mCustZip').value = c.zip || '';
+    document.getElementById('mCustPhone').value = c.phone || '';
+    document.getElementById('mCustDiscount').value = c.discount || 0;
+    document.getElementById('mCustContacts').value = c.contacts || '';
+    
+    // Emails
+    currentEmailList = c.emails || [];
+    renderEmailChips();
+    
+    // Υποκαταστήματα
+    const branchesCont = document.getElementById('branchesContainer');
+    branchesCont.innerHTML = '';
+    if (c.branches) {
+        c.branches.forEach(b => addBranchRow(b));
+    }
+}
+
+// --- ΔΙΑΓΡΑΦΗ ΠΕΛΑΤΗ ---
+function deleteCustomer(name) {
+    if (confirm(`⚠️ Προσοχή: Είστε σίγουροι ότι θέλετε να διαγράψετε τον πελάτη "${name}";`)) {
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        delete db[name];
+        localStorage.setItem('customersDB', JSON.stringify(db));
+        renderCustomers();
+        
+        // Ενημέρωση Dashboard αν είναι ανοιχτό
+        if (window.opener && !window.opener.closed) {
+            window.opener.location.reload();
+        }
+    }
+}
+
+// --- ΑΡΧΙΚΟΠΟΙΗΣΗ ΣΕΛΙΔΑΣ ---
+document.addEventListener('DOMContentLoaded', () => {
+    renderCustomers();
+    checkTritonHolidays();
+    
+    // Bonus: Κλείσιμο modal με το πλήκτρο Esc
+    window.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") closeModal();
+    });
+});
     document.addEventListener('DOMContentLoaded', () => {
         renderCustomers();
         checkTritonHolidays();

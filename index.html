@@ -2604,6 +2604,73 @@ function closeTritonModal() {
     </div>
     <iframe id="modalIframe" src="" style="width:100%; height:calc(100% - 40px); border:none;"></iframe>
 </div>
+          <script>
+// --- ΒΗΜΑ 1: ΚΩΔΙΚΟΣ ΕΝΟΙΚΙΑΣΗΣ (Πρώτη Πύλη) ---
+function unlockTriton() {
+    const keyInput = document.getElementById('masterKey');
+    if (!keyInput) { alert("Σφάλμα: Δεν βρέθηκε το πεδίο masterKey"); return; }
+    
+    const key = keyInput.value;
+    
+    // Ο κωδικός που πουλάς (Πρέπει να είναι ο ίδιος στο HTML)
+    if (key === "TRITON2026") { 
+        document.getElementById('masterGate').style.display = 'none';
+        document.getElementById('authGate').style.display = 'block';
+        console.log("🔱 Triton: Η πρώτη πύλη άνοιξε.");
+    } else {
+        alert("❌ Λάθος Κωδικός Ενοικίασης!");
+    }
+}
+
+// --- ΒΗΜΑ 2: ΚΑΝΟΝΙΚΟ LOGIN (Email + Pass) ---
+function completeLogin() {
+    const email = document.getElementById('userEmail').value;
+    const pass = document.getElementById('userPass').value;
+
+    if (!email || !email.includes('@')) {
+        alert("⚠️ Εισάγετε έγκυρο Email Επιχείρησης.");
+        return;
+    }
+
+    if (pass.length < 4) {
+        alert("⚠️ Ο κωδικός πρόσβασης πρέπει να είναι τουλάχιστον 4 ψηφία.");
+        return;
+    }
+
+    // Αν όλα είναι οκ, μπαίνουμε
+    localStorage.setItem('triton_user_email', email);
+    localStorage.setItem('triton_is_logged_in', 'true');
+    executeFinalEntry();
+}
+
+// --- ΒΗΜΑ 2 (ΕΝΑΛΛΑΚΤΙΚΗ): GOOGLE LOGIN ---
+function fakeGoogleLogin() {
+    console.log("🔱 Triton: Το κουμπί της Google πατήθηκε.");
+    const email = prompt("🔱 TRITON GOOGLE LOGIN\nΕισάγετε το Gmail σας για αυτόματη επαλήθευση:");
+
+    if (email && email.includes('@')) {
+        localStorage.setItem('triton_user_email', email);
+        localStorage.setItem('triton_is_logged_in', 'true');
+        alert("✅ Η Google επαλήθευσε το email: " + email);
+        executeFinalEntry();
+    } else if (email !== null) {
+        alert("❌ Άκυρο Email.");
+    }
+}
+
+// --- ΤΕΛΙΚΗ ΕΙΣΟΔΟΣ (Εξαφάνιση Μαύρου Overlay) ---
+function executeFinalEntry() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            // Εδώ τρέχουν οι συναρτήσεις του ERP σου
+            if (typeof refreshTritonDashboard === "function") refreshTritonDashboard();
+        }, 500);
+    }
+}
+</script>
 </body>
 </html>
    

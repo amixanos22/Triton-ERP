@@ -671,7 +671,7 @@
         <a href="#" class="nav-item">📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span></a>
         
    <div class="nav-item-container">
-    <a href="#" class="nav-item">
+   <a href="javascript:void(0)" class="nav-item">
         💎 <span class="translate" data-el="Πληρωμές" data-en="Payments">Πληρωμές</span>
     </a>
     <div class="submenu">
@@ -694,11 +694,14 @@
     <span>🧪</span> 
     <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
 </a>
-      <a href="dashboard.html" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">  
-    📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
-</a> 
-      <a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #f59e0b; margin-top: 5px;">
+
+<a href="javascript:void(0)" onclick="openDashboardModal()" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">  
     <span>📊</span> 
+    <span class="translate" data-el="ΟΙΚΟΝΟΜΙΚΟ DASHBOARD" data-en="FINANCIAL DASHBOARD">ΟΙΚΟΝΟΜΙΚΟ DASHBOARD</span>
+</a>
+
+<a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #06b6d4; margin-top: 5px;">
+    <span>📈</span> 
     <span class="translate" data-el="Οικονομικό Πλάνο (Κέρδη/Έξοδα)" data-en="Financial Plan (Profit/Expenses)">
         Οικονομικό Πλάνο (Κέρδη/Έξοδα)
     </span>
@@ -723,7 +726,7 @@
  <div class="main-container">
         <header class="top-navbar">
            
-       <div class="current-page translate" data-el="Επισκόπηση" data-en="Dashboard">Επισκόπηση</div>
+        <div class="current-page translate" data-el="Επισκόπηση" data-en="Dashboard">Επισκόπηση</div>
           <div class="quick-actions-wrapper" style="display: flex; align-items: center; justify-content: flex-end; gap: 2px;">
           <div class="top-navbar-right">
         <span style="font-size: 14px; 
@@ -738,34 +741,45 @@
                     <button class="add-btn" id="quickAddBtn">＋</button>
                   <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
     
-    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html', '📄 Τιμολόγιο Πώλησης', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-                <span>📄</span> Τιμολόγιο Πώλησης
-            </a>
-                    
+   <a href="javascript:void(0)" onclick="createNewWindow('invoice.html', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
+        <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
+    </a>
 
-    <a href="javascript:void(0)" onclick="createNewWindow('delivery_note.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+    <a href="javascript:void(0)" onclick="createNewWindow('deltio.html', '🚚 Δελτίο Αποστολής', 1100, 800)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
         <span>🚚</span> Δελτίο Αποστολής
     </a>
 
-    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ', '🔄 Πιστωτικό Τιμολόγιο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+    <a href="javascript:void(0)" onclick="createNewWindow('returns.html', '🔄 Πιστωτικό Τιμολόγιο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
         <span>🔄</span> Πιστωτικό Τιμολόγιο
     </a>
 
-    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ', '🔗 Πιστωτικό Συσχετιζόμενο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+    <a href="javascript:void(0)" onclick="createNewWindow('returns.html?mode=related', '🔗 Πιστωτικό Συσχετιζόμενο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
         <span>🔗</span> Πιστωτικό Συσχετιζόμενο
     </a>
 
-    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+    <a href="javascript:void(0)" onclick="createNewWindow('eispraxi.html', '💰 Απόδειξη Είσπραξης', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
         <span>💰</span> Απόδειξη Είσπραξης
     </a>
 
-    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+    <a href="javascript:void(0)" onclick="createNewWindow('pliromi.html', '💸 Απόδειξη Πληρωμής', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
         <span>💸</span> Απόδειξη Πληρωμής
     </a>
 
+                    <div style="background:#f8fafc; padding:8px 15px; font-size:10px; font-weight:900; color:#64748b; border-bottom:1px solid #e2e8f0;">ΔΙΑΧΕΙΡΙΣΗ</div>
+    
+    <a href="javascript:void(0)" onclick="createNewWindow('inventory.html', '📦 Αποθήκη', 1200, 800)" style="padding: 10px 15px; text-decoration: none; color: #475569; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 13px;">
+        <span>📦</span> Αποθήκη
+    </a>
+      <a href="javascript:void(0)" onclick="openDashboardModal()" style="padding: 10px 15px; text-decoration: none; color: #475569; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 13px;">
+        <span>📊</span> Πωλήσεις (Stats)
+    </a>
+    <a href="javascript:void(0)" onclick="createNewWindow('finance.html', '🏛️ Ταμείο', 1200, 800)" style="padding: 10px 15px; text-decoration: none; color: #475569; display: flex; align-items: center; gap: 10px; font-size: 13px;">
+        <span>🏛️</span> Ταμείο
+    </a>              
 </div>
                   
 </div></div>
+  
   
   
            
@@ -928,31 +942,67 @@ window.onload = function() {
 };
 // Η νέα συνάρτηση που καθοδηγεί τον χρήστη στο "ανθρωπάκι"
 function showTritonHint() {
-    // Δημιουργία ενός κομψού banner στα χρώματα του Triton
+    // 1. ΕΛΕΓΧΟΣ: Αν υπάρχει ήδη το banner, μην το ξαναβγάλεις
+    if (document.getElementById('tritonHintBanner')) return;
+
+    // 2. Προσθήκη Animation (αν δεν υπάρχει)
+    if (!document.getElementById('tritonAnimation')) {
+        const style = document.createElement('style');
+        style.id = 'tritonAnimation';
+        style.innerHTML = `
+            @keyframes slideInRightTriton {
+                from { transform: translateX(110%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 3. Δημιουργία Banner (Πιο στενό και compact)
     const hint = document.createElement('div');
     hint.id = 'tritonHintBanner';
+    hint.style.cssText = `
+        position: fixed; 
+        top: 85px; 
+        right: 20px; 
+        background: #0f172a; 
+        color: #0ea5e9; 
+        padding: 12px 18px; 
+        border-radius: 10px; 
+        border: 1px solid #0ea5e9; 
+        box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
+        z-index: 10005; 
+        font-family: 'Segoe UI', sans-serif;
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        max-width: 280px; /* ΕΔΩ ΤΟ ΚΑΝΟΥΜΕ ΠΙΟ ΣΤΕΝΟ */
+        animation: slideInRightTriton 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
+    `;
+
     hint.innerHTML = `
-        <div style="position:fixed; top:80px; right:20px; background:#001f3f; color:#00d4ff; 
-             padding:15px 20px; border-radius:12px; border:1px solid #00d4ff; 
-             box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:10001; font-family:sans-serif;
-             display:flex; align-items:center; gap:12px; animation: slideInRight 0.5s ease-out;">
-            <span style="font-size:20px;">👤</span>
-            <div>
-                <strong style="display:block; color:white;">Δεν πειράζει!</strong>
-                <span style="font-size:13px;">Μπορείς να συμπληρώσεις τα στοιχεία σου αργότερα από το εικονίδιο προφίλ πάνω δεξιά.</span>
-            </div>
+        <div style="font-size:20px;">👤</div>
+        <div style="flex: 1;">
+            <strong style="display:block; color:white; font-size:13px; margin-bottom:2px;">Δεν πειράζει!</strong>
+            <span style="font-size:11px; color:#94a3b8; line-height:1.3; display:block;">
+                Συμπλήρωσε τα στοιχεία σου αργότερα από το προφίλ πάνω δεξιά.
+            </span>
         </div>
     `;
+
     document.body.appendChild(hint);
 
-    // Εξαφάνιση μετά από 6 δευτερόλεπτα
+    // 4. Εξαφάνιση
     setTimeout(() => {
         hint.style.opacity = '0';
-        hint.style.transition = 'opacity 1s ease';
-        setTimeout(() => hint.remove(), 1000);
-    }, 6000);
+        hint.style.transform = 'translateX(20px)';
+        hint.style.transition = 'all 0.6s ease';
+        setTimeout(() => {
+            if(hint.parentNode) hint.parentNode.removeChild(hint);
+        }, 600);
+    }, 5500);
 }
-
 function saveSettings() {
     const settings = {
         name: document.getElementById('setName').value,
@@ -1070,11 +1120,19 @@ function finalizeInvoice() {
 // --- 4. INITIALIZATION ---
 window.onload = function() {
     console.log("🔱 Triton ERP: Initializing System...");
-    // 1. Έλεγχος Login
+
+    // 1. Έλεγχος Login (Ο παλιός σου κώδικας)
     if(localStorage.getItem('isLoggedIn') === 'true') {
         const loginOverlay = document.getElementById('loginOverlay');
         if(loginOverlay) loginOverlay.style.display = "none";
     }
+
+    // 2. Ενεργοποίηση του Triton Hint (Το νέο μπανεράκι)
+    showTritonHint(); 
+    
+    // 3. Εδώ μπορείς να καλέσεις και άλλες λειτουργίες αν έχεις (π.χ. μεταφράσεις)
+    console.log("🔱 Triton: System Ready.");
+};
    </script>
           
 <script>
@@ -1349,14 +1407,21 @@ function closeSettings() {
 // --- 2. Η ΜΗΧΑΝΗ ΤΩΝ POPUPS (ΔΙΟΡΘΩΜΕΝΗ) ---
 function createNewWindow(url, title, width, height) {
     console.log("🔱 Triton: Opening " + title);
+    
     const left = (screen.width - width) / 2;
     const top = (screen.height - height) / 2;
-    const windowName = title.replace(/\s+/g, ''); 
-    const options = `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes,popup=yes`;
+
+    // ΔΙΟΡΘΩΣΗ 1: Δίνουμε μοναδικό όνομα βασισμένο στο αρχείο (π.χ. invoice_win)
+    // Έτσι αν ανοίξεις Τιμολόγιο ΚΑΙ Απόδειξη, θα μείνουν ΚΑΙ ΤΑ ΔΥΟ ανοιχτά.
+    const windowID = url.split('.')[0] + "_triton"; 
     
-    const newWin = window.open(url, windowName, options);
+    // ΔΙΟΡΘΩΣΗ 2: Αφαιρούμε το "popup=yes" που μερικές φορές τα πετάει έξω από τον browser
+    const options = `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`;
+    
+    const newWin = window.open(url, windowID, options);
+    
     if (newWin) {
-        newWin.focus();
+        newWin.focus(); // Φέρνει το νέο παράθυρο πάντα μπροστά από την index
     } else {
         alert("⚠️ Παρακαλώ επιτρέψτε τα Popups για το Triton!");
     }
@@ -1534,7 +1599,7 @@ function createNewWindow(url, title, width, height) {
     }
 }
 </script>
-         
+  <script>       
 // ==========================================
 // 📊 ΤΑΜΠΛΟ ΚΕΡΔΩΝ & ΣΤΑΤΙΣΤΙΚΑ (TRITON ENGINE)
 // ==========================================

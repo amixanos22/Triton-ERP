@@ -674,10 +674,10 @@
    <a href="javascript:void(0)" class="nav-item">
         💎 <span class="translate" data-el="Πληρωμές" data-en="Payments">Πληρωμές</span>
     </a>
-    <div class="submenu">
-        <a href="javascript:void(0)" onclick="openEispraxiModal()" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
-        <a href="javascript:void(0)" onclick="openPliromiModal()" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
-    </div>
+   <div class="submenu">
+    <a href="javascript:void(0)" onclick="openEispraxiModal()" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
+    <a href="javascript:void(0)" onclick="openPliromiModal()" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
+</div>
 </div>
 
 <a href="javascript:void(0)" onclick="openCustomerModal()" class="nav-item">
@@ -1325,11 +1325,12 @@ function initMainChart() {
 </div>
 
 <script>
-// --- 1. ΣΥΣΤΗΜΑ ΑΣΦΑΛΕΙΑΣ & LOGIN ---
+// --- ΒΗΜΑ 1: Κωδικός Ενοικίασης (Master Key) ---
 function unlockTriton() {
     const key = document.getElementById('masterKey').value;
-    if (key === "TRITON2026") {
-        localStorage.setItem('triton_gate_unlocked', 'true');
+    
+    if (key === "TRITON2026") { // Ο κωδικός που πουλάς
+        // Κρύβεις το πρώτο κουτί, δείχνεις το δεύτερο
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
     } else {
@@ -1337,29 +1338,26 @@ function unlockTriton() {
     }
 }
 
+// --- ΒΗΜΑ 2: Επαλήθευση Email (Αυτό που μου έστειλες) ---
 function completeLogin() {
     const email = document.getElementById('userEmail').value;
+    const pass = document.getElementById('userPass').value;
+
     if (!email || !email.includes('@')) {
         alert("⚠️ Εισάγετε έγκυρο Email Επιχείρησης.");
         return;
     }
+
+    if (pass.length < 4) {
+        alert("⚠️ Ο κωδικός πρόσβασης πρέπει να είναι τουλάχιστον 4 ψηφία.");
+        return;
+    }
+
+    // Όλα καλά! Αποθήκευση και είσοδος
     localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
-    executeFinalEntry();
+    executeFinalEntry(); 
 }
-
-function executeFinalEntry() {
-    const overlay = document.getElementById('loginOverlay');
-    if(overlay) {
-        overlay.style.opacity = "0";
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            if (!localStorage.getItem('bizSettings')) openSettings();
-            refreshTritonDashboard();
-        }, 500);
-    }
-}
-
 // --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (MYDATA READY) ---
 function openSettings() {
     const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
@@ -1577,8 +1575,16 @@ function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγέ�
 
 // --- ΟΙΚΟΝΟΜΙΚΑ ---
 function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
-function openEispraxiModal()  { createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); }
-function openPliromiModal()   { createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); }
+// 1. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΕΙΣΠΡΑΞΗ (Έσοδο)
+// Διόρθωση: Το 'income.html' γίνεται 'eispraxi.html'
+function openEispraxiModal() { 
+    createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); 
+}
+
+// Διόρθωση: Το 'expense.html' γίνεται 'pliromi.html'
+function openPliromiModal() { 
+    createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); 
+}
 
 // --- ΣΤΑΤΙΣΤΙΚΑ ---
 function openDashboardModal() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); }
@@ -2534,6 +2540,34 @@ function showTritonHint() {
                 alert("❌ Λάθος στοιχεία. Η πρόσβαση δεν επετράπη.");
             }
         }
+           async function fakeGoogleLogin() {
+    // 1. Ζητάμε ΜΟΝΟ το email (Προσομοίωση Google Auth)
+    const email = prompt("🔱 Triton Security\nΣύνδεση με Google. Εισάγετε το Gmail σας για επαλήθευση:");
+    
+    // Αν ο χρήστης πατήσει "Άκυρο" ή το αφήσει κενό
+    if (!email || !email.includes('@')) {
+        alert("⚠️ Απαιτείται έγκυρο Email για την ταυτοποίηση μέσω Google.");
+        return;
+    }
+
+    // 2. Εφόσον πέρασε την πρώτη πόρτα (TRITON2026), 
+    // το Google Login τον βάζει μέσα αμέσως μόνο με το email του.
+    console.log("🔱 Triton: Ταυτοποίηση Google επιτυχής για " + email);
+    
+    localStorage.setItem('triton_user_email', email);
+    localStorage.setItem('triton_is_logged_in', 'true');
+    
+    // 3. Εξαφάνιση του Login Overlay
+    const overlay = document.getElementById('loginOverlay');
+    if(overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            // Ανανέωση του Dashboard
+            if(typeof refreshTritonDashboard === "function") refreshTritonDashboard();
+        }, 500);
+    }
+} 
     </script>
           <script>
       function createNewWindow(url, title, width, height) {

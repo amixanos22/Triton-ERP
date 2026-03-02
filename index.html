@@ -1439,33 +1439,28 @@ function importBackup(event) {
 // 🔱 TRITON CENTRAL NAVIGATION ENGINE
 // ==========================================
 
-// 1. Συναρτήσεις για την Πλάγια Μπάρα & το Μενού (+)
-function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
-function openShoppingModal()  { createNewWindow('suppliers.html', 'Αγορές', 1200, 800); }
-function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές', 1100, 800); }
-function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
-function openEispraxiModal()  { createNewWindow('income.html', 'Απόδειξη Είσπραξης', 900, 700); }
-function openPliromiModal()   { createNewWindow('expense.html', 'Απόδειξη Πληρωμής', 900, 700); }
+/// 1. Συναρτήσεις για την Πλάγια Μπάρα & το Μενού (+)
+    function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
+    function openShoppingModal()  { createNewWindow('suppliers.html', 'Αγορές', 1200, 800); }
+    function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές', 1100, 800); }
+    function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
+    function openEispraxiModal()  { createNewWindow('income.html', 'Απόδειξη Είσπραξης', 900, 700); }
+    function openPliromiModal()   { createNewWindow('expense.html', 'Απόδειξη Πληρωμής', 900, 700); }
 
-// 2. Η Κεντρική Μηχανή Ανοίγματος Παραθύρων
-function createNewWindow(url, title, width, height) {
-    console.log("🔱 Triton: Opening " + title);
-    
-    // Υπολογισμός κεντραρίσματος στην οθόνη
-    const left = (screen.width - width) / 2;
-    const top = (screen.height - height) / 2;
-    
-    // Άνοιγμα Popup
-    const newWin = window.open(url, '_blank', 
-        `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
-    );
+    // 2. Η Κεντρική Μηχανή Ανοίγματος Παραθύρων
+    function createNewWindow(url, title, width, height) {
+        console.log("🔱 Triton: Opening " + title);
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
+        const newWin = window.open(url, '_blank', 
+            `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+        );
 
-    // Έλεγχος αν ο Browser έκοψε το παράθυρο
-    if (!newWin) {
-        alert("⚠️ Το Triton εμποδίστηκε! Παρακαλώ επιτρέψτε τα αναδυόμενα παράθυρα (popups) από τις ρυθμίσεις του browser σας (πάνω δεξιά στη μπάρα).");
+        if (!newWin) {
+            alert("⚠️ Το Triton εμποδίστηκε! Παρακαλώ επιτρέψτε τα popups από τις ρυθμίσεις του browser σας.");
+        }
     }
-}
-</script>
+      <script>    
 // ==========================================
 // 📊 ΤΑΜΠΛΟ ΚΕΡΔΩΝ & ΣΤΑΤΙΣΤΙΚΑ (TRITON ENGINE)
 // ==========================================

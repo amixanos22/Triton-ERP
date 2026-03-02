@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="el">
 <head>
   
@@ -893,34 +893,39 @@ function openSettings() {
     if(modal) modal.style.display = 'flex';
 }
 
+// --- 1. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΚΛΕΙΝΕΙ ΤΙΣ ΡΥΘΜΙΣΕΙΣ ---
 function closeSettings() {
-    // 1. Κλείνουμε το παράθυρο (Χρησιμοποιούμε το ΙΔΙΟ ID: settingsModal)
-    const modal = document.getElementById('settingsModal'); 
+    const modal = document.getElementById('settingsModal');
     
     if (modal) {
         modal.style.display = 'none';
-        console.log("🔱 Triton: Η φόρμα έκλεισε με επιτυχία.");
+        console.log("✅ Triton: Η φόρμα έκλεισε επιτυχώς.");
     }
-    
-    // 2. Έλεγχος για το Hint (Συννεφάκι)
+
+    // Αν δεν έχουν σωθεί στοιχεία, ξεκίνα το Hint (μπλε συννεφάκι)
     const savedData = localStorage.getItem('bizSettings');
-    if (!savedData) {
+    if (!savedData || savedData === '{}') {
         if (typeof showTritonHint === "function") {
             showTritonHint();
         }
     }
 }
-function showTritonHint() {
-    const banner = document.getElementById('triton-welcome-banner');
-    if (banner) {
-        banner.style.display = 'flex';
-        
-        // Το κρύβουμε αυτόματα μετά από 6 δευτερόλεπτα
-        setTimeout(() => {
-            banner.style.display = 'none';
-        }, 6000);
+
+// --- 2. Η ΑΡΧΙΚΟΠΟΙΗΣΗ ΤΟΥ ΣΥΣΤΗΜΑΤΟΣ (ΣΤΟ ΤΕΛΟΣ ΤΟΥ SCRIPT) ---
+window.onload = function() {
+    console.log("🔱 Triton ERP: Initializing System...");
+
+    // Έλεγχος Login
+    if(localStorage.getItem('isLoggedIn') === 'true') {
+        const loginOverlay = document.getElementById('loginOverlay');
+        if(loginOverlay) loginOverlay.style.display = "none";
     }
-}
+
+    // Ξεκίνα το Triton Hint (Το μπλε μπανεράκι)
+    showTritonHint(); 
+    
+    console.log("🔱 Triton: System Ready.");
+};
 // Η νέα συνάρτηση που καθοδηγεί τον χρήστη στο "ανθρωπάκι"
 function showTritonHint() {
     // Δημιουργία ενός κομψού banner στα χρώματα του Triton
@@ -1324,16 +1329,15 @@ function saveSettings() {
     localStorage.setItem('bizSettings', JSON.stringify(settings));
     location.reload();
 }
+// --- 1. ΚΛΕΙΣΙΜΟ ΡΥΘΜΙΣΕΩΝ ---
 function closeSettings() {
-    // Χρησιμοποιούμε το ID 'settingsModal' γιατί αυτό ανοίγει η openSettings
     const modal = document.getElementById('settingsModal');
-    
     if (modal) {
-        modal.style.display = 'none'; // Εδώ γίνεται η "μαγεία" και κλείνει!
-        console.log("✅ Triton: Η φόρμα έκλεισε επιτυχώς.");
+        modal.style.display = 'none';
+        console.log("✅ Triton: Settings closed.");
     }
 
-    // Αν δεν έχουν σωθεί στοιχεία, δείξε το συννεφάκι (Hint)
+    // Έλεγχος αν λείπουν στοιχεία για να δείξουμε το Hint
     const savedData = localStorage.getItem('bizSettings');
     if (!savedData || savedData === '{}') {
         if (typeof showTritonHint === "function") {
@@ -1341,6 +1345,40 @@ function closeSettings() {
         }
     }
 }
+
+// --- 2. Η ΜΗΧΑΝΗ ΤΩΝ POPUPS (ΔΙΟΡΘΩΜΕΝΗ) ---
+function createNewWindow(url, title, width, height) {
+    console.log("🔱 Triton: Opening " + title);
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    const windowName = title.replace(/\s+/g, ''); 
+    const options = `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes,popup=yes`;
+    
+    const newWin = window.open(url, windowName, options);
+    if (newWin) {
+        newWin.focus();
+    } else {
+        alert("⚠️ Παρακαλώ επιτρέψτε τα Popups για το Triton!");
+    }
+}
+
+// --- 3. ΑΡΧΙΚΟΠΟΙΗΣΗ ΣΥΣΤΗΜΑΤΟΣ (ΜΟΝΟ ΜΙΑ ΦΟΡΑ ΣΤΟ ΤΕΛΟΣ) ---
+window.onload = function() {
+    console.log("🔱 Triton ERP: System Initializing...");
+
+    // Έλεγχος Login
+    if(localStorage.getItem('isLoggedIn') === 'true') {
+        const loginOverlay = document.getElementById('loginOverlay');
+        if(loginOverlay) loginOverlay.style.display = "none";
+    }
+
+    // Ξεκίνα το μπλε μπανεράκι (Hint)
+    if (typeof showTritonHint === "function") {
+        showTritonHint();
+    }
+    
+    console.log("🔱 Triton: System Ready.");
+};
 // --- 3. DASHBOARD & STATISTICS ---
 function refreshTritonDashboard() {
     const invoices = JSON.parse(localStorage.getItem('triton_invoices') || '[]');
@@ -1453,12 +1491,32 @@ function checkPass() {
 // ==========================================
 // 🛸 2. ΠΛΟΗΓΗΣΗ (POPUPS)
 // ==========================================
+// ==========================================
+// 🛸 ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (GITHUB SYNC)
+// ==========================================
+
+// --- ΠΕΛΑΤΕΣ & ΠΡΟΜΗΘΕΥΤΕΣ ---
 function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
-function openShoppingModal()  { createNewWindow('suppliers.html', 'Αγορές', 1200, 800); }
-function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές', 1100, 800); }
+function openSupplierModal()  { createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); }
+
+// --- ΠΩΛΗΣΕΙΣ & ΕΚΔΟΣΗ ---
+function openInvoiceModal()   { createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); }
+function openBillingModal()   { createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); }
+function openDeltioModal()    { createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); }
+function openReturnsModal()   { createNewWindow('returns.html', 'Επιστροφές / Πιστωτικά', 1100, 800); }
+
+// --- ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ ---
+function openInventoryModal() { createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); }
+function openShoppingModal()  { createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); }
+function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές Παραγωγής', 1100, 800); }
+
+// --- ΟΙΚΟΝΟΜΙΚΑ ---
 function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
-function openEispraxiModal()  { createNewWindow('income.html', 'Απόδειξη Είσπραξης', 900, 700); }
-function openPliromiModal()   { createNewWindow('expense.html', 'Απόδειξη Πληρωμής', 900, 700); }
+function openEispraxiModal()  { createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); }
+function openPliromiModal()   { createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); }
+
+// --- ΣΤΑΤΙΣΤΙΚΑ ---
+function openDashboardModal() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); }
 
 // ==========================================
 // ⚙️ 3. ΜΗΧΑΝΗ ΠΑΡΑΘΥΡΩΝ

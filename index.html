@@ -1034,7 +1034,7 @@ document.body.appendChild(hint);
 }
 function saveSettings() {
     const settings = {
-        name: document.getElementById('setName').value,
+        name: document.getElementById('setName').value.trim().toUpperCase(),
         job: document.getElementById('setJob').value,
         afm: document.getElementById('setAfm').value,
         doy: document.getElementById('setDoy').value,
@@ -1044,7 +1044,9 @@ function saveSettings() {
         phone: document.getElementById('setPhone').value,
         gemi: document.getElementById('setGemi').value,
         mu: document.getElementById('setMyDataUser').value,
-        mk: document.getElementById('setMyDataKey').value
+        mk: document.getElementById('setMyDataKey').value,
+        // ΠΡΟΣΟΧΗ: Αυτή η γραμμή παίρνει τη φωτό από την προεπισκόπηση και τη σώζει!
+        logo: document.getElementById('imgPreview').src 
     };
 
     if(!settings.afm || !settings.name) {
@@ -1054,13 +1056,37 @@ function saveSettings() {
 
     localStorage.setItem('bizSettings', JSON.stringify(settings));
     
-    // Αν υπήρχε το hint, το αφαιρούμε αφού έσωσε τα στοιχεία
     const existingHint = document.getElementById('tritonHintBanner');
     if(existingHint) existingHint.remove();
 
     alert('Τα στοιχεία αποθηκεύτηκαν επιτυχώς! 🔱');
     closeSettings();
     location.reload(); 
+}
+  function loadBizBranding() {
+    const data = JSON.parse(localStorage.getItem('bizSettings'));
+    if (!data) return;
+
+    // 1. Γέμισμα Logo (αν υπάρχει)
+    const logoImg = document.getElementById('docLogo'); // Το ID στο έγγραφο
+    if (logoImg && data.logo && data.logo.startsWith('data:image')) {
+        logoImg.src = data.logo;
+        logoImg.style.display = 'block';
+    }
+
+    // 2. Γέμισμα Στοιχείων (Όνομα, ΑΦΜ κλπ)
+    const nameEl = document.getElementById('docBizName');
+    const infoEl = document.getElementById('docBizDetails');
+
+    if (nameEl) nameEl.innerText = data.name;
+    if (infoEl) {
+        infoEl.innerHTML = `
+            ${data.job}<br>
+            ΑΦΜ: ${data.afm} - ΔΟΥ: ${data.doy}<br>
+            ${data.address}, ${data.city} - ΤΚ: ${data.tk}<br>
+            Τηλ: ${data.phone}
+        `;
+    }
 }
 // --- 3. ΔΙΑΧΕΙΡΙΣΗ ΤΙΜΟΛΟΓΙΟΥ ---
 function openInvoiceForm() {
@@ -2097,9 +2123,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             
 
-// ==========================================
-// 3. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ & myDATA
-// ==========================================
 function saveSettings() {
     const settings = {
         name: document.getElementById('setName').value.trim().toUpperCase(),
@@ -2112,7 +2135,9 @@ function saveSettings() {
         phone: document.getElementById('setPhone').value.trim(),
         gemi: document.getElementById('setGemi').value.trim(),
         mu: document.getElementById('setMyDataUser').value.trim(),
-        mk: document.getElementById('setMyDataKey').value.trim()
+        mk: document.getElementById('setMyDataKey').value.trim(),
+        // ΕΔΩ ΠΡΟΣΘΕΤΟΥΜΕ ΤΟ LOGO:
+        logo: document.getElementById('imgPreview').src 
     };
 
     if (!settings.afm || !settings.name) {
@@ -2120,6 +2145,7 @@ function saveSettings() {
         return;
     }
 
+    // Αποθήκευση στο "κουτί" (localStorage)
     localStorage.setItem('bizSettings', JSON.stringify(settings));
     alert('🔱 Οι ρυθμίσεις της επιχείρησης Triton ενημερώθηκαν!');
     location.reload();

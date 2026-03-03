@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Triton ERP - Πιστωτικό Τιμολόγιο</title>
     <style>
-        /* 1. CLEANUP & VARIABLES */
         #navbar-iframe { display: none !important; }
         :root { 
-            --triton-credit: #64748b; 
             --triton-blue: #0ea5e9;
             --triton-bg: #f8fafc; 
             --triton-border: #cbd5e1; 
             --triton-dark: #0f172a;
         }
 
-        body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--triton-dark); }
+        body { background: #e2e8f0; margin: 0; padding: 20px; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--triton-dark); }
 
-        /* 2. APP LAYOUT */
         #triton-app { 
             width: 1000px; 
             margin: 60px auto 40px auto; 
@@ -31,15 +28,16 @@
         }
 
         input, select, textarea { border: none; outline: none; background: transparent; font-family: inherit; width: 100%; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* 3. HEADER SECTION */
-        .header-top-grid { display: grid; grid-template-columns: 180px 1fr 140px; gap: 25px; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 25px; margin-bottom: 20px; }
-        .company-info-area h1 { margin: 0; font-size: 24px; text-transform: uppercase; color: var(--triton-dark); }
+        /* HEADER - SAME AS DELIVERY NOTE */
+        .header-top-grid { display: grid; grid-template-columns: 180px 1fr 140px; gap: 25px; align-items: flex-start; border-bottom: 2px solid var(--triton-dark); padding-bottom: 25px; margin-bottom: 20px; }
+        .company-info-area h1 { margin: 0; color: var(--triton-blue); font-size: 26px; text-transform: uppercase; font-weight: 900; }
         .company-info-area p { margin: 3px 0; font-size: 13px; font-weight: 600; color: #475569; }
         
+        .logo-area img { max-width: 150px; max-height: 100px; object-fit: contain; }
+
         .doc-label { 
-            background: var(--triton-credit); 
+            background: var(--triton-dark); 
             color: white; 
             padding: 8px 18px; 
             font-weight: 900; 
@@ -50,48 +48,33 @@
             text-transform: uppercase;
         }
 
-        /* 4. INFO BARS */
+        /* INFO BARS */
         .triton-info-bar { display: flex; background: var(--triton-bg); border: 1px solid var(--triton-border); margin-bottom: 25px; border-radius: 6px; overflow: hidden; }
         .bar-cell { flex: 1; padding: 12px 15px; border-right: 1px solid var(--triton-border); }
         .bar-cell:last-child { border-right: none; }
-        .bar-cell label { display: block; font-size: 10px; color: var(--triton-credit); font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+        .bar-cell label { display: block; font-size: 10px; color: var(--triton-blue); font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
         .bar-cell span, .bar-cell input { font-size: 14px; font-weight: 700; color: var(--triton-dark); }
 
         .grid-info { display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; margin-bottom: 30px; }
-        .info-card { background: #fdfdfd; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 4px solid var(--triton-credit); }
+        .info-card { background: #fdfdfd; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 4px solid var(--triton-blue); }
         .info-card label { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
-        .info-card input { padding: 5px 0; font-size: 14px; margin-bottom: 8px; font-weight: 700; color: var(--triton-dark); border-bottom: 1px solid transparent; }
+        .info-card input { padding: 5px 0; font-size: 14px; margin-bottom: 8px; font-weight: 700; color: var(--triton-dark); }
 
-        /* 5. TABLE SECTION */
+        /* TABLE */
         table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
         th { background: #f1f5f9; padding: 12px 8px; font-size: 11px; border-top: 2px solid black; border-bottom: 2px solid black; text-transform: uppercase; text-align: left; }
         td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
-        .col-input { font-size: 13px; font-weight: 700; color: var(--triton-dark); text-align: center; }
-        .p-name { text-align: left !important; }
-
-        /* 6. TOTALS & FOOTER */
-        .footer-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 50px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 25px; }
+        
         .totals-box { text-align: right; }
         .total-line { display: flex; justify-content: space-between; padding: 6px 0; font-weight: 700; font-size: 14px; color: #475569; }
         .grand-total { font-size: 24px; color: var(--triton-dark); border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; }
         
-        .mydata-info { font-family: monospace; font-size: 11px; color: #94a3b8; margin-top: 15px; }
+        .qr-placeholder { width: 110px; height: 110px; border: 2px solid var(--triton-dark); display: flex; align-items: center; justify-content: center; background: #fff; margin: 0 auto; position: relative; }
         
         .btn-finalize { 
-            width: 100%; 
-            padding: 18px; 
-            background: var(--triton-dark); 
-            color: white; 
-            border-radius: 10px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            border: none; 
-            margin-top: 20px; 
-            font-size: 15px; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            width: 100%; padding: 18px; background: var(--triton-dark); color: white; border-radius: 10px; font-weight: 800; cursor: pointer; border: none; margin-top: 20px; font-size: 15px; text-transform: uppercase;
         }
-        .btn-finalize:hover { background: var(--triton-credit); }
+        .btn-finalize:hover { background: var(--triton-blue); }
 
         @media print { 
             .no-print { display: none !important; } 
@@ -104,21 +87,28 @@
 
 <div id="triton-app">
     <div class="header-top-grid">
-        <div id="idxLogo"></div>
+        <div id="idxLogo" class="logo-area">
+            <img id="viewCompLogo" src="" style="display:none;">
+        </div>
         <div class="company-info-area">
-            <h1 id="idxCompName">TRITON ERP</h1>
-            <p id="idxActivity">Φορτώνεται...</p>
+            <h1 id="idxCompName">ΦΟΡΤΩΣΗ...</h1>
+            <p id="idxActivity">-</p>
             <p id="idxAddress">-</p>
             <p>ΑΦΜ: <span id="idxTaxId"></span> - ΔΟΥ: <span id="idxTaxOffice"></span></p>
         </div>
-        <div style="border:1px solid #ddd; height:100px; display:flex; align-items:center; justify-content:center; font-size:9px; text-align:center; border-radius:8px; color:#94a3b8;">myDATA<br>QR CODE</div>
+        <div id="qrArea">
+            <div class="qr-placeholder">
+                <span style="font-size:8px; text-align:center; font-weight:900;">myDATA<br>QR CODE</span>
+            </div>
+            <div style="font-size: 9px; font-weight: 900; text-align: center; margin-top: 5px;">MARK: --------</div>
+        </div>
     </div>
 
     <div class="doc-label">Πιστωτικό Τιμολόγιο & Δελτίο Αποστολής</div>
 
     <div class="triton-info-bar">
         <div class="bar-cell"><label>Ημερομηνία</label><span id="dtDisplay">--/--/----</span></div>
-        <div class="bar-cell"><label>Σειρά - Αριθμός</label><input type="text" value="ΓΓ001" style="color:var(--triton-credit)"></div>
+        <div class="bar-cell"><label>Σειρά - Αριθμός</label><input type="text" id="docNum" value="ΓΓ001"></div>
         <div class="bar-cell"><label>Σχετικό Δελτίο Επιστροφής</label><input type="text" id="refDoc" placeholder="π.χ. ΔΕ 452"></div>
         <div class="bar-cell">
             <label>Τρόπος Εξόφλησης</label>
@@ -161,22 +151,15 @@
         <tbody id="rowsBody"></tbody>
     </table>
 
-    <div class="footer-layout">
-        <div class="notes-area">
-            <label style="font-size:10px; font-weight:800; color:var(--triton-credit); text-transform:uppercase;">Παρατηρήσεις / Σκοπός</label>
-            <textarea id="inpRemarks" style="height:80px; border:1px solid var(--triton-border); border-radius:8px; padding:12px; width:100%; box-sizing:border-box; background:#fcfcfc; font-size:13px; margin-top:5px;" placeholder="Αναλυτική αιτιολογία πίστωσης..."></textarea>
-            
-            <div class="mydata-info">
-                MARK: <span id="myDataMark">----------------------------</span><br>
-                UID: <span id="myDataUid">----------------------------</span>
-            </div>
+    <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:50px; margin-top:30px;">
+        <div>
+            <label style="font-size:10px; font-weight:800; color:var(--triton-blue); text-transform:uppercase;">Παρατηρήσεις</label>
+            <textarea id="inpRemarks" style="height:80px; border:1px solid var(--triton-border); border-radius:8px; padding:12px; width:100%; box-sizing:border-box; background:#fcfcfc; font-size:13px; margin-top:5px;"></textarea>
         </div>
-        
         <div class="totals-box">
             <div class="total-line"><span>ΚΑΘΑΡΗ ΑΞΙΑ:</span> <span id="sumNet">0.00 €</span></div>
             <div class="total-line"><span>ΣΥΝΟΛΟ ΦΠΑ:</span> <span id="sumTax">0.00 €</span></div>
             <div class="total-line grand-total"><span>ΠΡΟΣ ΠΙΣΤΩΣΗ:</span> <span id="sumGrand">0.00 €</span></div>
-            
             <button class="btn-finalize no-print" onclick="finalizeInvoice()">ΟΡΙΣΤΙΚΟΠΟΙΗΣΗ & ΕΚΤΥΠΩΣΗ (F10)</button>
         </div>
     </div>
@@ -185,33 +168,28 @@
 <datalist id="prodData"></datalist>
 
 <script>
-    function loadData() {
-        const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
-        document.getElementById('idxCompName').innerText = s.companyName || "TRITON ERP";
-        document.getElementById('idxActivity').innerText = s.activity || "";
-        document.getElementById('idxAddress').innerText = s.address || "";
-        document.getElementById('idxTaxId').innerText = s.taxId || "";
-        document.getElementById('idxTaxOffice').innerText = s.taxOffice || "";
-        if(s.logoUrl) document.getElementById('idxLogo').innerHTML = `<img src="${s.logoUrl}" style="max-height:80px">`;
+    // 🔱 AUTO-SYNC FROM BIZSETTINGS
+    function loadSystemSettings() {
+        const s = JSON.parse(localStorage.getItem('bizSettings'));
+        if (s) {
+            document.getElementById('idxCompName').innerText = s.name || "ΕΠΩΝΥΜΙΑ";
+            document.getElementById('idxActivity').innerText = s.job || "";
+            document.getElementById('idxAddress').innerText = (s.address || "") + " " + (s.city || "");
+            document.getElementById('idxTaxId').innerText = s.afm || "-";
+            document.getElementById('idxTaxOffice').innerText = s.doy || "-";
+            const logoImg = document.getElementById('viewCompLogo');
+            if (s.logo) { logoImg.src = s.logo; logoImg.style.display = 'block'; }
+        }
         
-        // Load Customers
+        // Load Customers & Products
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const dl = document.getElementById('custData');
-        Object.keys(db).forEach(name => {
-            let opt = document.createElement('option');
-            opt.value = name;
-            dl.appendChild(opt);
-        });
+        Object.keys(db).forEach(name => { let opt = document.createElement('option'); opt.value = name; dl.appendChild(opt); });
 
-        // Load Products
         const pDb = JSON.parse(localStorage.getItem('triton_products')) || [];
         const pdl = document.getElementById('prodData');
-        pDb.forEach(p => {
-            let opt = document.createElement('option');
-            opt.value = p.name;
-            pdl.appendChild(opt);
-        });
-
+        pDb.forEach(p => { let opt = document.createElement('option'); opt.value = p.name; pdl.appendChild(opt); });
+        
         document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
     }
 
@@ -219,30 +197,21 @@
         const name = document.getElementById('cName').value;
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const c = db[name];
-        const branchList = document.getElementById('branchData');
-        branchList.innerHTML = '';
         if(c) {
-            document.getElementById('cTax').value = (c.afm || "") + " - " + (c.doy || "");
+            document.getElementById('cTax').value = (c.taxId || "") + " - " + (c.taxOffice || "");
             document.getElementById('cAddr').value = (c.address || "");
-            if(c.branches) {
-                c.branches.forEach(b => {
-                    let opt = document.createElement('option');
-                    opt.value = b;
-                    branchList.appendChild(opt);
-                });
-            }
         }
     }
 
     function addRow() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="col-input p-name" list="prodData" placeholder="Προϊόν..." onchange="checkProduct(this)" onkeydown="nav(event, 'name')"></td>
-            <td><input type="number" class="col-input p-qty" placeholder="0" oninput="recalc()" onkeydown="nav(event, 'qty')"></td>
-            <td><input type="number" class="col-input p-prc" placeholder="0.00" oninput="recalc()" onkeydown="nav(event, 'prc')"></td>
-            <td><input type="number" class="col-input p-dsc" value="0" oninput="recalc()" onkeydown="nav(event, 'dsc')"></td>
-            <td><input type="number" class="col-input p-fpa" value="24" oninput="recalc()"></td>
-            <td style="text-align:right;"><input type="text" class="col-input p-total" readonly value="0.00" style="text-align:right; width:100px;"></td>
+            <td><input type="text" class="p-name" list="prodData" placeholder="Είδος..." onchange="checkProduct(this)" onkeydown="nav(event, 'name')"></td>
+            <td><input type="number" class="p-qty" value="1" style="text-align:center;" oninput="recalc()" onkeydown="nav(event, 'qty')"></td>
+            <td><input type="number" class="p-prc" value="0.00" style="text-align:center;" oninput="recalc()" onkeydown="nav(event, 'prc')"></td>
+            <td><input type="number" class="p-dsc" value="0" style="text-align:center;" oninput="recalc()"></td>
+            <td><input type="number" class="p-fpa" value="24" style="text-align:center;" oninput="recalc()"></td>
+            <td style="text-align:right;"><span class="line-total">0.00</span> €</td>
         `;
         document.getElementById('rowsBody').appendChild(tr);
         return tr;
@@ -264,66 +233,35 @@
             e.preventDefault();
             const tr = e.target.closest('tr');
             if(field === 'name') tr.querySelector('.p-qty').focus();
-            if(field === 'qty') tr.querySelector('.p-prc').focus();
-            if(field === 'prc') tr.querySelector('.p-dsc').focus();
-            if(field === 'dsc') {
-                const next = addRow();
-                next.querySelector('.p-name').focus();
-            }
+            else if(field === 'qty') tr.querySelector('.p-prc').focus();
+            else if(field === 'prc') { addRow().querySelector('.p-name').focus(); }
         }
     }
 
     function recalc() {
-        let netTotal = 0, taxTotal = 0;
+        let net = 0, tax = 0;
         document.querySelectorAll('#rowsBody tr').forEach(tr => {
             const q = parseFloat(tr.querySelector('.p-qty').value) || 0;
             const p = parseFloat(tr.querySelector('.p-prc').value) || 0;
             const d = parseFloat(tr.querySelector('.p-dsc').value) || 0;
             const f = parseFloat(tr.querySelector('.p-fpa').value) || 0;
-            const lineNet = (q * p) * (1 - d/100);
-            const lineTax = lineNet * (f/100);
-            tr.querySelector('.p-total').value = (lineNet + lineTax).toFixed(2);
-            netTotal += lineNet; taxTotal += lineTax;
+            const lNet = (q * p) * (1 - d/100);
+            const lTax = lNet * (f/100);
+            tr.querySelector('.line-total').innerText = (lNet + lTax).toFixed(2);
+            net += lNet; tax += lTax;
         });
-        document.getElementById('sumNet').innerText = netTotal.toFixed(2) + " €";
-        document.getElementById('sumTax').innerText = taxTotal.toFixed(2) + " €";
-        document.getElementById('sumGrand').innerText = (netTotal + taxTotal).toFixed(2) + " €";
+        document.getElementById('sumNet').innerText = net.toFixed(2) + " €";
+        document.getElementById('sumTax').innerText = tax.toFixed(2) + " €";
+        document.getElementById('sumGrand').innerText = (net + tax).toFixed(2) + " €";
     }
 
     function finalizeInvoice() {
-        const customerName = document.getElementById('cName').value;
-        const total = parseFloat(document.getElementById('sumGrand').innerText) || 0;
-        
-        if (!customerName || total <= 0) {
-            alert("⚠️ Προσοχή: Επιλέξτε πελάτη και συμπληρώστε είδη.");
-            return;
-        }
-
-        let db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        if (db[customerName]) {
-            // Ενημέρωση υπολοίπου (Μείωση - Πίστωση)
-            if (db[customerName].balance === undefined) db[customerName].balance = 0;
-            if (!db[customerName].history) db[customerName].history = [];
-
-            db[customerName].balance -= total; 
-            db[customerName].history.push({
-                date: new Date().toLocaleDateString('el-GR'),
-                type: 'ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ ΓΓ001',
-                amount: -total,
-                newBalance: db[customerName].balance
-            });
-
-            localStorage.setItem('customersDB', JSON.stringify(db));
-            alert("✅ Το Πιστωτικό οριστικοποιήθηκε και το υπόλοιπο του πελάτη ενημερώθηκε.");
-            window.print();
-            location.reload();
-        } else {
-            alert("❌ Σφάλμα: Ο πελάτης δεν βρέθηκε στη βάση δεδομένων.");
-        }
+        if (!document.getElementById('cName').value) { alert("⚠️ Επιλέξτε πελάτη!"); return; }
+        window.print();
+        location.reload();
     }
 
-    document.addEventListener('keydown', e => { if(e.key === "F10") finalizeInvoice(); });
-    window.onload = () => { loadData(); addRow(); };
+    window.onload = () => { loadSystemSettings(); addRow(); };
 </script>
 </body>
 </html>

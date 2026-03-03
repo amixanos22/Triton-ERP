@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Triton ERP - Απόδειξη Πληρωμής</title>
     <style>
-        /* 1. ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
         #navbar-iframe, .navbar, .header-outer, .footer-outer, .base-cms-navbar { 
             display: none !important; visibility: hidden !important; height: 0 !important; 
         }
@@ -23,10 +22,9 @@
             font-family: 'Segoe UI', system-ui, sans-serif; 
         }
 
-        /* 📐 ΑΕΡΑΣ 100 ΓΙΑ ΤΟ MODAL */
         #triton-payment-box { 
             max-width: 800px; 
-            margin: 100px auto 50px auto; 
+            margin: 60px auto 50px auto; 
             background: #fff; 
             border-radius: 15px; 
             border: 1px solid var(--triton-border); 
@@ -34,28 +32,29 @@
             overflow: hidden;
         }
 
-        .company-info { padding: 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: flex-start; }
-        .company-details h1 { margin: 0; color: var(--triton-dark); font-size: 22px; text-transform: uppercase; letter-spacing: -0.5px; }
-        .company-details p { margin: 4px 0; color: #64748b; font-size: 13px; }
+        /* 🔱 ΕΝΗΜΕΡΩΜΕΝΗ ΚΕΦΑΛΙΔΑ TRITON */
+        .company-info { padding: 25px; border-bottom: 2px solid var(--triton-red); display: flex; justify-content: space-between; align-items: flex-start; background: white; }
+        .company-details h1 { margin: 0; color: var(--triton-blue); font-size: 24px; text-transform: uppercase; font-weight: 900; }
+        .company-details p { margin: 4px 0; color: #475569; font-size: 13px; font-weight: 500; }
         
-        .logo-area { max-width: 150px; }
-        .logo-area img { max-width: 100%; height: auto; border-radius: 8px; }
+        .logo-area { max-width: 130px; max-height: 100px; display: flex; align-items: center; justify-content: flex-end; }
+        .logo-area img { max-width: 100%; max-height: 100px; object-fit: contain; border-radius: 5px; }
         
-        .triton-header { background: var(--triton-dark); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--triton-red); }
+        .triton-header { background: var(--triton-dark); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
         .counter-badge { background: var(--triton-red); color: white; padding: 6px 15px; border-radius: 8px; font-weight: 900; font-size: 14px; }
         
         .form-container { padding: 30px; }
         .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
         .field-group { display: flex; flex-direction: column; margin-bottom: 15px; }
-        .field-group label { font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        input, select, textarea { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; }
+        .field-group label { font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
+        input, select, textarea { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
         input:focus { border-color: var(--triton-red); box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
         
         .amount-panel { background: #fff1f2; border: 2px dashed var(--triton-red); border-radius: 15px; padding: 20px; text-align: center; margin-top: 10px; }
         .big-amount-input { font-size: 36px; font-weight: 900; border: none; background: transparent; width: 180px; text-align: center; color: var(--triton-dark); outline: none; }
         
         .btn-main { background: var(--triton-dark); color: white; border: none; padding: 18px; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 20px; transition: 0.3s; font-size: 16px; }
-        .btn-main:hover { background: var(--triton-red); transform: translateY(-1px); }
+        .btn-main:hover { background: var(--triton-red); }
         
         #balance-info { font-size: 13px; color: var(--triton-blue); font-weight: bold; margin-top: 6px; display: block; }
 
@@ -63,7 +62,7 @@
             .no-print { display: none !important; } 
             body { background: white; padding: 0; }
             #triton-payment-box { margin: 0; border: none; box-shadow: none; width: 100%; }
-            .triton-header { background: #fee2e2 !important; color: black !important; border-bottom: 2px solid #ef4444; }
+            .company-info { border-bottom: 2px solid black; }
         }
     </style>
 </head>
@@ -72,16 +71,19 @@
 <div id="triton-payment-box">
     <div class="company-info">
         <div class="company-details">
-            <h1 id="viewCompName">TRITON BUSINESS</h1>
-            <p id="viewCompActivity">Φορτώνεται...</p>
+            <h1 id="viewCompName">ΦΟΡΤΩΣΗ...</h1>
+            <p id="viewCompActivity">-</p>
             <p id="viewCompAddress">-</p>
             <p>ΑΦΜ: <span id="viewCompTaxId">-</span> | ΔΟΥ: <span id="viewCompTaxOffice">-</span></p>
+            <p id="viewCompPhone">-</p>
         </div>
-        <div class="logo-area" id="logoContainer"></div>
+        <div class="logo-area" id="logoContainer">
+            <img id="viewCompLogo" src="" style="display:none;">
+        </div>
     </div>
 
     <div class="triton-header">
-        <h2 style="margin:0; font-size:18px; letter-spacing: 1px;">ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ</h2>
+        <h2 id="receiptTypeTitle" style="margin:0; font-size:18px; letter-spacing: 1px;">ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ</h2>
         <div id="displayCounter" class="counter-badge">ΠΛ001</div>
     </div>
 
@@ -171,14 +173,20 @@
     }
 
     function loadFromSystem() {
-        const s = JSON.parse(localStorage.getItem('triton_settings'));
+        const s = JSON.parse(localStorage.getItem('bizSettings'));
         if (s) {
-            document.getElementById('viewCompName').innerText = s.companyName || "TRITON BUSINESS";
-            document.getElementById('viewCompActivity').innerText = s.activity || "";
-            document.getElementById('viewCompAddress').innerText = s.address || "";
-            document.getElementById('viewCompTaxId').innerText = s.taxId || "-";
-            document.getElementById('viewCompTaxOffice').innerText = s.taxOffice || "-";
-            if (s.logoUrl) document.getElementById('logoContainer').innerHTML = `<img src="${s.logoUrl}" alt="Logo">`;
+            document.getElementById('viewCompName').innerText = s.name || "ΕΠΩΝΥΜΙΑ";
+            document.getElementById('viewCompActivity').innerText = s.job || "";
+            document.getElementById('viewCompAddress').innerText = (s.address || "") + " " + (s.city || "");
+            document.getElementById('viewCompTaxId').innerText = s.afm || "-";
+            document.getElementById('viewCompTaxOffice').innerText = s.doy || "-";
+            document.getElementById('viewCompPhone').innerText = "Τηλ: " + (s.phone || "-");
+            
+            const logoImg = document.getElementById('viewCompLogo');
+            if (s.logo && s.logo.startsWith('data:image')) {
+                logoImg.src = s.logo;
+                logoImg.style.display = 'block';
+            }
         }
         
         const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
@@ -193,19 +201,16 @@
 
     let count = parseInt(localStorage.getItem('triton_pay_count')) || 1;
 
-   function init() {
+    function init() {
         setupBanks();
         loadFromSystem();
         document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('displayCounter').innerText = "ΠΛ" + count.toString().padStart(3, '0');
 
-        // 🔱 ΠΡΟΣΘΗΚΗ: Διάβασμα τύπου παραστατικού από το URL
         const params = new URLSearchParams(window.location.search);
         const typeFromUrl = params.get('type');
         if (typeFromUrl) {
-            // Ενημερώνει τον τίτλο στην μπλε/κόκκινη μπάρα
-            document.querySelector('.triton-header h2').innerText = typeFromUrl;
-            // Ενημερώνει και το όνομα στην καρτέλα του browser
+            document.getElementById('receiptTypeTitle').innerText = typeFromUrl.toUpperCase();
             document.title = "Triton ERP - " + typeFromUrl;
         }
         
@@ -231,7 +236,6 @@
             if (db[recipient].balance === undefined) db[recipient].balance = 0;
             if (!db[recipient].history) db[recipient].history = [];
 
-            // Στην ΠΛΗΡΩΜΗ το υπόλοιπο αυξάνεται (μειώνεται η οφειλή μας προς αυτόν)
             db[recipient].balance += amount; 
 
             db[recipient].history.push({
@@ -248,7 +252,6 @@
         localStorage.setItem('triton_pay_count', count);
         
         setTimeout(() => { 
-            if(window.parent && window.parent.closeForm) window.parent.closeForm();
             location.reload(); 
         }, 500);
     }

@@ -2183,6 +2183,46 @@ function makeDraggable(elmnt, header) {
         };
     };
 }
+                  function showTritonAuthForm() {
+    // Αν υπάρχει ήδη, την αφαιρούμε για να την ξαναφτιάξουμε φρέσκια
+    const old = document.getElementById('tritonAuthWrapper');
+    if (old) old.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'tritonAuthWrapper';
+    
+    // Στυλ για να "κλειδώσει" την οθόνη και να φαίνεται μόνο η φόρμα
+    wrapper.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.9); /* Σκούρο φόντο Triton */
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000000; font-family: sans-serif;
+    `;
+
+    wrapper.innerHTML = `
+        <div style="background: #1e293b; padding: 40px; border-radius: 15px; border: 2px solid #0284c7; box-shadow: 0 0 30px rgba(2, 132, 199, 0.5); width: 350px; text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 10px;">🔱</div>
+            <h2 style="color: white; margin-bottom: 20px;">TRITON SYSTEM LOGIN</h2>
+            <p style="color: #7dd3fc; font-size: 13px; margin-bottom: 20px;">Παρακαλώ εισάγετε τον κωδικό πρόσβασης</p>
+            
+            <input type="password" id="tritonSecurityCode" placeholder="Κωδικός..." 
+                style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; outline: none; text-align: center; font-size: 18px;">
+            
+            <button onclick="validateTritonAccess()" 
+                style="width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s;">
+                ΕΠΙΒΕΒΑΙΩΣΗ
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(wrapper);
+    
+    // Κάνουμε αυτόματη εστίαση στο πεδίο του κωδικού
+    setTimeout(() => {
+        const input = document.getElementById('tritonSecurityCode');
+        if(input) input.focus();
+    }, 100);
+}
 </script>
           <div id="minimizedBar" style="position: fixed; bottom: 0; left: 260px; right: 0; height: 45px; background: #0f172a; display: flex; gap: 10px; padding: 0 15px; z-index: 99999; border-top: 2px solid #0284c7; align-items: center;">
     </div>

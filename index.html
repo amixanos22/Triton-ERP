@@ -1415,31 +1415,36 @@ function openSettings() {
 
 function saveSettings() {
     const settings = {
-        name: document.getElementById('setName').value,
-        afm: document.getElementById('setAfm').value,
-        mu: document.getElementById('setMyDataUser').value,
-        mk: document.getElementById('setMyDataKey').value,
-        // ... υπόλοιπα πεδία
+        name: document.getElementById('setName').value.trim(),
+        afm: document.getElementById('setAfm').value.trim(),
+        job: document.getElementById('setJob').value.trim(),
+        doy: document.getElementById('setDoy').value.trim(),
+        address: document.getElementById('setAddress').value.trim(),
+        city: document.getElementById('setCity').value.trim(),
+        tk: document.getElementById('setTk').value.trim(),
+        phone: document.getElementById('setPhone').value.trim(),
+        gemi: document.getElementById('setGemi').value.trim(),
+        mu: document.getElementById('setMyDataUser').value.trim(),
+        mk: document.getElementById('setMyDataKey').value.trim(),
+        // ΕΔΩ ΠΑΙΡΝΟΥΜΕ ΤΟ LOGO ΑΠΟ ΤΗΝ ΠΡΟΕΠΙΣΚΟΠΗΣΗ:
+        logo: document.getElementById('imgPreview').src 
     };
-    if(!settings.afm || !settings.name) return alert("⚠️ ΑΦΜ και Επωνυμία είναι υποχρεωτικά!");
-    localStorage.setItem('bizSettings', JSON.stringify(settings));
-    location.reload();
-}
-// --- 1. ΚΛΕΙΣΙΜΟ ΡΥΘΜΙΣΕΩΝ ---
-function closeSettings() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.style.display = 'none';
-        console.log("✅ Triton: Settings closed.");
+
+    // Έλεγχος υποχρεωτικών
+    if(!settings.afm || !settings.name) {
+        return alert("⚠️ ΑΦΜ και Επωνυμία είναι υποχρεωτικά για το άνοιγμα του καταστήματος!");
     }
 
-    // Έλεγχος αν λείπουν στοιχεία για να δείξουμε το Hint
-    const savedData = localStorage.getItem('bizSettings');
-    if (!savedData || savedData === '{}') {
-        if (typeof showTritonHint === "function") {
-            showTritonHint();
-        }
-    }
+    // Αποθήκευση στο LocalStorage
+    localStorage.setItem('bizSettings', JSON.stringify(settings));
+    
+    // Ενημερώνουμε ότι το login ολοκληρώθηκε
+    localStorage.setItem('triton_is_logged_in', 'true');
+
+    console.log("✅ Triton: Ρυθμίσεις και Logo αποθηκεύτηκαν.");
+    
+    alert("🔱 Το κατάστημα Triton " + settings.name + " είναι έτοιμο!");
+    location.reload();
 }
 
  
@@ -2275,7 +2280,45 @@ function makeDraggable(elmnt, header) {
         }
         reader.readAsDataURL(input.files[0]);
     }
-}          
+}   
+            function validateTritonAccess() {
+    const code = document.getElementById('tritonSecurityCode').value;
+    
+    if (code === "TRITON2026") { 
+        // ΣΒΗΝΕΙ ΤΟ ΜΠΑΝΕΡ
+        const banner = document.getElementById('tritonAuthWrapper');
+        if (banner) {
+            banner.style.opacity = "0";
+            banner.style.transition = "0.4s";
+            setTimeout(() => {
+                banner.remove(); // Εδώ εξαφανίζεται οριστικά
+                
+                // ΑΝΟΙΓΕΙ ΤΟ ΜΕΓΑΛΟ MODAL ΤΩΝ ΡΥΘΜΙΣΕΩΝ
+                const modal = document.getElementById('settingsModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                }
+            }, 400);
+        }
+    } else {
+        alert("❌ Λάθος Κωδικός Triton!");
+    }
+}
+            function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('imgPreview');
+            const text = document.getElementById('noLogoText');
+            if(preview) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            if(text) text.style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
 </script>
           <div id="minimizedBar" style="position: fixed; bottom: 0; left: 260px; right: 0; height: 45px; background: #0f172a; display: flex; gap: 10px; padding: 0 15px; z-index: 99999; border-top: 2px solid #0284c7; align-items: center;">
     </div>

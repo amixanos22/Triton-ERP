@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+          <!DOCTYPE html>
 <html lang="el">
 <head>
   
@@ -579,6 +579,11 @@
 .floating-window[style*="width: calc(100% - 260px)"]::after {
     display: none;
 }
+      /* Αυτό θα εφαρμοστεί σε όλες τις φόρμες σου αυτόματα */
+.form-container { 
+    position: relative !important; 
+    padding-top: 60px !important; /* Δημιουργεί κενό για να μην πέσει το logo πάνω στα κουμπιά σου */
+}
 </style>
     
 </head>
@@ -628,7 +633,7 @@
 
 
  
-<div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+ <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
     
     <div id="masterGate" style="background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #1e293b; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
         <h2 style="color: #7dd3fc; margin-bottom: 10px;">🔱 TRITON ERP</h2>
@@ -864,6 +869,32 @@
   
    
 <script>
+  // ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΓΕΜΙΖΕΙ ΤΑ ΣΤΟΙΧΕΙΑ ΣΕ ΟΛΕΣ ΤΙΣ ΦΟΡΜΕΣ
+function loadBusinessData() {
+    // 1. Φόρτωση Logo
+    const savedLogo = localStorage.getItem('triton_logo_saved');
+    const allLogoPlaceholders = document.querySelectorAll('.company-logo-view'); // Χρησιμοποιούμε class για να το πιάνει παντού
+    
+    if (savedLogo) {
+        allLogoPlaceholders.forEach(img => {
+            img.src = savedLogo;
+            img.style.display = 'block';
+        });
+    }
+
+    // 2. Φόρτωση Στοιχείων (Επωνυμία, ΑΦΜ κλπ)
+    // Υποθέτουμε ότι τα έχεις σώσει με αυτά τα ονόματα
+    const businessName = localStorage.getItem('triton_business_name');
+    const businessTax = localStorage.getItem('triton_business_afm');
+
+    // Αν υπάρχουν πεδία με id "viewBusinessName", τα γεμίζει
+    if (document.getElementById('viewBusinessName')) {
+        document.getElementById('viewBusinessName').innerText = businessName || 'Όνομα Επιχείρησης';
+    }
+}
+
+// Τρέχει αυτόματα όταν φορτώνει οποιαδήποτε σελίδα
+document.addEventListener('DOMContentLoaded', loadBusinessData);
 // --- ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΕΝΟΙΚΙΑΣΗΣ TRITON ---
 function checkLogin() {
     const email = document.getElementById('loginEmail').value;
@@ -1367,6 +1398,23 @@ function completeLogin() {
         alert("⚠️ Ο κωδικός πρόσβασης πρέπει να είναι τουλάχιστον 4 ψηφία.");
         return;
     }
+
+    // 2. ΑΠΟΘΗΚΕΥΣΗ ΣΤΟΙΧΕΙΩΝ (Για να τα βρίσκουν οι φόρμες)
+    localStorage.setItem('triton_business_email', email);
+    
+    // Αν έχει ανεβάσει logo, το LocalStorage το έχει ήδη πάρει από την previewLogo.
+    // Εδώ προαιρετικά μπορούμε να σώσουμε και την κατάσταση σύνδεσης
+    localStorage.setItem('triton_is_logged_in', 'true');
+
+    // 3. Είσοδος στο σύστημα
+    alert("✅ Η σύνδεση ολοκληρώθηκε!");
+    document.getElementById('loginOverlay').style.display = 'none';
+
+    // 4. Φόρτωση των στοιχείων στις φόρμες του ERP
+    if (typeof loadBusinessData === "function") {
+        loadBusinessData();
+    }
+}
 
     // 2. Αποθήκευση στο LocalStorage
     localStorage.setItem('triton_user_email', email);
@@ -2130,6 +2178,107 @@ function makeDraggable(elmnt, header) {
 </script>
           <div id="minimizedBar" style="position: fixed; bottom: 0; left: 260px; right: 0; height: 45px; background: #0f172a; display: flex; gap: 10px; padding: 0 15px; z-index: 99999; border-top: 2px solid #0284c7; align-items: center;">
     </div>
+         <script>
+// ΑΥΤΗ ΕΙΝΑΙ Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΨΑΧΝΕΙΣ
+function previewLogo(input) {
+    const preview = document.getElementById('logoPreview');
+    const icon = document.getElementById('logoNoImg');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const base64Image = e.target.result; 
+            
+            if (preview) {
+                preview.src = base64Image;
+                preview.style.display = 'block';
+            }
+            if (icon) icon.style.display = 'none';
+            
+            // ΑΛΛΑΓΗ ΕΔΩ: Χρησιμοποιούμε το όνομα που "ακούνε" οι 13 φόρμες
+            localStorage.setItem('triton_logo_saved', base64Image);
+            
+            // ΚΑΙ ΕΔΩ: Τρέχουμε τη φόρτωση για να ενημερωθούν οι φόρμες αμέσως
+            if (typeof loadBusinessData === "function") {
+                loadBusinessData();
+            }
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ΑΥΤΟ ΤΡΕΧΕΙ ΜΟΛΙΣ ΑΝΟΙΞΕΙ Η ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΘΥΜΑΤΑΙ ΤΟ LOGO
+window.addEventListener('load', () => {
+    // Χρησιμοποιούμε παντού το ίδιο όνομα: triton_logo_saved
+    const savedLogo = localStorage.getItem('triton_logo_saved');
+    const preview = document.getElementById('logoPreview');
+    const icon = document.getElementById('logoNoImg');
+    
+    if (savedLogo && preview) {
+        preview.src = savedLogo;
+        preview.style.display = 'block';
+        if (icon) icon.style.display = 'none';
+    }
+    
+    // Μόλις φορτώσει η σελίδα, τρέξε και το γέμισμα των φορμών
+    loadBusinessData();
+});
+
+function loadBusinessData() {
+    // 1. Φόρτωση Logo από το ΕΝΙΑΙΟ κλειδί
+    const savedLogo = localStorage.getItem('triton_logo_saved');
+    const allLogos = document.querySelectorAll('.company-logo-view');
+    const tritonIcons = document.querySelectorAll('.triton-icon');
+    
+    if (savedLogo) {
+        allLogos.forEach(img => {
+            img.src = savedLogo;
+            img.style.display = 'block';
+        });
+        // Κρύβουμε την τρίαινα αν υπάρχει Logo
+        tritonIcons.forEach(icon => icon.style.display = 'none');
+    }
+    
+    // 2. Φόρτωση Ονόματος (για το κενό πάνω αριστερά)
+    const savedName = localStorage.getItem('triton_business_name');
+    const nameDisplay = document.getElementById('viewBusinessNameTop');
+    if (savedName && nameDisplay) {
+        nameDisplay.innerText = savedName;
+    }
+}
+
+    // 2. Φόρτωση Ονόματος Επιχείρησης
+    const savedName = localStorage.getItem('triton_business_name');
+    const nameDisplay = document.getElementById('viewBusinessNameTop');
+    
+    if (savedName && nameDisplay) {
+        nameDisplay.innerText = savedName;
+    }
+}
+
+// Εκτέλεση με το που ανοίγει η σελίδα
+window.addEventListener('load', loadBusinessData);
+           function applyGlobalLogo(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Αν δεν υπάρχει ήδη το logo σε αυτή τη φόρμα, βάλτο
+    if (!container.querySelector('.auto-logo')) {
+        const logoData = localStorage.getItem('triton_logo_saved');
+        const bizName = localStorage.getItem('triton_business_name') || 'TRITON ERP';
+        
+        const html = `
+            <div class="auto-logo" style="position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 8px;">
+                <img src="${logoData}" style="height: 40px; border-radius: 4px; display: ${logoData ? 'block' : 'none'};">
+                <span style="color: #7dd3fc; font-weight: bold; font-size: 12px;">${bizName}</span>
+            </div>`;
+            
+        container.insertAdjacentHTML('afterbegin', html);
+    }
+}
+</script> 
 </body>
 </html>
    

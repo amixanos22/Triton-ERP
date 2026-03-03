@@ -1,4 +1,4 @@
-          <!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="el">
 <head>
   
@@ -579,10 +579,16 @@
 .floating-window[style*="width: calc(100% - 260px)"]::after {
     display: none;
 }
-      /* Αυτό θα εφαρμοστεί σε όλες τις φόρμες σου αυτόματα */
-.form-container { 
-    position: relative !important; 
-    padding-top: 60px !important; /* Δημιουργεί κενό για να μην πέσει το logo πάνω στα κουμπιά σου */
+      @keyframes pulse-blue {
+    0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
 }
 </style>
     
@@ -606,28 +612,36 @@
 </div>
 
 <script>
-   document.addEventListener('DOMContentLoaded', () => {
-    // 1. Έλεγχος για ενημέρωση τιμών (Αυτό που είχες)
-    const lastUpdate = localStorage.getItem('lastPriceUpdate');
-    if (lastUpdate) {
-        const updateDate = new Date(lastUpdate);
-        const now = new Date();
-        const diffInHours = (now - updateDate) / (1000 * 60 * 60);
-        if (diffInHours < 24) {
-            const banner = document.getElementById('priceAlertBanner');
-            if(banner) banner.style.display = 'flex';
+ // === ΑΡΧΗ ΚΩΔΙΚΑ ΓΙΑ ΤΟ BANNER ΚΑΙ ΤΟ ΑΝΘΡΩΠΑΚΙ ===
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // Λειτουργία που τρέχει κάθε 15 δευτερόλεπτα
+    setInterval(() => {
+        const banner = document.getElementById('priceAlertBanner');
+        const lastUpdate = localStorage.getItem('lastPriceUpdate');
+        
+        if (lastUpdate && banner) {
+            const updateDate = new Date(lastUpdate);
+            const now = new Date();
+            const diffInHours = (now - updateDate) / (1000 * 60 * 60);
+            
+            // Αν η ενημέρωση είναι εντός 24ώρου, το banner ξαναεμφανίζεται
+            if (diffInHours < 24) {
+                banner.style.display = 'flex'; 
+            }
         }
-    }
+    }, 15000); // 15000ms = 15 δευτερόλεπτα
 
-    // 2. ΝΕΟ: Έλεγχος για το "ανθρωπάκι" (Animation προφίλ)
+    // Έλεγχος για το "ανθρωπάκι" (Blink)
     const biz = localStorage.getItem('bizSettings');
-    // Σιγουρέψου ότι το class στο HTML σου είναι .user-profile ή άλλαξέ το εδώ
-    const profileBtn = document.querySelector('.user-profile'); 
+    const profileBtn = document.querySelector('.user-profile-trigger') || document.querySelector('.user-profile'); 
 
     if (!biz && profileBtn) {
         profileBtn.classList.add('blink-profile');
     }
 });
+// === ΤΕΛΟΣ ΚΩΔΙΚΑ ΓΙΑ ΤΟ BANNER ΚΑΙ ΤΟ ΑΝΘΡΩΠΑΚΙ ===
+  
 </script>  
 
 
@@ -652,30 +666,15 @@
         
         <button onclick="completeLogin()" style="width: 100%; padding: 14px; background: #0ea5e9; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ΕΚΚΙΝΗΣΗ</button>
 
-        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #1e293b;">
-            <div style="background: rgba(14, 165, 233, 0.1); color: #7dd3fc; padding: 10px; border-radius: 10px; font-size: 0.7rem; border-left: 3px solid #0ea5e9; margin-bottom: 15px; text-align: left;">
-                ℹ️ <b>Logo:</b> Αν δεν θέλετε τώρα, πατήστε το ανθρωπάκι αργότερα από τις ρυθμίσεις.
-            </div>
-
-            <div style="position: relative; width: 70px; height: 70px; margin: 0 auto;">
-                <div onclick="document.getElementById('setLogo').click()" style="width: 70px; height: 70px; background: #1e293b; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px dashed #334155; overflow: hidden; cursor: pointer; position: relative;">
-                    <img id="logoPreview" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                    <span id="logoNoImg" style="font-size: 25px; color: #475569;">👤</span>
-                </div>
-                <input type="file" id="setLogo" accept="image/*" onchange="previewLogo(this)" style="display: none;">
-                <div style="position: absolute; bottom: 0; right: 0; background: #0ea5e9; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 15px; font-weight: bold; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center; pointer-events: none;">+</div>
-            </div>
-        </div>
-
         <div style="margin: 20px 0; color: #475569; font-size: 0.8rem; position: relative;">
             <span style="background: #0f172a; padding: 0 10px; position: relative; z-index: 1;">ή συνέχεια με</span>
             <hr style="position: absolute; top: 50%; left: 0; width: 100%; border: 0; border-top: 1px solid #1e293b;">
         </div>
 
-        <button onclick="fakeGoogleLogin()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; transition: 0.2s;">
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> 
-            Σύνδεση με Google
-        </button>
+       <button onclick="fakeGoogleLogin()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; transition: 0.2s;">
+    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> 
+    Σύνδεση με Google
+</button>
     </div>
 </div>
  
@@ -702,7 +701,7 @@
 
 <a href="javascript:void(0)" onclick="openCustomerModal()" class="nav-item">
     <span>🛸</span> 
-    <span class="translate" data-el="Πελάτες" data-en="customers">Πελάτες</span>
+    <span class="translate" data-el="Πελάτες" data-en="Customers">Πελάτες</span>
 </a>
 
 <a href="javascript:void(0)" onclick="openShoppingModal()" class="nav-item" style="border-left: 4px solid #0ea5e9; margin-top: 5px;">
@@ -869,32 +868,6 @@
   
    
 <script>
-  // ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΓΕΜΙΖΕΙ ΤΑ ΣΤΟΙΧΕΙΑ ΣΕ ΟΛΕΣ ΤΙΣ ΦΟΡΜΕΣ
-function loadBusinessData() {
-    // 1. Φόρτωση Logo
-    const savedLogo = localStorage.getItem('triton_logo_saved');
-    const allLogoPlaceholders = document.querySelectorAll('.company-logo-view'); // Χρησιμοποιούμε class για να το πιάνει παντού
-    
-    if (savedLogo) {
-        allLogoPlaceholders.forEach(img => {
-            img.src = savedLogo;
-            img.style.display = 'block';
-        });
-    }
-
-    // 2. Φόρτωση Στοιχείων (Επωνυμία, ΑΦΜ κλπ)
-    // Υποθέτουμε ότι τα έχεις σώσει με αυτά τα ονόματα
-    const businessName = localStorage.getItem('triton_business_name');
-    const businessTax = localStorage.getItem('triton_business_afm');
-
-    // Αν υπάρχουν πεδία με id "viewBusinessName", τα γεμίζει
-    if (document.getElementById('viewBusinessName')) {
-        document.getElementById('viewBusinessName').innerText = businessName || 'Όνομα Επιχείρησης';
-    }
-}
-
-// Τρέχει αυτόματα όταν φορτώνει οποιαδήποτε σελίδα
-document.addEventListener('DOMContentLoaded', loadBusinessData);
 // --- ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΕΝΟΙΚΙΑΣΗΣ TRITON ---
 function checkLogin() {
     const email = document.getElementById('loginEmail').value;
@@ -1389,53 +1362,20 @@ function completeLogin() {
     const email = document.getElementById('userEmail').value;
     const pass = document.getElementById('userPass').value;
 
-    // 1. Έλεγχοι εγκυρότητας
     if (!email || !email.includes('@')) {
         alert("⚠️ Εισάγετε έγκυρο Email Επιχείρησης.");
         return;
     }
+
     if (pass.length < 4) {
         alert("⚠️ Ο κωδικός πρόσβασης πρέπει να είναι τουλάχιστον 4 ψηφία.");
         return;
     }
 
-    // 2. ΑΠΟΘΗΚΕΥΣΗ ΣΤΟΙΧΕΙΩΝ (Για να τα βρίσκουν οι φόρμες)
-    localStorage.setItem('triton_business_email', email);
-    
-    // Αν έχει ανεβάσει logo, το LocalStorage το έχει ήδη πάρει από την previewLogo.
-    // Εδώ προαιρετικά μπορούμε να σώσουμε και την κατάσταση σύνδεσης
-    localStorage.setItem('triton_is_logged_in', 'true');
-
-    // 3. Είσοδος στο σύστημα
-    alert("✅ Η σύνδεση ολοκληρώθηκε!");
-    document.getElementById('loginOverlay').style.display = 'none';
-
-    // 4. Φόρτωση των στοιχείων στις φόρμες του ERP
-    if (typeof loadBusinessData === "function") {
-        loadBusinessData();
-    }
-}
-
-    // 2. Αποθήκευση στο LocalStorage
+    // Όλα καλά! Αποθήκευση και είσοδος
     localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
-
-    // 3. Κλείσιμο του Login Overlay
-    const loginOverlay = document.getElementById('loginOverlay');
-    const authGate = document.getElementById('authGate'); // Το κουτί του email
-    
-    if (loginOverlay) loginOverlay.style.display = 'none';
-
-    // 4. ΑΥΤΟΜΑΤΟ ΑΝΟΙΓΜΑ ΦΟΡΜΑΣ ΣΤΟΙΧΕΙΩΝ
-    // Ελέγχουμε αν έχουν ήδη σωθεί ρυθμίσεις. Αν όχι, ανοίγουμε τη φόρμα.
-    const savedSettings = localStorage.getItem('bizSettings');
-    if (!savedSettings || savedSettings === '{}') {
-        console.log("🔱 Triton: First Login. Opening Business Settings...");
-        openSettings(); 
-    } else {
-        // Αν υπάρχουν ήδη στοιχεία, απλά ανανέωσε το ταμπλό
-        if (typeof refreshTritonDashboard === "function") refreshTritonDashboard();
-    }
+    executeFinalEntry(); 
 }
 // --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (MYDATA READY) ---
 function openSettings() {
@@ -2178,107 +2118,6 @@ function makeDraggable(elmnt, header) {
 </script>
           <div id="minimizedBar" style="position: fixed; bottom: 0; left: 260px; right: 0; height: 45px; background: #0f172a; display: flex; gap: 10px; padding: 0 15px; z-index: 99999; border-top: 2px solid #0284c7; align-items: center;">
     </div>
-         <script>
-// ΑΥΤΗ ΕΙΝΑΙ Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΨΑΧΝΕΙΣ
-function previewLogo(input) {
-    const preview = document.getElementById('logoPreview');
-    const icon = document.getElementById('logoNoImg');
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            const base64Image = e.target.result; 
-            
-            if (preview) {
-                preview.src = base64Image;
-                preview.style.display = 'block';
-            }
-            if (icon) icon.style.display = 'none';
-            
-            // ΑΛΛΑΓΗ ΕΔΩ: Χρησιμοποιούμε το όνομα που "ακούνε" οι 13 φόρμες
-            localStorage.setItem('triton_logo_saved', base64Image);
-            
-            // ΚΑΙ ΕΔΩ: Τρέχουμε τη φόρτωση για να ενημερωθούν οι φόρμες αμέσως
-            if (typeof loadBusinessData === "function") {
-                loadBusinessData();
-            }
-        }
-        
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-// ΑΥΤΟ ΤΡΕΧΕΙ ΜΟΛΙΣ ΑΝΟΙΞΕΙ Η ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΘΥΜΑΤΑΙ ΤΟ LOGO
-window.addEventListener('load', () => {
-    // Χρησιμοποιούμε παντού το ίδιο όνομα: triton_logo_saved
-    const savedLogo = localStorage.getItem('triton_logo_saved');
-    const preview = document.getElementById('logoPreview');
-    const icon = document.getElementById('logoNoImg');
-    
-    if (savedLogo && preview) {
-        preview.src = savedLogo;
-        preview.style.display = 'block';
-        if (icon) icon.style.display = 'none';
-    }
-    
-    // Μόλις φορτώσει η σελίδα, τρέξε και το γέμισμα των φορμών
-    loadBusinessData();
-});
-
-function loadBusinessData() {
-    // 1. Φόρτωση Logo από το ΕΝΙΑΙΟ κλειδί
-    const savedLogo = localStorage.getItem('triton_logo_saved');
-    const allLogos = document.querySelectorAll('.company-logo-view');
-    const tritonIcons = document.querySelectorAll('.triton-icon');
-    
-    if (savedLogo) {
-        allLogos.forEach(img => {
-            img.src = savedLogo;
-            img.style.display = 'block';
-        });
-        // Κρύβουμε την τρίαινα αν υπάρχει Logo
-        tritonIcons.forEach(icon => icon.style.display = 'none');
-    }
-    
-    // 2. Φόρτωση Ονόματος (για το κενό πάνω αριστερά)
-    const savedName = localStorage.getItem('triton_business_name');
-    const nameDisplay = document.getElementById('viewBusinessNameTop');
-    if (savedName && nameDisplay) {
-        nameDisplay.innerText = savedName;
-    }
-}
-
-    // 2. Φόρτωση Ονόματος Επιχείρησης
-    const savedName = localStorage.getItem('triton_business_name');
-    const nameDisplay = document.getElementById('viewBusinessNameTop');
-    
-    if (savedName && nameDisplay) {
-        nameDisplay.innerText = savedName;
-    }
-}
-
-// Εκτέλεση με το που ανοίγει η σελίδα
-window.addEventListener('load', loadBusinessData);
-           function applyGlobalLogo(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    // Αν δεν υπάρχει ήδη το logo σε αυτή τη φόρμα, βάλτο
-    if (!container.querySelector('.auto-logo')) {
-        const logoData = localStorage.getItem('triton_logo_saved');
-        const bizName = localStorage.getItem('triton_business_name') || 'TRITON ERP';
-        
-        const html = `
-            <div class="auto-logo" style="position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 8px;">
-                <img src="${logoData}" style="height: 40px; border-radius: 4px; display: ${logoData ? 'block' : 'none'};">
-                <span style="color: #7dd3fc; font-weight: bold; font-size: 12px;">${bizName}</span>
-            </div>`;
-            
-        container.insertAdjacentHTML('afterbegin', html);
-    }
-}
-</script> 
 </body>
 </html>
    

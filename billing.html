@@ -49,11 +49,9 @@
         th { background: #f8fafc; padding: 10px; font-size: 10px; border-bottom: 2px solid black; text-transform: uppercase; text-align: left; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
         .col-input { width: 100%; border: none; outline: none; background: transparent; font-size: 13px; }
-        .price-alert { background: #fee2e2 !important; color: var(--triton-red) !important; font-weight: bold; }
 
         /* FOOTER & TOTALS */
         .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px; }
-        
         .totals-container { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
         .total-row { display: flex; justify-content: space-between; width: 320px; font-size: 14px; font-weight: bold; color: #475569; }
         .final-row { border-top: 2px solid black; padding-top: 10px; margin-top: 5px; font-size: 22px; color: var(--triton-blue); font-weight: 900; }
@@ -79,14 +77,8 @@
             .no-print { display: none !important; }
             #triton-app { width: 100%; margin: 0; box-shadow: none; padding: 0; }
         }
-      /* Εξαφάνιση της μπάρας του Blogger */
-#navbar-iframe {
-    display: none !important;
-}
-
-body {
-    top: 0 !important; /* Επαναφορά του κενού που αφήνει η μπάρα */
-}
+        #navbar-iframe { display: none !important; }
+        body { top: 0 !important; }
     </style>
 </head>
 <body>
@@ -152,10 +144,10 @@ body {
         </div>
     </div>
 
-    <table>
+    <table id="invoiceTable">
         <thead>
             <tr>
-                <th style="width:45%">Περιγραφή</th>
+                <th style="width:45%">Περιγραφή (Autocomplete)</th>
                 <th style="width:10%">Ποσ.</th>
                 <th style="width:12%">Τιμή</th>
                 <th style="width:8%">Εκπτ.%</th>
@@ -165,7 +157,6 @@ body {
         </thead>
         <tbody id="rowsBody"></tbody>
     </table>
-    <button class="no-print" onclick="addRow()" style="border:none; background:none; color:var(--triton-blue); font-weight:bold; cursor:pointer;">+ Προσθήκη Γραμμής</button>
 
     <div class="footer-grid">
         <div>
@@ -211,7 +202,7 @@ body {
 <datalist id="prodData"></datalist>
 
 <script>
-    // --- 1. ΑΥΤΟΜΑΤΗ ΑΡΙΘΜΗΣΗ & SETUP ---
+    // --- 1. SETUP & SETTINGS ---
     window.onload = () => {
         loadSettings();
         setupAutoNumbering();
@@ -238,12 +229,18 @@ body {
         if (s.logoBase64) document.getElementById('idxLogo').innerHTML = `<img src="${s.logoBase64}">`;
 
         // Load Datalists
+        updateDatalists();
+    }
+
+    function updateDatalists() {
         const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const cDl = document.getElementById('custData');
+        cDl.innerHTML = '';
         Object.keys(customers).forEach(name => { let o = document.createElement('option'); o.value = name; cDl.appendChild(o); });
 
         const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
         const pDl = document.getElementById('prodData');
+        pDl.innerHTML = '';
         Object.keys(products).forEach(p => { let o = document.createElement('option'); o.value = p; pDl.appendChild(o); });
     }
 
@@ -256,7 +253,7 @@ body {
             document.getElementById('cAfm').value = c.afm || "";
             document.getElementById('cDoy').value = c.doy || "";
             document.getElementById('cAddr').value = c.address || "";
-            document.getElementById('deliveryAddr').value = ""; // Reset
+            document.getElementById('deliveryAddr').value = ""; 
         }
     }
 
@@ -293,28 +290,52 @@ body {
         document.getElementById('branchOverlay').style.display = "none";
     }
 
-    // --- 3. ΠΙΝΑΚΑΣ ΠΡΟΪΟΝΤΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ ---
+    // --- 3. ΠΙΝΑΚΑΣ ΠΡΟΪΟΝΤΩΝ & ENTER FLOW ---
+    function handleNavigation(event, currentInput) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            const row = currentInput.closest('tr');
+            
+            if (currentInput.classList.contains('p-name')) {
+                const qtyInput = row.querySelector('.qty');
+                qtyInput.focus();
+                qtyInput.select();
+            } 
+            else if (currentInput.classList.contains('qty')) {
+                const nextRow = addRow();
+                nextRow.querySelector('.p-name').focus();
+            }
+        }
+    }
+
     function addRow() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" list="prodData" class="col-input p-name" onchange="fillProd(this)"></td>
-            <td><input type="number" class="col-input qty" value="1" oninput="recalc()"></td>
-            <td><input type="number" class="col-input prc" step="0.01" oninput="recalc()"></td>
-            <td><input type="number" class="col-input dsc" value="0" oninput="recalc()"></td>
-            <td><input type="number" class="col-input tax" value="24" oninput="recalc()"></td>
+            <td><input type="text" list="prodData" class="col-input p-name" placeholder="Προϊόν..." onchange="fillProd(this)" onkeydown="handleNavigation(event, this)"></td>
+            <td><input type="number" class="col-input qty" value="1" oninput="recalc()" onkeydown="handleNavigation(event, this)"></td>
+            <td><input type="number" class="col-input prc" readonly tabindex="-1" style="background:#f1f5f9; color:#475569; cursor:not-allowed;"></td>
+            <td><input type="number" class="col-input dsc" readonly tabindex="-1" style="background:#f1f5f9; color:#475569; cursor:not-allowed;"></td>
+            <td><input type="number" class="col-input tax" readonly tabindex="-1" style="background:#f1f5f9; color:#475569; cursor:not-allowed;"></td>
             <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
         `;
         document.getElementById('rowsBody').appendChild(tr);
+        return tr;
     }
 
     function fillProd(el) {
-        const db = JSON.parse(localStorage.getItem('productsDB') || '{}');
-        const p = db[el.value];
+        const productsDB = JSON.parse(localStorage.getItem('productsDB') || '{}');
+        const p = productsDB[el.value];
+        const r = el.closest('tr');
+        
         if (p) {
-            const r = el.closest('tr');
             r.querySelector('.prc').value = p.price || 0;
+            r.querySelector('.dsc').value = p.discount || 0;
             r.querySelector('.tax').value = p.vat || 24;
             recalc();
+            
+            const qtyInput = r.querySelector('.qty');
+            qtyInput.focus();
+            qtyInput.select();
         }
     }
 
@@ -349,19 +370,15 @@ body {
         const grand = net + tax;
         document.getElementById('sumGrand').innerText = grand.toFixed(2) + " €";
 
-        // Υπολογισμός Κέρδους
         const profitVal = net - costTotal;
         const profitPerc = net > 0 ? (profitVal / net) * 100 : 0;
         document.getElementById('totalProfitDisplay').innerText = `${profitPerc.toFixed(1)}% (${profitVal.toFixed(2)} €)`;
     }
 
-    // --- 4. ΕΚΤΥΠΩΣΗ & ΟΡΙΣΤΙΚΟΠΟΙΗΣΗ ---
     function finalizeAndPrint() {
-        // Αύξηση αρίθμησης
         let current = parseInt(localStorage.getItem('triton_last_id'));
         localStorage.setItem('triton_last_id', current + 1);
 
-        // Ενημέρωση Αποθήκης
         const db = JSON.parse(localStorage.getItem('productsDB') || '{}');
         document.querySelectorAll('#rowsBody tr').forEach(row => {
             const name = row.querySelector('.p-name').value;
@@ -377,8 +394,10 @@ body {
     function lookupVat() {
         const afm = document.getElementById('cAfm').value;
         if (!afm) return alert("Εισάγετε ΑΦΜ.");
-        alert("Αναζήτηση myDATA για ΑΦΜ: " + afm);
+        window.open(`https://www.vrisko.gr/search-aade-afm/?afm=${afm}`, 'TritonHelper', 'width=800,height=600');
     }
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'F10') { e.preventDefault(); finalizeAndPrint(); } });
 </script>
 </body>
 </html>

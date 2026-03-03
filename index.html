@@ -1343,20 +1343,36 @@ function completeLogin() {
     const email = document.getElementById('userEmail').value;
     const pass = document.getElementById('userPass').value;
 
+    // 1. Έλεγχοι εγκυρότητας
     if (!email || !email.includes('@')) {
         alert("⚠️ Εισάγετε έγκυρο Email Επιχείρησης.");
         return;
     }
-
     if (pass.length < 4) {
         alert("⚠️ Ο κωδικός πρόσβασης πρέπει να είναι τουλάχιστον 4 ψηφία.");
         return;
     }
 
-    // Όλα καλά! Αποθήκευση και είσοδος
+    // 2. Αποθήκευση στο LocalStorage
     localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
-    executeFinalEntry(); 
+
+    // 3. Κλείσιμο του Login Overlay
+    const loginOverlay = document.getElementById('loginOverlay');
+    const authGate = document.getElementById('authGate'); // Το κουτί του email
+    
+    if (loginOverlay) loginOverlay.style.display = 'none';
+
+    // 4. ΑΥΤΟΜΑΤΟ ΑΝΟΙΓΜΑ ΦΟΡΜΑΣ ΣΤΟΙΧΕΙΩΝ
+    // Ελέγχουμε αν έχουν ήδη σωθεί ρυθμίσεις. Αν όχι, ανοίγουμε τη φόρμα.
+    const savedSettings = localStorage.getItem('bizSettings');
+    if (!savedSettings || savedSettings === '{}') {
+        console.log("🔱 Triton: First Login. Opening Business Settings...");
+        openSettings(); 
+    } else {
+        // Αν υπάρχουν ήδη στοιχεία, απλά ανανέωσε το ταμπλό
+        if (typeof refreshTritonDashboard === "function") refreshTritonDashboard();
+    }
 }
 // --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (MYDATA READY) ---
 function openSettings() {

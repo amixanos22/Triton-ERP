@@ -402,7 +402,7 @@
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
 }
       
-       <style>
+     
 .triton-modal {
     display: none; /* Κρυφό αρχικά */
     position: fixed;
@@ -589,6 +589,15 @@
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-10px); }
     75% { transform: translateX(10px); }
+}
+      @keyframes tritonPulse {
+    0% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7); background: #0284c7; }
+    70% { box-shadow: 0 0 0 10px rgba(2, 132, 199, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); background: #1e293b; }
+}
+
+.pulse-new {
+    animation: tritonPulse 1.5s ease-out;
 }
 </style>
     
@@ -977,6 +986,7 @@ function showTritonHint() {
         document.head.appendChild(style);
     }
 
+   
     // 3. Δημιουργία Banner (Πιο στενό και compact)
     const hint = document.createElement('div');
     hint.id = 'tritonHintBanner';
@@ -1421,28 +1431,7 @@ function closeSettings() {
     }
 }
 
-// --- 2. Η ΜΗΧΑΝΗ ΤΩΝ POPUPS (ΔΙΟΡΘΩΜΕΝΗ) ---
-function createNewWindow(url, title, width, height) {
-    console.log("🔱 Triton: Opening " + title);
-    
-    const left = (screen.width - width) / 2;
-    const top = (screen.height - height) / 2;
-
-    // ΔΙΟΡΘΩΣΗ 1: Δίνουμε μοναδικό όνομα βασισμένο στο αρχείο (π.χ. invoice_win)
-    // Έτσι αν ανοίξεις Τιμολόγιο ΚΑΙ Απόδειξη, θα μείνουν ΚΑΙ ΤΑ ΔΥΟ ανοιχτά.
-    const windowID = url.split('.')[0] + "_triton"; 
-    
-    // ΔΙΟΡΘΩΣΗ 2: Αφαιρούμε το "popup=yes" που μερικές φορές τα πετάει έξω από τον browser
-    const options = `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`;
-    
-    const newWin = window.open(url, windowID, options);
-    
-    if (newWin) {
-        newWin.focus(); // Φέρνει το νέο παράθυρο πάντα μπροστά από την index
-    } else {
-        alert("⚠️ Παρακαλώ επιτρέψτε τα Popups για το Triton!");
-    }
-}
+ 
 
 // ==========================================
 // 📊 3. DASHBOARD & STATISTICS (TRITON ENGINE)
@@ -1612,36 +1601,8 @@ function openPliromiModal() { 
 // --- ΣΤΑΤΙΣΤΙΚΑ ---
 function openDashboardModal() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); }
 
-// ==========================================
-// ⚙️ 3. ΜΗΧΑΝΗ ΠΑΡΑΘΥΡΩΝ
-// ==========================================
-function createNewWindow(url, title, width = 900, height = 700) {
-    // Αντί για window.open, καλούμε τη συνάρτηση που φτιάχνει το "πλωτό" παράθυρο μέσα στο site
-    if (typeof createFloatingWindow === "function") {
-        createFloatingWindow(url, title, width, height);
-    } else {
-        // Αν δεν έχεις φτιάξει ακόμα τα floating windows, άνοιξέ το στο κεντρικό Modal
-        openModule(url, title);
-    }
-}
-  function createNewWindow(url, title, width = 900, height = 700) {
-    console.log("🔱 Triton Engine: Attempting to open " + title);
-
-    // 1. Πρώτη επιλογή: Πλωτά παράθυρα (αν υπάρχει ο κώδικας)
-    if (typeof createFloatingWindow === "function") {
-        createFloatingWindow(url, title, width, height);
-        return; 
-    } 
-    
-    // 2. Δεύτερη επιλογή: Το κεντρικό Modal (iframe)
-    if (typeof openModule === "function") {
-        openModule(url, title);
-        return;
-    }
-    
-    // 3. Έσχατη λύση: Αν όλα αποτύχουν, τότε μόνο window.open
-    window.open(url, '_blank', `width=${width},height=${height}`);
-}
+ 
+   
 </script>
   <script>       
 // ==========================================
@@ -1697,26 +1658,17 @@ function openModule(pageUrl, title, icon = "🔱") {
         frame.src = pageUrl;
         modal.style.display = 'block';
         
-        // Φέρτο μπροστά (Z-index)
         modal.style.zIndex = "10000";
         
-        // Ενεργοποίηση Drag
-        makeElementDraggable(modal, header);
+        // ΔΙΟΡΘΩΣΗ: Από makeElementDraggable το αλλάζουμε σε makeDraggable
+        // για να δουλεύει με τη συνάρτηση που κρατήσαμε πριν.
+        makeDraggable(modal, header); 
         
         console.log(`🔱 Triton Loading: ${title}`);
     }
 }
-
-function closeTritonModal() {
-    const modal = document.getElementById('tritonGlobalModal');
-    const frame = document.getElementById('modalFrame');
-    if(modal) {
-        modal.style.display = 'none';
-        if(frame) frame.src = ""; 
-        updateDashboardStats(); 
-    }
-}
-
+    
+ 
 // ==========================================
 // 🖱️ ΜΗΧΑΝΙΣΜΟΣ DRAG
 // ==========================================
@@ -1791,7 +1743,76 @@ function makeDraggable(element, handle) {
         };
     };
 }
+/* --- 1. ΠΡΟΣΘΕΣΕ ΑΥΤΑ ΣΤΟ CSS ΣΟΥ --- */
+/* (Αν τα έχεις ήδη, απλά βεβαιώσου ότι είναι έτσι) */
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes tritonPulse {
+    0% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7); background: #0284c7; }
+    70% { box-shadow: 0 0 0 10px rgba(2, 132, 199, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); background: #1e293b; }
+  }
+  .pulse-new {
+    animation: tritonPulse 1.5s ease-out;
+  }
+`;
+document.head.appendChild(style);
 
+/* --- 2. Η ΔΙΟΡΘΩΜΕΝΗ ΣΥΝΑΡΤΗΣΗ --- */
+function createTaskbarTab(winId, title) {
+    // Έλεγχος αν υπάρχει ήδη
+    if (document.getElementById('tab_' + winId)) return;
+    
+    const bar = document.getElementById('minimizedBar');
+    if (!bar) {
+        console.error("🔱 Triton Error: Το minimizedBar δεν βρέθηκε στο HTML!");
+        return;
+    }
+
+    const tab = document.createElement('div');
+    tab.id = 'tab_' + winId;
+    tab.className = 'pulse-new'; // Εδώ μπαίνει το εφέ που αναβοσβήνει
+    
+    tab.style.cssText = `
+        background: #1e293b; 
+        color: #7dd3fc; 
+        padding: 8px 15px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        font-size: 12px; 
+        border: 1px solid #334155; 
+        font-weight: bold;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+
+    tab.innerHTML = `<span>🔱</span> ${title}`;
+
+    // Hover εφέ
+    tab.onmouseenter = () => { tab.style.background = "#334155"; tab.style.borderColor = "#7dd3fc"; };
+    tab.onmouseleave = () => { tab.style.background = "#1e293b"; tab.style.borderColor = "#334155"; };
+
+    // Επαναφορά παραθύρου
+    tab.onclick = () => {
+        const win = document.getElementById(winId);
+        if (win) {
+            win.style.display = 'flex';
+            if (typeof bringToFront === "function") bringToFront(win);
+        }
+        tab.remove();
+    };
+
+    bar.appendChild(tab);
+    
+    // Σταματάμε το animation μετά από 2 δευτερόλεπτα
+    setTimeout(() => {
+        tab.classList.remove('pulse-new');
+    }, 2000);
+}
 // 2. ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΘΥΡΩΝ (FLOATING WINDOWS)
 function createNewWindow(url, title, width = 850, height = 600) {
     const winId = 'win_' + Date.now();
@@ -1802,24 +1823,28 @@ function createNewWindow(url, title, width = 850, height = 600) {
     const leftPos = (window.innerWidth - width) / 2;
     const topPos = (window.innerHeight - height) / 2;
 
-    win.style.cssText = `position: fixed; top: ${topPos}px; left: ${leftPos}px; width: ${width}px; height: ${height}px; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 10005; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0; resize: both; min-width: 400px; min-height: 300px;`;
+    // ΔΙΟΡΘΩΣΗ: Border χρώματος Triton (#0284c7)
+    win.style.cssText = `position: fixed; top: ${topPos}px; left: ${leftPos}px; width: ${width}px; height: ${height}px; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 10005; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #0284c7; resize: both; min-width: 400px; min-height: 300px;`;
 
     win.innerHTML = `
-        <div class="win-header" style="background: #0284c7; color: white; padding: 10px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
+        <div class="win-header" style="background: #0f172a; color: white; padding: 10px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
             <span>🔱 ${title}</span>
             <div style="display: flex; gap: 15px; align-items: center;">
-                <span onclick="this.closest('.floating-window').querySelector('iframe').src += ''" style="cursor:pointer;">🔄</span>
-                <span onclick="minimizeWindow('${winId}', '${title}')" style="cursor:pointer; font-size:20px;">_</span>
-                <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;">&times;</span>
+                <span onclick="this.closest('.floating-window').querySelector('iframe').src += ''" style="cursor:pointer;" title="Ανανέωση">🔄</span>
+                <span onclick="minimizeWindow('${winId}', '${title}')" style="cursor:pointer; font-size:20px;" title="Ελαχιστοποίηση">_</span>
+                <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;" title="Κλείσιμο">&times;</span>
             </div>
         </div>
-        <iframe src="${url}" style="flex: 1; border: none; width: 100%; height: 100%; pointer-events: auto;"></iframe>
+        <iframe src="${url}" style="flex: 1; border: none; width: 100%; height: 100%; pointer-events: auto; background: #f8fafc;"></iframe>
     `;
 
     document.body.appendChild(win);
-    makeDraggable(win, win.querySelector('.win-header'));
+    
+    // Σύνδεση με τη μηχανή κίνησης και το Z-index
+    if (typeof makeDraggable === "function") makeDraggable(win, win.querySelector('.win-header'));
+    if (typeof bringToFront === "function") bringToFront(win);
 }
-
+             
 // 3. TASKBAR ΛΕΙΤΟΥΡΓΙΑ
 function minimizeWindow(winId, title) {
     const win = document.getElementById(winId);
@@ -1830,22 +1855,54 @@ function minimizeWindow(winId, title) {
 }
 
 function createTaskbarTab(winId, title) {
+    // 1. Έλεγχος αν υπάρχει ήδη το tab για να μην γεμίσει η μπάρα διπλότυπα
     if (document.getElementById('tab_' + winId)) return;
+    
     const bar = document.getElementById('minimizedBar');
     if (!bar) return;
 
     const tab = document.createElement('div');
     tab.id = 'tab_' + winId;
-    tab.style.cssText = `background: #1e293b; color: #7dd3fc; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; border: 1px solid #334155; font-weight: bold;`;
-    tab.innerHTML = `🔱 ${title}`;
+    
+    // Στυλ με τα χρώματα του Triton (Deep Navy και Light Blue)
+    tab.style.cssText = `
+        background: #1e293b; 
+        color: #7dd3fc; 
+        padding: 8px 15px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        font-size: 12px; 
+        border: 1px solid #334155; 
+        font-weight: bold;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    `;
+
+    // Εφέ Hover (Αλλαγή χρώματος όταν πάει το ποντίκι πάνω)
+    tab.onmouseenter = () => { tab.style.background = "#334155"; tab.style.borderColor = "#7dd3fc"; };
+    tab.onmouseleave = () => { tab.style.background = "#1e293b"; tab.style.borderColor = "#334155"; };
+
+    tab.innerHTML = `<span>🔱</span> ${title}`;
+
+    // Λειτουργία επαναφοράς παραθύρου
     tab.onclick = () => {
         const win = document.getElementById(winId);
         if (win) {
-            win.style.display = 'flex';
-            win.style.zIndex = "10010";
+            win.style.display = 'flex'; // Επαναφορά εμφάνισης
+            
+            // Χρήση της bringToFront για να έρθει "πρώτο τραπέζι πίστα"
+            if (typeof bringToFront === "function") {
+                bringToFront(win);
+            } else {
+                win.style.zIndex = "10010";
+            }
         }
-        tab.remove();
+        tab.remove(); // Αφαίρεση του tab από την μπάρα αφού το παράθυρο άνοιξε
     };
+
     bar.appendChild(tab);
 }
 
@@ -1948,18 +2005,29 @@ function closeModal(id) {
     }
 }
 
-// Ειδική συνάρτηση για το Κεντρικό Modal/Overlay
+// ✅ ΑΥΤΗ ΕΙΝΑΙ Η ΤΕΛΙΚΗ (ΚΡΑΤΑ ΤΗΝ)
 function closeTritonModal() {
+    // 1. Κλείνει όλα τα πιθανά παράθυρα/overlays
     const ids = ['tritonGlobalModal', 'tritonInternalWin', 'tritonOverlay', 'tritonModalContainer'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
+
+    // 2. Μηδενίζει τα iframes για να μην τρώνε μνήμη και να μην ακούγονται ήχοι στο background
     const frames = ['modalFrame', 'winFrame', 'modalIframe'];
     frames.forEach(id => {
         const f = document.getElementById(id);
         if (f) f.src = '';
     });
+
+    // 3. Η ΠΡΟΣΘΗΚΗ: Ενημερώνει τα στατιστικά σου στο Dashboard μόλις κλείσει η καρτέλα
+    if (typeof updateDashboardStats === "function") {
+        updateDashboardStats();
+    }
+    if (typeof refreshTritonDashboard === "function") {
+        refreshTritonDashboard();
+    }
 }
 
 // ==========================================

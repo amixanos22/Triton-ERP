@@ -52,22 +52,22 @@
             <div style="display:flex; justify-content:space-between;">
                 <label style="font-size:10px; font-weight:bold;">ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ</label>
                 <button onclick="lookupMyData()" class="no-print" style="cursor:pointer; background:var(--triton-blue); color:white; border:none; border-radius:3px; padding:2px 5px; font-size:10px;">🔍 myDATA</button>
-            </div>
-            <input id="cName" list="custList" placeholder="Επωνυμία" onchange="autoFillCust()">
-            <input id="cAfm" placeholder="ΑΦΜ">
-            <input id="cAddr" placeholder="Διεύθυνση">
-            <input id="cCity" placeholder="Πόλη">
-        </div>
-        
-        <div class="card" style="border-left-color: #64748b;">
-            <label style="font-size:10px; font-weight:bold;">ΔΙΑΚΙΝΗΣΗ / ΠΑΡΑΔΟΣΗ</label>
-            <input id="purpose" value="ΠΩΛΗΣΗ">
-            <input id="car" placeholder="Αρ. Αυτοκινήτου">
-            <input id="delivery" list="branchList" placeholder="Τόπος Παράδοσης">
-            <datalist id="branchList"></datalist>
-        </div>
-    </div>
-
+              
+       </div> 
+        <input id="cName" list="custList" placeholder="Επωνυμία" onchange="autoFillCust()"> 
+        <input id="cAfm" placeholder="ΑΦΜ"> 
+        <input id="cAddr" placeholder="Διεύθυνση"> 
+        <input id="cCity" placeholder="Πόλη"> 
+    </div> 
+    
+    <div class="card" style="border-left-color: #64748b;"> 
+        <label style="font-size:10px; font-weight:bold;">ΔΙΑΚΙΝΗΣΗ / ΠΑΡΑΔΟΣΗ</label> 
+        <input id="purpose" value="ΠΩΛΗΣΗ"> 
+        <input id="car" placeholder="Αρ. Αυτοκινήτου"> 
+        <input id="delivery" list="branchList" placeholder="Τόπος Παράδοσης"> 
+        <datalist id="branchList"></datalist> 
+    </div> 
+</div>
     <table id="itemsTable">
         <thead>
             <tr>
@@ -171,26 +171,101 @@ async function updateLists(userId) {
 
 // 5. ΣΥΓΧΡΟΝΙΣΜΟΣ (Προσθήκη user_id για τη μνήμη)
 async function syncWithSupabase() {
-    if (!currentUser) return;
+    if (!currentUser) return alert("🔱 Triton: Παρακαλώ συνδεθείτε για να συγχρονίσετε.");
     
-    const customerName = document.getElementById('cName').value;
-    const customerAfm = document.getElementById('cAfm').value;
+    const customerName = document.getElementById('cName').value.trim();
+    const customerAfm = document.getElementById('cAfm').value.trim();
 
     if (customerName && customerAfm) {
-        await _supabase.from('customers').upsert({ 
-            name: customerName, 
+        // 1. Αποστολή στο Cloud
+        const { error } = await _supabase.from('customers').upsert({ 
+            name: customerName.toUpperCase(), // Κεφαλαία για ομοιομορφία
             afm: customerAfm,
             address: document.getElementById('cAddr').value,
             city: document.getElementById('cCity').value,
-            user_id: currentUser.id // Σημαντικό: για να ξέρει σε ποιον ανήκει ο πελάτης
-        }, { onConflict: 'name' });
+            user_id: currentUser.id 
+        }, { onConflict: 'afm' }); // <-- Χρήση ΑΦΜ για αποφυγή διπλοεγγραφών
+
+        if (error) {
+            console.error("Sync Error:", error.message);
+            alert("❌ Σφάλμα συγχρονισμού!");
+        } else {
+            // 2. Ενημέρωση της λίστας (datalist) αμέσως
+            if (typeof updateLists === "function") updateLists(currentUser.id);
+            
+            alert("✅ Η βάση δεδομένων Triton ενημερώθηκε!");
+        }
+    } else {
+        alert("⚠️ Συμπληρώστε Επωνυμία και ΑΦΜ για συγχρονισμό.");
     }
-    alert("✅ Η βάση δεδομένων Triton ενημερώθηκε!");
 }
 function sendEmailWithPDF() {
     const email = document.getElementById('emailSelect').value;
     if(!email) return alert("Επιλέξτε Email!");
     alert("📧 Αποστολή PDF στο: " + email);
+}
+  async function syncProductsToCloud() {
+    if (!currentUser) return;
+
+    // 1. Μαζεύουμε όλα τα προϊόντα από τις γραμμές του πίνακα
+    const rows = document.querySelectorAll('#invoiceTable tbody tr');
+    const productsToSync = [];
+
+    rows.forEach(row => {
+        const desc = row.querySelector('.desc')?.value.trim();
+        const price = parseFloat(row.querySelector('.price')?.value) || 0;
+
+        if (desc && price > 0) {
+            productsToSync.push({
+                user_id: currentUser.id,
+                name: desc.toUpperCase(), // Αποθήκευση με κεφαλαία
+                unit_price: price,
+                updated_at: new Date()
+            });
+        }
+    });
+
+    if (productsToSync.length === 0) return;
+
+    // 2. Ανέβασμα στο Cloud (Upsert)
+    // Χρησιμοποιούμε το 'name' ως Conflict για να ενημερώνεται η τιμή αν το προϊόν υπάρχει ήδη
+    const { error } = await _supabase
+        .from('products')
+        .upsert(productsToSync, { onConflict: 'user_id, name' });
+
+    if (error) {
+        console.error("❌ Σφάλμα συγχρονισμού προϊόντων:", error.message);
+    } else {
+        console.log("✅ Τα προϊόντα Triton ενημερώθηκαν στο Cloud!");
+        // Ενημερώνουμε τη λίστα prodList για να τα προτείνει την επόμενη φορά
+        updateLists(currentUser.id);
+    }
+}
+  // Λειτουργία: Όταν επιλέγεις προϊόν, συμπλήρωσε αυτόματα την τιμή
+async function autoFillProductPrice(inputElement) {
+    const productName = inputElement.value.trim().toUpperCase();
+    if (!productName || !currentUser) return;
+
+    // Ψάχνουμε στη βάση αν υπάρχει αυτό το προϊόν για τον συγκεκριμένο χρήστη
+    const { data: product, error } = await _supabase
+        .from('products')
+        .select('unit_price')
+        .eq('user_id', currentUser.id)
+        .eq('name', productName)
+        .single();
+
+    if (product) {
+        // Βρίσκουμε τη γραμμή (row) στην οποία ανήκει το input που γράφουμε
+        const row = inputElement.closest('tr');
+        const priceField = row.querySelector('.price');
+        
+        if (priceField && (!priceField.value || priceField.value == 0)) {
+            priceField.value = product.unit_price;
+            // Καλούμε την recalc αν την έχεις για να ενημερωθούν τα σύνολα/ΦΠΑ
+            if (typeof recalc === "function") recalc();
+            console.log(`🔱 Triton: Αυτόματη τιμή για ${productName}: ${product.unit_price}€`);
+        }
+    }
 }
 </script>
  

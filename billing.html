@@ -123,22 +123,22 @@ window.onload = async () => {
         return;
     }
 
-    currentUser = user; // Αποθήκευση του χρήστη για χρήση μετά
+    currentUser = user; 
     await loadProfile(user.id);
     await updateLists(user.id); 
     
-    addRow(); // Τώρα θα δουλέψει!
+    addRow(); 
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('el-GR');
 };
 
-// 2. ΠΡΟΣΘΗΚΗ ΓΡΑΜΜΗΣ (Έλειπε από τον κώδικά σου)
+// 2. ΠΡΟΣΘΗΚΗ ΓΡΑΜΜΗΣ
 function addRow() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td><input type="text" list="prodList" class="p-name" placeholder="Προϊόν..." onchange="fillProd(this)"></td>
+        <td><input type="text" list="prodList" class="desc" placeholder="Προϊόν..." onchange="autoFillProductPrice(this)"></td>
         <td><input type="number" class="qty" value="1" oninput="recalc()"></td>
-        <td><input type="number" class="prc" value="0" oninput="recalc()"></td>
-        <td><input type="number" class="tax" value="24" oninput="recalc()" onkeydown="checkEnter(event, this)"></td>
+        <td><input type="number" class="price" value="0" oninput="recalc()"></td>
+        <td><input type="number" class="tax" value="24" oninput="recalc()"></td>
         <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
     `;
     document.getElementById('rows').appendChild(tr);
@@ -156,98 +156,69 @@ async function loadProfile(userId) {
     }
 }
 
-// 4. ΕΝΗΜΕΡΩΣΗ ΛΙΣΤΩΝ (Μόνο για τον συγκεκριμένο χρήστη)
+// 4. ΕΝΗΜΕΡΩΣΗ ΛΙΣΤΩΝ
 async function updateLists(userId) {
     const { data: custs } = await _supabase.from('customers').select('name').eq('user_id', userId);
     const { data: prods } = await _supabase.from('products').select('name').eq('user_id', userId);
     
     const cL = document.getElementById('custList');
     const pL = document.getElementById('prodList');
-    cL.innerHTML = ''; pL.innerHTML = '';
+    if(cL) cL.innerHTML = ''; 
+    if(pL) pL.innerHTML = '';
     
     if (custs) custs.forEach(c => { let o = document.createElement('option'); o.value = c.name; cL.appendChild(o); });
     if (prods) prods.forEach(p => { let o = document.createElement('option'); o.value = p.name; pL.appendChild(o); });
 }
 
-// 5. ΣΥΓΧΡΟΝΙΣΜΟΣ (Προσθήκη user_id για τη μνήμη)
+// 5. ΥΠΟΛΟΓΙΣΜΟΣ ΣΥΝΟΛΩΝ (Recalc)
+function recalc() {
+    let grandTotal = 0;
+    document.querySelectorAll('#rows tr').forEach(row => {
+        const q = parseFloat(row.querySelector('.qty').value) || 0;
+        const p = parseFloat(row.querySelector('.price').value) || 0;
+        const t = parseFloat(row.querySelector('.tax').value) || 0;
+        
+        const lineTotal = (q * p) * (1 + t/100);
+        row.querySelector('.row-total').innerText = lineTotal.toFixed(2) + " €";
+        grandTotal += lineTotal;
+    });
+    if(document.getElementById('grandTotal')) {
+        document.getElementById('grandTotal').innerText = grandTotal.toFixed(2) + " €";
+    }
+}
+
+// 6. ΣΥΓΧΡΟΝΙΣΜΟΣ ΠΕΛΑΤΗ
 async function syncWithSupabase() {
-    if (!currentUser) return alert("🔱 Triton: Παρακαλώ συνδεθείτε για να συγχρονίσετε.");
+    if (!currentUser) return alert("🔱 Triton: Παρακαλώ συνδεθείτε.");
     
     const customerName = document.getElementById('cName').value.trim();
     const customerAfm = document.getElementById('cAfm').value.trim();
 
     if (customerName && customerAfm) {
-        // 1. Αποστολή στο Cloud
         const { error } = await _supabase.from('customers').upsert({ 
-            name: customerName.toUpperCase(), // Κεφαλαία για ομοιομορφία
+            name: customerName.toUpperCase(),
             afm: customerAfm,
             address: document.getElementById('cAddr').value,
             city: document.getElementById('cCity').value,
             user_id: currentUser.id 
-        }, { onConflict: 'afm' }); // <-- Χρήση ΑΦΜ για αποφυγή διπλοεγγραφών
+        }, { onConflict: 'afm' });
 
-        if (error) {
-            console.error("Sync Error:", error.message);
-            alert("❌ Σφάλμα συγχρονισμού!");
-        } else {
-            // 2. Ενημέρωση της λίστας (datalist) αμέσως
-            if (typeof updateLists === "function") updateLists(currentUser.id);
-            
+        if (error) alert("❌ Σφάλμα συγχρονισμού!");
+        else {
+            updateLists(currentUser.id);
             alert("✅ Η βάση δεδομένων Triton ενημερώθηκε!");
         }
     } else {
-        alert("⚠️ Συμπληρώστε Επωνυμία και ΑΦΜ για συγχρονισμό.");
+        alert("⚠️ Συμπληρώστε Επωνυμία και ΑΦΜ.");
     }
 }
-function sendEmailWithPDF() {
-    const email = document.getElementById('emailSelect').value;
-    if(!email) return alert("Επιλέξτε Email!");
-    alert("📧 Αποστολή PDF στο: " + email);
-}
-  async function syncProductsToCloud() {
-    if (!currentUser) return;
 
-    // 1. Μαζεύουμε όλα τα προϊόντα από τις γραμμές του πίνακα
-    const rows = document.querySelectorAll('#invoiceTable tbody tr');
-    const productsToSync = [];
-
-    rows.forEach(row => {
-        const desc = row.querySelector('.desc')?.value.trim();
-        const price = parseFloat(row.querySelector('.price')?.value) || 0;
-
-        if (desc && price > 0) {
-            productsToSync.push({
-                user_id: currentUser.id,
-                name: desc.toUpperCase(), // Αποθήκευση με κεφαλαία
-                unit_price: price,
-                updated_at: new Date()
-            });
-        }
-    });
-
-    if (productsToSync.length === 0) return;
-
-    // 2. Ανέβασμα στο Cloud (Upsert)
-    // Χρησιμοποιούμε το 'name' ως Conflict για να ενημερώνεται η τιμή αν το προϊόν υπάρχει ήδη
-    const { error } = await _supabase
-        .from('products')
-        .upsert(productsToSync, { onConflict: 'user_id, name' });
-
-    if (error) {
-        console.error("❌ Σφάλμα συγχρονισμού προϊόντων:", error.message);
-    } else {
-        console.log("✅ Τα προϊόντα Triton ενημερώθηκαν στο Cloud!");
-        // Ενημερώνουμε τη λίστα prodList για να τα προτείνει την επόμενη φορά
-        updateLists(currentUser.id);
-    }
-}
-  // Λειτουργία: Όταν επιλέγεις προϊόν, συμπλήρωσε αυτόματα την τιμή
+// 7. ΑΥΤΟΜΑΤΗ ΣΥΜΠΛΗΡΩΣΗ ΤΙΜΗΣ ΑΠΟ ΑΠΟΘΗΚΗ
 async function autoFillProductPrice(inputElement) {
     const productName = inputElement.value.trim().toUpperCase();
     if (!productName || !currentUser) return;
 
-    // Ψάχνουμε στη βάση αν υπάρχει αυτό το προϊόν για τον συγκεκριμένο χρήστη
-    const { data: product, error } = await _supabase
+    const { data: product } = await _supabase
         .from('products')
         .select('unit_price')
         .eq('user_id', currentUser.id)
@@ -255,17 +226,50 @@ async function autoFillProductPrice(inputElement) {
         .single();
 
     if (product) {
-        // Βρίσκουμε τη γραμμή (row) στην οποία ανήκει το input που γράφουμε
         const row = inputElement.closest('tr');
         const priceField = row.querySelector('.price');
-        
-        if (priceField && (!priceField.value || priceField.value == 0)) {
+        if (priceField) {
             priceField.value = product.unit_price;
-            // Καλούμε την recalc αν την έχεις για να ενημερωθούν τα σύνολα/ΦΠΑ
-            if (typeof recalc === "function") recalc();
-            console.log(`🔱 Triton: Αυτόματη τιμή για ${productName}: ${product.unit_price}€`);
+            recalc();
         }
     }
+}
+
+// 8. ΜΕΙΩΣΗ ΑΠΟΘΕΜΑΤΟΣ ΜΕΤΑ ΤΗΝ ΠΩΛΗΣΗ
+async function updateStockAfterSale() {
+    if (!currentUser) return;
+    const rows = document.querySelectorAll('#rows tr');
+    
+    for (let row of rows) {
+        const nameInput = row.querySelector('.desc');
+        const qtyInput = row.querySelector('.qty');
+        
+        if (!nameInput || !qtyInput) continue;
+        const name = nameInput.value.trim().toUpperCase();
+        const qty = parseFloat(qtyInput.value) || 0;
+
+        if (name && qty > 0) {
+            const { data: product } = await _supabase
+                .from('products')
+                .select('id, stock')
+                .eq('user_id', currentUser.id)
+                .eq('name', name)
+                .single();
+
+            if (product) {
+                const newStock = (parseFloat(product.stock) || 0) - qty;
+                await _supabase.from('products').update({ stock: newStock }).eq('id', product.id);
+                console.log(`🔱 Stock Update: ${name} -> ${newStock}`);
+            }
+        }
+    }
+}
+
+// Λοιπές συναρτήσεις
+function sendEmailWithPDF() {
+    const email = document.getElementById('emailSelect')?.value;
+    if(!email) return alert("Επιλέξτε Email!");
+    alert("📧 Αποστολή PDF στο: " + email);
 }
 </script>
  

@@ -177,11 +177,15 @@ function fillProd(el) {
     if (p) {
         const r = el.closest('tr');
         r.querySelector('.prc').value = p.price || 0;
-        r.querySelector('.tax').value = p.vat || 24;
+        
+        // ΑΛΛΑΓΗ ΕΔΩ: Βάζουμε "" αντί για 24
+        r.querySelector('.tax').value = p.vat || ""; 
+        
         recalc();
+        // Προαιρετικό: Μεταφέρει τον κέρσορα στην ποσότητα για πιο γρήγορη πληκτρολόγηση
+        r.querySelector('.qty').focus(); 
     }
 }
-
 function recalc() {
     let net = 0, tax = 0;
     document.querySelectorAll('#rows tr').forEach(r => {

@@ -1409,19 +1409,66 @@ function completeLogin() {
     localStorage.setItem('triton_is_logged_in', 'true');
     executeFinalEntry(); 
 }
-// --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (MYDATA READY) ---
-function openSettings() {
-    const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
-    const fields = {
-        'setName': saved.name, 'setJob': saved.job, 'setAfm': saved.afm,
-        'setDoy': saved.doy, 'setAddress': saved.address, 'setCity': saved.city,
-        'setTk': saved.tk, 'setPhone': saved.phone, 'setGemi': saved.gemi,
-        'setMyDataUser': saved.mu, 'setMyDataKey': saved.mk
-    };
-    for (let id in fields) {
-        if(document.getElementById(id)) document.getElementById(id).value = fields[id] || '';
+async function completeLogin() {
+    const email = document.getElementById('userEmail').value;
+    const pass = document.getElementById('userPass').value;
+
+    // 1. Πραγματικό Login στο Supabase
+    const { data, error } = await _supabase.auth.signInWithPassword({
+        email: email,
+        password: pass
+    });
+
+    if (error) {
+        alert("❌ Λάθος στοιχεία!");
+        return;
     }
+
+    // 2. ΣΗΜΑΝΤΙΚΟ: Σημαδεύουμε το PC/Κινητό ότι αυτός είναι "γνωστός"
+    localStorage.setItem('triton_user_exists', 'true');
+
+    // 3. ΕΛΕΓΧΟΣ: Έχει ήδη σώσει την επιχείρησή του (saveBusinessSettings);
+    const { data: profile } = await _supabase
+        .from('profiles')
+        .select('company_name')
+        .eq('id', data.user.id)
+        .single();
+
+    if (profile && profile.company_name) {
+        // ΑΝ ΕΧΕΙ ΗΔΗ ΠΡΟΦΙΛ: Κλείνουμε το overlay και μπαίνει στις μπάρες
+        document.getElementById('loginOverlay').style.display = 'none';
+        console.log("🔱 Triton: Καλώς ήρθες πίσω!");
+    } else {
+        // ΑΝ ΕΙΝΑΙ ΝΕΟΣ: Του δείχνουμε τη φόρμα για να τη συμπληρώσει ΜΙΑ φορά
+        document.getElementById('authGate').style.display = 'none';
+        document.getElementById('businessForm').style.display = 'block'; 
+    }
+}
+
+    // 2. Αντιστοίχιση των πεδίων της βάσης με τα IDs της φόρμας σου
+    const fields = {
+        'setName': saved.company_name || saved.name, 
+        'setJob': saved.activity || saved.job, 
+        'setAfm': saved.tax_id || saved.afm,
+        'setDoy': saved.tax_office || saved.doy, 
+        'setAddress': saved.address, 
+        'setCity': saved.city,
+        'setTk': saved.tk, 
+        'setPhone': saved.phone, 
+        'setGemi': saved.gemi,
+        'setMyDataUser': saved.mydata_user || saved.mu, 
+        'setMyDataKey': saved.mydata_key || saved.mk
+    };
+
+    // 3. Γέμισμα των input fields στο Modal
+    for (let id in fields) {
+        const elem = document.getElementById(id);
+        if(elem) elem.value = fields[id] || '';
+    }
+
+    // 4. Εμφάνιση του Modal
     document.getElementById('settingsModal').style.display = 'flex';
+    console.log("🔱 Triton: Ρυθμίσεις φορτώθηκαν από το Cloud.");
 }
 
  
@@ -1846,95 +1893,94 @@ function minimizeWindow(winId, title) {
     }
 }
 
-function createTaskbarTab(winId, title) {
-    // 1. Έλεγχος αν υπάρχει ήδη το tab για να μην γεμίσει η μπάρα διπλότυπα
-    if (document.getElementById('tab_' + winId)) return;
-    
-    const bar = document.getElementById('minimizedBar');
-    if (!bar) return;
-
-    const tab = document.createElement('div');
-    tab.id = 'tab_' + winId;
-    
-    // Στυλ με τα χρώματα του Triton (Deep Navy και Light Blue)
-    tab.style.cssText = `
-        background: #1e293b; 
-        color: #7dd3fc; 
-        padding: 8px 15px; 
-        border-radius: 6px; 
-        cursor: pointer; 
-        font-size: 12px; 
-        border: 1px solid #334155; 
-        font-weight: bold;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    `;
-
-    // Εφέ Hover (Αλλαγή χρώματος όταν πάει το ποντίκι πάνω)
-    tab.onmouseenter = () => { tab.style.background = "#334155"; tab.style.borderColor = "#7dd3fc"; };
-    tab.onmouseleave = () => { tab.style.background = "#1e293b"; tab.style.borderColor = "#334155"; };
-
-    tab.innerHTML = `<span>🔱</span> ${title}`;
-
-    // Λειτουργία επαναφοράς παραθύρου
-    tab.onclick = () => {
-        const win = document.getElementById(winId);
-        if (win) {
-            win.style.display = 'flex'; // Επαναφορά εμφάνισης
-            
-            // Χρήση της bringToFront για να έρθει "πρώτο τραπέζι πίστα"
-            if (typeof bringToFront === "function") {
-                bringToFront(win);
-            } else {
-                win.style.zIndex = "10010";
-            }
-        }
-        tab.remove(); // Αφαίρεση του tab από την μπάρα αφού το παράθυρο άνοιξε
-    };
-
-    bar.appendChild(tab);
+// ==========================================
+// 3. TASKBAR ΛΕΙΤΟΥΡΓΙΑ (Η ΜΟΝΑΔΙΚΗ ΕΚΔΟΣΗ)
+// ==========================================
+function minimizeWindow(winId, title) {
+    const win = document.getElementById(winId);
+    if (win) {
+        win.style.display = 'none';
+        createTaskbarTab(winId, title);
+    }
 }
 
-// 4. ΠΕΛΑΤΟΛΟΓΙΟ (QUICK MODAL)
-function openCustomerModal() {
+// Η createTaskbarTab υπάρχει ήδη στην αρχή του script σου (με το pulse-new), 
+// οπότε δεν χρειάζεται να την ξαναγράψουμε εδώ για να μην μπερδεύεται ο κώδικας.
+
+// ==========================================
+// 4. ΠΕΛΑΤΟΛΟΓΙΟ (CLOUD SYNC - SUPABASE)
+// ==========================================
+async function openCustomerModal() {
     const modal = document.getElementById('customerModal');
+    const header = document.getElementById('customerModalHeader');
     if (modal) {
         modal.style.display = 'block';
         modal.style.zIndex = "10020";
-        makeDraggable(modal, document.getElementById('customerModalHeader'));
-        renderCustomersInModal();
+        
+        // Σύνδεση με τη μηχανή κίνησης (Drag)
+        if (typeof makeDraggable === "function") {
+            makeDraggable(modal, header || document.getElementById('customerModalHeader'));
+        }
+        
+        // Φέρνουμε τους πελάτες από το Cloud (όχι από το PC)
+        await renderCustomersInModal();
+        
         const search = document.getElementById('modalSearchInput');
         if(search) search.focus();
     }
 }
 
-function renderCustomersInModal() {
-    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+async function renderCustomersInModal() {
+    // 1. Έλεγχος αν ο χρήστης είναι συνδεδεμένος
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) {
+        console.error("🔱 Triton: Δεν βρέθηκε ενεργός χρήστης για λήψη πελατών.");
+        return;
+    }
+
+    // 2. Λήψη δεδομένων από τον πίνακα 'customers' του Supabase
+    const { data: db, error } = await _supabase
+        .from('customers')
+        .select('*')
+        .eq('user_id', user.id) // Φίλτρο για να βλέπεις ΜΟΝΟ τους δικούς σου
+        .order('name', { ascending: true });
+
     const container = document.getElementById('modalCustomerBody');
     if (!container) return;
 
-    const names = Object.keys(db).sort();
-    let html = `<table style="width:100%; border-collapse:collapse;">
-        <thead style="background:#f1f5f9; position:sticky; top:0;">
-            <tr><th style="padding:10px; text-align:left;">ΕΠΩΝΥΜΙΑ</th><th style="padding:10px; text-align:left;">ΤΗΛΕΦΩΝΟ</th></tr>
-        </thead><tbody>`;
+    let html = `
+        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+            <thead style="background:#f8fafc; position:sticky; top:0; z-index:10; border-bottom:2px solid #e2e8f0;">
+                <tr>
+                    <th style="padding:12px; text-align:left; color:#1e293b;">ΕΠΩΝΥΜΙΑ / ΑΦΜ</th>
+                    <th style="padding:12px; text-align:left; color:#1e293b;">ΤΗΛΕΦΩΝΟ</th>
+                </tr>
+            </thead>
+            <tbody id="modalTableBody">`;
 
-    if (names.length === 0) {
-        html += `<tr><td colspan="2" style="padding:20px; text-align:center;">Κενό Πελατολόγιο</td></tr>`;
+    if (error || !db || db.length === 0) {
+        html += `<tr><td colspan="2" style="padding:40px; text-align:center; color:#64748b;">📭 Δεν βρέθηκαν πελάτες στο Cloud.</td></tr>`;
     } else {
-        names.forEach(name => {
-            html += `<tr style="border-bottom:1px solid #eee;">
-                <td style="padding:10px;"><b>${name}</b></td>
-                <td style="padding:10px;">${db[name].phone || '-'}</td>
-            </tr>`;
+        db.forEach(c => {
+            // Σύνδεση με τη συνάρτηση επιλογής για το τιμολόγιο
+            html += `
+                <tr style="border-bottom:1px solid #f1f5f9; cursor:pointer; transition:0.2s;" 
+                    onmouseover="this.style.background='#f1f5f9'" 
+                    onmouseout="this.style.background='transparent'"
+                    onclick="selectCustomerFromModal('${c.name}', '${c.afm}', '${c.address || ''}', '${c.city || ''}')">
+                    <td style="padding:12px;">
+                        <div style="font-weight:bold; color:#0f172a;">${c.name}</div>
+                        <div style="font-size:11px; color:#64748b;">ΑΦΜ: ${c.afm || '-'}</div>
+                    </td>
+                    <td style="padding:12px; color:#334155;">${c.phone || '-'}</td>
+                </tr>`;
         });
     }
+    
     html += `</tbody></table>`;
     container.innerHTML = html;
-}   </script>
+}
+          </script>
           
 <div id="minimizedBar" style="position: fixed; bottom: 0; left: 260px; right: 0; height: 40px; background: #0f172a; display: flex; gap: 10px; padding: 0 15px; z-index: 99999; border-top: 2px solid #0284c7;"></div>
           
@@ -2026,33 +2072,38 @@ function closeTritonModal() {
 // ==========================================
 // 2. ΕΝΑΡΞΗ & AUTO-ONBOARDING (ΔΙΟΡΘΩΜΕΝΟ)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const biz = localStorage.getItem('bizSettings');
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Ρωτάμε το Supabase: "Υπάρχει κάποιος συνδεδεμένος;"
+    const { data: { user } } = await _supabase.auth.getUser();
     
-    if (!biz || biz === '{}') {
+    if (!user) {
+        // Αν ΔΕΝ είναι συνδεδεμένος, δείχνουμε τη φόρμα Login
         setTimeout(() => {
-            // Εμφάνιση Hint
-            if (typeof showTritonHint === "function") {
-                showTritonHint("🔱 Καλώς ήρθατε. Παρακαλώ εισάγετε τον κωδικό Triton.");
+            if (typeof showTritonAuthForm === "function") {
+                showTritonAuthForm(); 
             }
-            
-            // Εμφάνιση Φόρμας μετά από 1 δευτερόλεπτο
-            setTimeout(() => {
-                if (typeof showTritonAuthForm === "function") {
-                    showTritonAuthForm(); 
-                }
-            }, 1000);
-            
         }, 1500);
     } else {
-        const data = JSON.parse(biz);
-        const nameElem = document.getElementById('displayCompanyName');
-        if (nameElem && data.name) nameElem.innerText = data.name;
+        // Αν ΕΙΝΑΙ συνδεδεμένος, τραβάμε το προφίλ του από τη ΒΑΣΗ
+        const { data: profile } = await _supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            // Ενημερώνουμε το όνομα της εταιρείας στην οθόνη
+            const nameElem = document.getElementById('displayCompanyName');
+            if (nameElem) nameElem.innerText = profile.company_name;
+            
+            // Αποθηκεύουμε προσωρινά στο LocalStorage για ταχύτητα (προαιρετικά)
+            localStorage.setItem('bizSettings', JSON.stringify(profile));
+        }
     }
 
     if (typeof refreshDashboardMetrics === "function") refreshDashboardMetrics();
     if (typeof initMainChart === "function") initMainChart();
-}); 
+});
  // ==========================================
 // 2. ΕΝΑΡΞΗ & AUTO-ONBOARDING
 // ==========================================
@@ -2076,47 +2127,88 @@ document.addEventListener('DOMContentLoaded', () => {
             
 
 function saveSettings() {
+    console.log("🔱 Triton: Checking fields...");
+    
+    // 1. Ασφαλής λήψη τιμών (αν λείπει το id, βάζει κενό αντί να κολλάει)
+    const getValue = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
+    const imgElement = document.getElementById('imgPreview');
+    const logoData = (imgElement && imgElement.src.includes('data:image')) ? imgElement.src : "";
+
     const settings = {
-        // Τα ονόματα που θέλει η Billing
-        companyName: document.getElementById('setName').value.trim().toUpperCase(),
-        activity: document.getElementById('setJob').value.trim(),
-        taxId: document.getElementById('setAfm').value.trim(),
-        taxOffice: document.getElementById('setDoy').value.trim(),
-        address: document.getElementById('setAddress').value.trim(),
-        phone: document.getElementById('setPhone').value.trim(),
-        logoBase64: document.getElementById('imgPreview').src,
+        companyName: getValue('setName').toUpperCase(),
+        activity:    getValue('setJob'),
+        taxId:       getValue('setAfm'),
+        taxOffice:   getValue('setDoy'),
+        address:     getValue('setAddress') + " " + getValue('setCity'),
+        phone:       getValue('setPhone'),
+        logoBase64:  logoData,
         
-        // Κρατάμε και τα παλιά ονόματα για το Dashboard
-        name: document.getElementById('setName').value.trim().toUpperCase(),
-        job: document.getElementById('setJob').value.trim(),
-        afm: document.getElementById('setAfm').value.trim(),
-        doy: document.getElementById('setDoy').value.trim()
+        // Συμβατότητα με Dashboard
+        name: getValue('setName').toUpperCase(),
+        job:  getValue('setJob'),
+        afm:  getValue('setAfm'),
+        doy:  getValue('setDoy')
     };
 
+    // Έλεγχος υποχρεωτικών
     if (!settings.taxId || !settings.companyName) {
         alert("⚠️ Το ΑΦΜ και η Επωνυμία είναι υποχρεωτικά!");
         return;
     }
 
-    // Σώζουμε και στα δύο κλειδιά για να "γεφυρώσουμε" Index και Billing
-    localStorage.setItem('bizSettings', JSON.stringify(settings));
-    localStorage.setItem('triton_settings', JSON.stringify(settings));
-    
-    alert('🔱 Το σύστημα Triton ενημερώθηκε επιτυχώς!');
-    location.reload();
-}
+ 
+   // 2. ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD (SUPABASE)
+    try {
+        // Παίρνουμε τον χρήστη για να ξέρουμε σε ποιον ανήκουν οι ρυθμίσεις
+        const { data: { user } } = await _supabase.auth.getUser();
+        
+        if (!user) {
+            alert("⚠️ Πρέπει να είστε συνδεδεμένοι για να αποθηκεύσετε τις ρυθμίσεις!");
+            return;
+        }
 
+        // Ενημερώνουμε τον πίνακα 'profiles' στη βάση δεδομένων
+        const { error } = await _supabase
+            .from('profiles')
+            .upsert({
+                id: user.id,
+                company_name: settings.companyName,
+                tax_id: settings.taxId,
+                tax_office: settings.taxOffice,
+                address: settings.address,
+                phone: settings.phone,
+                activity: settings.activity,
+                logo_url: settings.logoBase64, // Προσωρινά ως base64
+                updated_at: new Date()
+            });
+
+        if (error) throw error;
+
+        // Κρατάμε και ένα αντίγραφο τοπικά για να φορτώνει ακαριαία το Dashboard
+        localStorage.setItem('bizSettings', JSON.stringify(settings));
+        
+        console.log("✅ Synced to Cloud & LocalStorage");
+        alert('🔱 Το Cloud προφίλ Triton ενημερώθηκε επιτυχώς!');
+        location.reload();
+
+    } catch (e) {
+        console.error("❌ Cloud Sync Error:", e);
+        alert("Σφάλμα κατά την αποθήκευση στο Cloud: " + e.message);
+    }
 // ==========================================
-// 4. ΔΙΑΧΕΙΡΙΣΗ ΠΕΛΑΤΩΝ
+// 4. ΔΙΑΧΕΙΡΙΣΗ ΠΕΛΑΤΩΝ (CLOUD VERSION)
 // ==========================================
-function openCustomerModal() {
+async function openCustomerModal() {
     const modal = document.getElementById('customerModal');
     const header = document.getElementById('customerModalHeader');
     if (modal) {
         modal.style.display = 'block';
         bringToFront(modal);
         if (header) makeDraggable(modal, header);
-        renderCustomersInModal();
+        
+        // Καλούμε τη νέα συνάρτηση που διαβάζει από το Supabase
+        await renderCustomersInModal();
+        
         setTimeout(() => {
             const search = document.getElementById('modalSearchInput');
             if (search) search.focus();
@@ -2124,33 +2216,61 @@ function openCustomerModal() {
     }
 }
 
-function renderCustomersInModal() {
-    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-    const container = document.getElementById('modalCustomerBody');
-    const names = Object.keys(db).sort();
+async function renderCustomersInModal() {
+    // 1. Παίρνουμε τον τρέχοντα χρήστη
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return;
 
-    if (names.length === 0) {
-        container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">Δεν βρέθηκαν πελάτες.</div>';
+    // 2. Τραβάμε τους πελάτες ΜΟΝΟ αυτού του χρήστη από το Supabase
+    const { data: db, error } = await _supabase
+        .from('customers')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name');
+
+    const container = document.getElementById('modalCustomerBody');
+    
+    if (error || !db || db.length === 0) {
+        container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">Δεν βρέθηκαν πελάτες στο Cloud.</div>';
         return;
     }
 
-    let html = `<table style="width:100%; border-collapse:collapse; font-size:14px;">
-        <thead style="background:#f1f5f9; text-align:left;">
-            <tr><th style="padding:10px;">ΠΕΛΑΤΗΣ / ΑΦΜ</th><th style="padding:10px;">ΤΗΛΕΦΩΝΟ</th></tr>
-        </thead><tbody id="modalTableBody">`;
+    let html = `
+        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+            <thead style="background:#f1f5f9; text-align:left;">
+                <tr>
+                    <th style="padding:10px;">ΠΕΛΑΤΗΣ / ΑΦΜ</th>
+                    <th style="padding:10px;">ΤΗΛΕΦΩΝΟ</th>
+                </tr>
+            </thead>
+            <tbody id="modalTableBody">`;
 
-    names.forEach(name => {
-        const c = db[name];
-        html += `<tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="console.log('Selected: ${name}')">
-            <td style="padding:10px;">
-                <div style="font-weight:bold; color:#0f172a;">${name}</div>
-                <div style="font-size:11px; color:#64748b;">ΑΦΜ: ${c.afm || '-'}</div>
-            </td>
-            <td style="padding:10px;">${c.phone || '-'}</td>
-        </tr>`;
+    db.forEach(c => {
+        // Χρησιμοποιούμε τη νέα selectCustomerFromModal για να γεμίζει η φόρμα
+        html += `
+            <tr style="border-bottom:1px solid #eee; cursor:pointer;" 
+                onclick="selectCustomerFromModal('${c.name}', '${c.afm}', '${c.address || ''}', '${c.city || ''}')">
+                <td style="padding:10px;">
+                    <div style="font-weight:bold; color:#0f172a;">${c.name}</div>
+                    <div style="font-size:11px; color:#64748b;">ΑΦΜ: ${c.afm || '-'}</div>
+                </td>
+                <td style="padding:10px;">${c.phone || '-'}</td>
+            </tr>`;
     });
+
     html += `</tbody></table>`;
     container.innerHTML = html;
+}
+
+// ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Γεμίζει αυτόματα τα πεδία στην billing.html
+function selectCustomerFromModal(name, afm, address, city) {
+    if(document.getElementById('cName')) document.getElementById('cName').value = name;
+    if(document.getElementById('cAfm')) document.getElementById('cAfm').value = afm;
+    if(document.getElementById('cAddr')) document.getElementById('cAddr').value = address;
+    if(document.getElementById('cCity')) document.getElementById('cCity').value = city;
+    
+    closeModal('customerModal'); // Κλείνει το παράθυρο
+    if (typeof autoFillCust === "function") autoFillCust(); // Ενημερώνει τα branches/emails
 }
 
 function filterModalCustomers() {
@@ -2160,7 +2280,6 @@ function filterModalCustomers() {
         row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
     });
 }
-
 // ==========================================
 // 5. ΑΣΦΑΛΕΙΑ & LOGIN GATES
 // ==========================================

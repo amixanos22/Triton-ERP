@@ -1378,17 +1378,16 @@ function initMainChart() {
 <script>
 // --- ΒΗΜΑ 1: Κωδικός Ενοικίασης (Master Key) ---
 function unlockTriton() {
-    const key = document.getElementById('masterKey').value;
+    // Προσθέτουμε το .toUpperCase() για να πιάνει και τα μικρά και τα κεφαλαία
+    const key = document.getElementById('masterKey').value.toUpperCase(); 
     
-    if (key === "TRITON2026") { // Ο κωδικός που πουλάς
-        // Κρύβεις το πρώτο κουτί, δείχνεις το δεύτερο
+    if (key === "TRITON2026") {
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
     } else {
         alert("❌ Λάθος Κωδικός Ενοικίασης!");
     }
 }
-
 // --- ΒΗΜΑ 2: Επαλήθευση Email (Αυτό που μου έστειλες) ---
 function completeLogin() {
     const email = document.getElementById('userEmail').value;

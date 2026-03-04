@@ -202,36 +202,34 @@
 <datalist id="prodData"></datalist>
 
 <script>
-    // --- 1. SETUP & SETTINGS ---
-    window.onload = () => {
-        loadSettings();
-        setupAutoNumbering();
-        addRow();
-        document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
-    };
+  // --- 1. SETUP & SETTINGS ---
+window.onload = () => {
+    loadSettings(); // Φορτώνει Logo και Στοιχεία Καταστήματος
 
-    function setupAutoNumbering() {
-        let last = localStorage.getItem('triton_last_id');
-        if (!last) {
-            last = prompt("Αριθμός έναρξης πρώτου τιμολογίου:", "1");
-            localStorage.setItem('triton_last_id', last || "1");
+    // --- ΕΔΩ ΜΠΑΙΝΕΙ Η "ΕΞΥΠΝΗ" ΕΝΤΟΛΗ ΑΠΟ ΤΗΝ INDEX ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const docTypeParam = urlParams.get('type');
+
+    if (docTypeParam) {
+        const select = document.getElementById('docType');
+        
+        // 1. Αυτόματη επιλογή Τύπου Παραστατικού
+        if(docTypeParam === 'TIM') select.value = "ΤΙΜΟΛΟΓΙΟ - ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
+        if(docTypeParam === 'DA')  select.value = "ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
+        if(docTypeParam === 'PIS') select.value = "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ";
+        
+        // 2. Αν είναι Απόδειξη Είσπραξης, αλλάζουμε τον τίτλο στο Header
+        if(docTypeParam === 'A-EISP') {
+            const headerLabel = document.querySelector('div[style*="color: var(--triton-blue)"]');
+            if(headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ";
         }
-        document.getElementById('docNumber').value = last.toString().padStart(4, '0');
     }
+    // ------------------------------------------------
 
-    function loadSettings() {
-        const s = JSON.parse(localStorage.getItem('triton_settings')) || {};
-        document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
-        document.getElementById('idxActivity').innerText = s.activity || "-";
-        document.getElementById('idxAddress').innerText = s.address || "-";
-        document.getElementById('idxTaxId').innerText = s.taxId || "-";
-        document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
-        if (s.logoBase64) document.getElementById('idxLogo').innerHTML = `<img src="${s.logoBase64}">`;
-
-        // Load Datalists
-        updateDatalists();
-    }
-
+    setupAutoNumbering();
+    addRow();
+    document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
+};
     function updateDatalists() {
         const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const cDl = document.getElementById('custData');

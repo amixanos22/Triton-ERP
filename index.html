@@ -1038,31 +1038,23 @@ document.body.appendChild(hint);
 }
 function saveSettings() {
     const settings = {
-        name: document.getElementById('setName').value.trim().toUpperCase(),
-        job: document.getElementById('setJob').value,
-        afm: document.getElementById('setAfm').value,
-        doy: document.getElementById('setDoy').value,
-        address: document.getElementById('setAddress').value,
-        city: document.getElementById('setCity').value,
-        tk: document.getElementById('setTk').value,
+        companyName: document.getElementById('setName').value.trim().toUpperCase(),
+        activity: document.getElementById('setJob').value, // Αντιστοιχία job -> activity
+        taxId: document.getElementById('setAfm').value,    // Αντιστοιχία afm -> taxId
+        taxOffice: document.getElementById('setDoy').value, // Αντιστοιχία doy -> taxOffice
+        address: document.getElementById('setAddress').value + ", " + document.getElementById('setCity').value,
         phone: document.getElementById('setPhone').value,
-        gemi: document.getElementById('setGemi').value,
-        mu: document.getElementById('setMyDataUser').value,
-        mk: document.getElementById('setMyDataKey').value,
-        // ΠΡΟΣΟΧΗ: Αυτή η γραμμή παίρνει τη φωτό από την προεπισκόπηση και τη σώζει!
-        logo: document.getElementById('imgPreview').src 
+        logoBase64: document.getElementById('imgPreview').src // Αποθήκευση Logo
     };
 
-    if(!settings.afm || !settings.name) {
+    if(!settings.taxId || !settings.companyName) {
         alert("⚠️ Το ΑΦΜ και η Επωνυμία είναι υποχρεωτικά!");
         return;
     }
 
-    localStorage.setItem('bizSettings', JSON.stringify(settings));
+    // ΠΡΟΣΟΧΗ: Αλλάζουμε το όνομα σε 'triton_settings' για να το βρίσκουν οι φόρμες
+    localStorage.setItem('triton_settings', JSON.stringify(settings));
     
-    const existingHint = document.getElementById('tritonHintBanner');
-    if(existingHint) existingHint.remove();
-
     alert('Τα στοιχεία αποθηκεύτηκαν επιτυχώς! 🔱');
     closeSettings();
     location.reload(); 

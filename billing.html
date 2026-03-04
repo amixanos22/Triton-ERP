@@ -202,28 +202,41 @@
 <datalist id="prodData"></datalist>
 
 <script>
-  // --- 1. SETUP & SETTINGS ---
-window.onload = () => {
-    loadSettings(); // Φορτώνει Logo και Στοιχεία Καταστήματος
+ window.onload = () => {
+    loadSettings(); // Φορτώνει τα στοιχεία που σώσαμε στην Index
 
-    // --- ΕΔΩ ΜΠΑΙΝΕΙ Η "ΕΞΥΠΝΗ" ΕΝΤΟΛΗ ΑΠΟ ΤΗΝ INDEX ---
     const urlParams = new URLSearchParams(window.location.search);
     const docTypeParam = urlParams.get('type');
 
     if (docTypeParam) {
         const select = document.getElementById('docType');
         
-        // 1. Αυτόματη επιλογή Τύπου Παραστατικού
-        if(docTypeParam === 'TIM') select.value = "ΤΙΜΟΛΟΓΙΟ - ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
-        if(docTypeParam === 'DA')  select.value = "ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
-        if(docTypeParam === 'PIS') select.value = "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ";
+        // 1. Αυτόματη επιλογή dropdown
+        if(docTypeParam === 'TIM')     select.value = "ΤΙΜΟΛΟΓΙΟ - ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
+        if(docTypeParam === 'DA')      select.value = "ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
+        if(docTypeParam === 'PIS')     select.value = "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ";
+        if(docTypeParam === 'PIS_SYS') select.value = "ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ"; // Προσθήκη
         
-        // 2. Αν είναι Απόδειξη Είσπραξης, αλλάζουμε τον τίτλο στο Header
+        // 2. Αλλαγή Τίτλου για Αποδείξεις
+        const headerLabel = document.querySelector('div[style*="color: var(--triton-blue)"]');
+        
         if(docTypeParam === 'A-EISP') {
-            const headerLabel = document.querySelector('div[style*="color: var(--triton-blue)"]');
             if(headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ";
+            select.value = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ"; // Αν το έχεις στο dropdown
+        }
+        if(docTypeParam === 'A-PLHR') {
+            if(headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ";
+            select.value = "ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ"; // Αν το έχεις στο dropdown
         }
     }
+
+    // Μην ξεχάσεις να καλέσεις και αυτά:
+    if(typeof setupAutoNumbering === "function") setupAutoNumbering();
+    if(typeof addRow === "function") addRow();
+    if(typeof updateDatalists === "function") updateDatalists();
+    
+    document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
+};
     // ------------------------------------------------
 
     setupAutoNumbering();
@@ -396,6 +409,101 @@ window.onload = () => {
     }
 
     document.addEventListener('keydown', (e) => { if (e.key === 'F10') { e.preventDefault(); finalizeAndPrint(); } });
+  function loadSettings() {
+    // 1. Διαβάζουμε το 'triton_settings' που φτιάξαμε στην Index
+    const rawData = localStorage.getItem('triton_settings');
+    if (!rawData) return; 
+
+    const s = JSON.parse(rawData);
+
+    // 2. Τοποθέτηση των στοιχείων στα ID της φόρμας (Header)
+    // ΠΡΟΣΟΧΗ: Τα ID πρέπει να υπάρχουν στο HTML σου (π.χ. <div id="idxCompName">)
+    if(document.getElementById('idxCompName')) document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
+    if(document.getElementById('idxActivity')) document.getElementById('idxActivity').innerText = s.activity || "-";
+    if(document.getElementById('idxAddress'))  document.getElementById('idxAddress').innerText  = s.address || "-";
+    if(document.getElementById('idxTaxId'))    document.getElementById('idxTaxId').innerText    = s.taxId || "-";
+    if(document.getElementById('idxTaxOffice')) document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
+    if(document.getElementById('idxPhone'))     document.getElementById('idxPhone').innerText     = s.phone || "-";
+    
+    // 3. Εμφάνιση του Logo
+    const logoContainer = document.getElementById('idxLogo');
+    if (s.logoBase64 && logoContainer) {
+        logoContainer.innerHTML = `<img src="${s.logoBase64}" style="max-height: 80px; max-width: 250px; object-fit: contain;">`;
+    }
+}
+  let rowCount = 0;
+
+function addRow() {
+    rowCount++;
+    const tbody = document.getElementById('tableBody');
+    const tr = document.createElement('tr');
+    tr.id = `row-${rowCount}`;
+
+    tr.innerHTML = `
+        <td style="font-size:11px; color:#94a3b8;">${rowCount}</td>
+        <td>
+            <input class="col-input" list="prodData" placeholder="Περιγραφή..." onchange="autoFillProduct(this)">
+        </td>
+        <td><input class="col-input" placeholder="Μ.Μ." value="ΤΕΜ"></td>
+        <td><input type="number" class="col-input qty" value="1" oninput="calculateRow(this)"></td>
+        <td><input type="number" class="col-input price" value="0.00" step="0.01" oninput="calculateRow(this)"></td>
+        <td><input type="number" class="col-input disc" value="0" oninput="calculateRow(this)"></td>
+        <td>
+            <select class="col-input vat" onchange="calculateRow(this)">
+                <option value="24">24%</option>
+                <option value="13">13%</option>
+                <option value="6">6%</option>
+                <option value="0">0%</option>
+            </select>
+        </td>
+        <td style="text-align:right; font-weight:bold;">
+            <span class="row-total">0.00</span>€
+        </td>
+        <td class="no-print">
+            <button onclick="this.closest('tr').remove(); calculateTotals();" style="color:var(--triton-red); border:none; background:none; cursor:pointer; font-weight:bold;">×</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+  function calculateRow(element) {
+    const row = element.closest('tr');
+    const qty = parseFloat(row.querySelector('.qty').value) || 0;
+    const price = parseFloat(row.querySelector('.price').value) || 0;
+    const disc = parseFloat(row.querySelector('.disc').value) || 0;
+    const vatPercent = parseFloat(row.querySelector('.vat').value) || 0;
+
+    // Υπολογισμός αξίας μετά την έκπτωση
+    const netValue = (qty * price) * (1 - disc / 100);
+    const vatAmount = netValue * (vatPercent / 100);
+    const total = netValue + vatAmount;
+
+    row.querySelector('.row-total').innerText = netValue.toFixed(2); // Δείχνουμε την καθαρή αξία στη γραμμή
+    
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let subtotal = 0;
+    let totalVat = 0;
+
+    document.querySelectorAll('#tableBody tr').forEach(row => {
+        const qty = parseFloat(row.querySelector('.qty').value) || 0;
+        const price = parseFloat(row.querySelector('.price').value) || 0;
+        const disc = parseFloat(row.querySelector('.disc').value) || 0;
+        const vatPercent = parseFloat(row.querySelector('.vat').value) || 0;
+
+        const net = (qty * price) * (1 - disc / 100);
+        const v = net * (vatPercent / 100);
+
+        subtotal += net;
+        totalVat += v;
+    });
+
+    // Ενημέρωση των πεδίων στο Footer (αν τα έχεις ονομάσει έτσι)
+    if(document.getElementById('subtotal')) document.getElementById('subtotal').innerText = subtotal.toFixed(2) + " €";
+    if(document.getElementById('vatTotal')) document.getElementById('vatTotal').innerText = totalVat.toFixed(2) + " €";
+    if(document.getElementById('grandTotal')) document.getElementById('grandTotal').innerText = (subtotal + totalVat).toFixed(2) + " €";
+}
 </script>
 </body>
 </html>

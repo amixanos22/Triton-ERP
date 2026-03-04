@@ -769,44 +769,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="add-btn" id="quickAddBtn">＋</button>
                   <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
     
-  <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
+ <a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
     <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
 </a>
 
-<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=DA', '🚚 Δελτίο Αποστολής', 1100, 800)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+<a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=DA', '🚚 Δελτίο Αποστολής', 1100, 800)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>🚚</span> Δελτίο Αποστολής
 </a>
 
-<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=PIS', '🔄 Πιστωτικό Τιμολόγιο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+<a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=PIS', '🔄 Πιστωτικό Τιμολόγιο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>🔄</span> Πιστωτικό Τιμολόγιο
 </a>
 
-<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=PIS_SYS', '🔗 Πιστωτικό Συσχετιζόμενο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+<a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=PIS_SYS', '🔗 Πιστωτικό Συσχετιζόμενο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>🔗</span> Πιστωτικό Συσχετιζόμενο
 </a>
 
 <div style="background:#f8fafc; padding:8px 15px; font-size:10px; font-weight:900; color:#22c55e; border-bottom:1px solid #e2e8f0;">ΟΙΚΟΝΟΜΙΚΑ</div>
 
-<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=A-EISP', '💰 Απόδειξη Είσπραξης', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+<a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=A-EISP', '💰 Απόδειξη Είσπραξης', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>💰</span> Απόδειξη Είσπραξης
 </a>
 
-<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=A-PLHR', '💸 Απόδειξη Πληρωμής', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+<a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=A-PLHR', '💸 Απόδειξη Πληρωμής', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>💸</span> Απόδειξη Πληρωμής
-</a>
-
-<div style="background:#f8fafc; padding:8px 15px; font-size:10px; font-weight:900; color:#64748b; border-bottom:1px solid #e2e8f0;">ΔΙΑΧΕΙΡΙΣΗ</div>
-
-<a href="javascript:void(0)" onclick="createNewWindow('inventory.html', '📦 Αποθήκη', 1200, 800)" style="padding: 10px 15px; text-decoration: none; color: #475569; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 13px;">
-    <span>📦</span> Αποθήκη
-</a>
-
-<a href="javascript:void(0)" onclick="openDashboardModal()" style="padding: 10px 15px; text-decoration: none; color: #475569; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 13px;">
-    <span>📊</span> Πωλήσεις (Stats)
-</a>
-
-<a href="javascript:void(0)" onclick="createNewWindow('finance.html', '🏛️ Ταμείο', 1200, 800)" style="padding: 10px 15px; text-decoration: none; color: #475569; display: flex; align-items: center; gap: 10px; font-size: 13px;">
-    <span>🏛️</span> Ταμείο
 </a>
 </div>
                   

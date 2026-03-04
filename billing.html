@@ -1,11 +1,16 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
     <title>Triton ERP - Έκδοση Τιμολογίου</title>
     <style>
+        /* ΚΡΥΒΕΙ ΤΗΝ ΜΠΑΡΑ ΤΟΥ BLOGGER */
+        #navbar-iframe, .navbar, .navbar-spaced { display: none !important; }
+        body { top: 0 !important; }
+
         :root { --triton-blue: #0ea5e9; --triton-dark: #1e293b; }
         body { background: #f1f5f9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        
         #invoice-container { 
             width: 1000px; margin: auto; background: white; padding: 40px; 
             box-shadow: 0 0 20px rgba(0,0,0,0.1); min-height: 1100px;
@@ -14,13 +19,16 @@
         .logo img { max-height: 100px; max-width: 250px; object-fit: contain; }
         .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
         .card { background: #f8fafc; padding: 15px; border-left: 5px solid var(--triton-blue); border-radius: 4px; }
-        input { width: 100%; border: none; border-bottom: 1px solid #cbd5e1; background: transparent; padding: 5px; margin-bottom: 8px; outline: none; }
+        input, select { width: 100%; border: none; border-bottom: 1px solid #cbd5e1; background: transparent; padding: 5px; margin-bottom: 8px; outline: none; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 30px; }
         th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #000; font-size: 12px; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
+        
         .total-section { margin-top: 30px; text-align: right; }
         .grand-total { font-size: 24px; font-weight: bold; color: var(--triton-blue); }
-        @media print { .no-print { display: none; } #invoice-container { box-shadow: none; width: 100%; padding: 0; } }
+        
+        @media print { .no-print { display: none !important; } #invoice-container { box-shadow: none; width: 100%; padding: 0; } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -45,19 +53,18 @@
                 <label style="font-size:10px; font-weight:bold;">ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ</label>
                 <button onclick="lookupMyData()" class="no-print" style="cursor:pointer; background:var(--triton-blue); color:white; border:none; border-radius:3px; padding:2px 5px; font-size:10px;">🔍 myDATA</button>
             </div>
-            <input id="cName" list="custList" placeholder="Επωνυμία (ή αναζήτηση...)" onchange="autoFillCust()">
+            <input id="cName" list="custList" placeholder="Επωνυμία" onchange="autoFillCust()">
             <input id="cAfm" placeholder="ΑΦΜ">
-            <input id="cDoy" placeholder="ΔΟΥ">
             <input id="cAddr" placeholder="Διεύθυνση">
             <input id="cCity" placeholder="Πόλη">
         </div>
+        
         <div class="card" style="border-left-color: #64748b;">
-            <label style="font-size:10px; font-weight:bold;">ΣΤΟΙΧΕΙΑ ΔΙΑΚΙΝΗΣΗΣ & ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ</label>
-            <input id="purpose" value="ΠΩΛΗΣΗ" placeholder="Σκοπός">
+            <label style="font-size:10px; font-weight:bold;">ΔΙΑΚΙΝΗΣΗ / ΠΑΡΑΔΟΣΗ</label>
+            <input id="purpose" value="ΠΩΛΗΣΗ">
             <input id="car" placeholder="Αρ. Αυτοκινήτου">
-            <input id="delivery" list="branchList" placeholder="Τόπος Παράδοσης (Αναζήτηση...)">
+            <input id="delivery" list="branchList" placeholder="Τόπος Παράδοσης">
             <datalist id="branchList"></datalist>
-            <input id="payment" placeholder="Τρόπος Πληρωμής">
         </div>
     </div>
 
@@ -73,37 +80,33 @@
         </thead>
         <tbody id="rows"></tbody>
     </table>
-    <button onclick="addRow()" class="no-print" style="margin-top:10px; cursor:pointer;">+ Προσθήκη</button>
 
     <div class="total-section">
         <div class="no-print" style="margin-bottom: 10px; font-weight: bold; color: #64748b; font-size: 0.9em;">
             ΕΚΤΙΜΩΜΕΝΟ ΚΕΡΔΟΣ: <span id="profitVal">0.00 €</span>
         </div>
-
         <p>ΚΑΘΑΡΗ ΑΞΙΑ: <span id="netVal">0.00 €</span></p>
         <p>ΦΠΑ: <span id="taxVal">0.00 €</span></p>
         <p class="grand-total">ΣΥΝΟΛΟ: <span id="grandVal">0.00 €</span></p>
-
+        
         <div class="no-print" style="margin-top: 25px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; text-align: left;">
             <label style="font-size: 11px; font-weight: bold; color: var(--triton-dark); display: block; margin-bottom: 5px;">ΑΠΟΣΤΟΛΗ ΣΕ EMAIL:</label>
             <select id="emailSelect" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: white;">
                 <option value="">Επιλέξτε email πελάτη...</option>
             </select>
-            
             <div style="display: flex; gap: 10px;">
-                <button onclick="window.print()" style="flex: 1; padding: 12px; background: #475569; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    ΕΚΤΥΠΩΣΗ
-                </button>
-                <button onclick="handleExport('email')" id="sendEmailBtn" style="flex: 2; padding: 12px; background: var(--triton-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    PDF & ΑΠΟΣΤΟΛΗ EMAIL
-                </button>
+                <button onclick="window.print()" style="flex: 1; padding: 12px; background: #475569; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">ΕΚΤΥΠΩΣΗ</button>
+                <button onclick="handleExport('email')" id="sendEmailBtn" style="flex: 2; padding: 12px; background: var(--triton-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">PDF & ΑΠΟΣΤΟΛΗ</button>
             </div>
         </div>
     </div>
+</div>
+
+<datalist id="custList"></datalist>
+<datalist id="prodList"></datalist>
 
 <script>
-// --- ΣΥΝΔΕΣΗ ΜΕ SUPABASE (ΑΛΛΑΞΕ ΤΟ URL) ---
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; 
+const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -121,100 +124,27 @@ function loadProfile() {
     if(s.logoBase64) document.getElementById('logoArea').innerHTML = `<img src="${s.logoBase64}">`;
 }
 
-async function lookupMyData() {
-    const afm = document.getElementById('cAfm').value.trim();
-    const s = JSON.parse(localStorage.getItem('triton_settings') || '{}');
-
-    if (!afm || !s.mydataUser || !s.mydataKey) {
-        alert("⚠️ Ελέγξτε το ΑΦΜ και τους κωδικούς myDATA στις Ρυθμίσεις.");
-        return;
-    }
-
-    try {
-        const res = await fetch(`/api/lookup?afm=${afm}&user=${s.mydataUser}&key=${s.mydataKey}`);
-        if (!res.ok) throw new Error("Αποτυχία σύνδεσης");
-        
-        const xmlText = await res.text();
-        const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-
-        const info = {
-            name: xml.getElementsByTagName("onomasia")[0]?.textContent || "",
-            addr: xml.getElementsByTagName("dieythinsi")[0]?.textContent || "",
-            doy: xml.getElementsByTagName("doy_descr")[0]?.textContent || "",
-            city: xml.getElementsByTagName("poli")[0]?.textContent || ""
-        };
-
-        if (!info.name) { alert("❌ Το ΑΦΜ δεν βρέθηκε."); return; }
-
-        document.getElementById('cName').value = info.name;
-        document.getElementById('cAddr').value = info.addr;
-        document.getElementById('cDoy').value = info.doy;
-        document.getElementById('cCity').value = info.city;
-
-        await saveToCustDB(info, afm);
-        await autoFillCust(); 
-    } catch (e) { alert("❌ Σφάλμα: " + e.message); }
+function addRow() {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" list="prodList" class="p-name" placeholder="Προϊόν..." onchange="fillProd(this)"></td>
+        <td><input type="number" class="qty" value="1" oninput="recalc()"></td>
+        <td><input type="number" class="prc" value="0" oninput="recalc()"></td>
+        <td><input type="number" class="tax" value="24" oninput="recalc()" onkeydown="checkEnter(event, this)"></td>
+        <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
+    `;
+    document.getElementById('rows').appendChild(tr);
 }
 
-async function saveToCustDB(data, afm) {
-    await _supabase.from('customers').upsert({ 
-        name: data.name, afm: afm, doy: data.doy, address: data.addr, city: data.city 
-    }, { onConflict: 'name' });
-    updateLists();
-}
-
-async function updateLists() {
-    const { data: custs } = await _supabase.from('customers').select('name');
-    const { data: prods } = await _supabase.from('products').select('name');
-
-    const cL = document.getElementById('custList');
-    const pL = document.getElementById('prodList');
-    cL.innerHTML = ''; pL.innerHTML = '';
-
-    if (custs) custs.forEach(c => { let o = document.createElement('option'); o.value = c.name; cL.appendChild(o); });
-    if (prods) prods.forEach(p => { let o = document.createElement('option'); o.value = p.name; pL.appendChild(o); });
-}
-
-async function autoFillCust() {
-    const customerName = document.getElementById('cName').value;
-    // Τραβάμε όλα τα στοιχεία του πελάτη από τη Supabase
-    const { data: c } = await _supabase.from('customers').select('*').eq('name', customerName).maybeSingle();
-
-    const branchList = document.getElementById('branchList');
-    const emailSelect = document.getElementById('emailSelect'); // Το dropdown των email
-    
-    if (branchList) branchList.innerHTML = ''; 
-    if (emailSelect) emailSelect.innerHTML = '<option value="">Επιλέξτε email...</option>'; 
-
-    if (c) {
-        document.getElementById('cAfm').value = c.afm || "";
-        document.getElementById('cDoy').value = c.doy || "";
-        document.getElementById('cAddr').value = c.address || "";
-        document.getElementById('cCity').value = c.city || "";
-        
-        // --- ΓΕΜΙΣΜΑ ΥΠΟΚΑΤΑΣΤΗΜΑΤΩΝ ---
-        if (c.branches && Array.isArray(c.branches)) {
-            c.branches.forEach(b => {
-                let opt = document.createElement('option');
-                opt.value = b;
-                branchList.appendChild(opt);
-            });
-        }
-
-        // --- ΓΕΜΙΣΜΑ EMAIL SELECTOR ---
-        // 1. Προσθήκη Κεντρικού Email (αν υπάρχει στη βάση)
-        if (c.email) {
-            let opt = new Option(`ΚΕΝΤΡΙΚΟ: ${c.email}`, c.email);
-            opt.selected = true; // Το επιλέγει αυτόματα ως πρώτη επιλογή
-            emailSelect.add(opt);
-        }
-
-        // 2. Προσθήκη Λίστας Email (αν υπάρχει στήλη extra_emails στη βάση)
-        if (c.extra_emails && Array.isArray(c.extra_emails)) {
-            c.extra_emails.forEach(mail => {
-                emailSelect.add(new Option(mail, mail));
-            });
-        }
+// ΛΕΙΤΟΥΡΓΙΑ ENTER ΓΙΑ ΝΕΑ ΓΡΑΜΜΗ
+function checkEnter(event, el) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        addRow();
+        // Εστίαση στο πρώτο input της νέας γραμμής
+        const rows = document.querySelectorAll('#rows tr');
+        const lastRow = rows[rows.length - 1];
+        lastRow.querySelector('.p-name').focus();
     }
 }
 
@@ -223,38 +153,61 @@ async function fillProd(el) {
     if (p) {
         const r = el.closest('tr');
         r.querySelector('.prc').value = p.price || 0;
-        r.querySelector('.tax').value = p.vat || ""; 
+        r.querySelector('.tax').value = p.vat || 24; 
+        r.dataset.cost = p.cost_price || 0;
         recalc();
         r.querySelector('.qty').focus(); 
     }
 }
 
-function addRow() {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td><input type="text" list="prodList" class="p-name" placeholder="Προϊόν..." onchange="fillProd(this)"></td>
-        <td><input type="number" class="qty" value="1" oninput="recalc()"></td>
-        <td><input type="number" class="prc" value="0" oninput="recalc()"></td>
-        <td><input type="number" class="tax" value="" placeholder="0" oninput="recalc()"></td>
-        <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
-    `;
-    document.getElementById('rows').appendChild(tr);
-}
-
 function recalc() {
-    let net = 0, tax = 0;
+    let net = 0, tax = 0, profit = 0;
     document.querySelectorAll('#rows tr').forEach(r => {
         const q = parseFloat(r.querySelector('.qty').value) || 0;
         const p = parseFloat(r.querySelector('.prc').value) || 0;
         const tx = parseFloat(r.querySelector('.tax').value) || 0;
+        const cost = parseFloat(r.dataset.cost) || 0;
+        
         const lineNet = q * p;
         const lineTax = lineNet * (tx / 100);
+        const lineProfit = (p - cost) * q;
+        
         r.querySelector('.row-total').innerText = (lineNet + lineTax).toFixed(2) + " €";
-        net += lineNet; tax += lineTax;
+        net += lineNet; tax += lineTax; profit += lineProfit;
     });
     document.getElementById('netVal').innerText = net.toFixed(2) + " €";
     document.getElementById('taxVal').innerText = tax.toFixed(2) + " €";
     document.getElementById('grandVal').innerText = (net + tax).toFixed(2) + " €";
+    document.getElementById('profitVal').innerText = profit.toFixed(2) + " €";
+}
+
+async function updateLists() {
+    const { data: custs } = await _supabase.from('customers').select('name');
+    const { data: prods } = await _supabase.from('products').select('name');
+    const cL = document.getElementById('custList');
+    const pL = document.getElementById('prodList');
+    cL.innerHTML = ''; pL.innerHTML = '';
+    if (custs) custs.forEach(c => { let o = document.createElement('option'); o.value = c.name; cL.appendChild(o); });
+    if (prods) prods.forEach(p => { let o = document.createElement('option'); o.value = p.name; pL.appendChild(o); });
+}
+
+async function autoFillCust() {
+    const customerName = document.getElementById('cName').value;
+    const { data: c } = await _supabase.from('customers').select('*').eq('name', customerName).maybeSingle();
+    const branchList = document.getElementById('branchList');
+    const emailSelect = document.getElementById('emailSelect');
+    
+    if (branchList) branchList.innerHTML = ''; 
+    if (emailSelect) emailSelect.innerHTML = '<option value="">Επιλέξτε email...</option>'; 
+
+    if (c) {
+        document.getElementById('cAfm').value = c.afm || "";
+        document.getElementById('cAddr').value = c.address || "";
+        document.getElementById('cCity').value = c.city || "";
+        if (c.branches) c.branches.forEach(b => { let o = document.createElement('option'); o.value = b; branchList.appendChild(o); });
+        if (c.email) { let opt = new Option(`ΚΕΝΤΡΙΚΟ: ${c.email}`, c.email); opt.selected = true; emailSelect.add(opt); }
+        if (c.extra_emails) c.extra_emails.forEach(m => emailSelect.add(new Option(m, m)));
+    }
 }
 </script>
 </body>

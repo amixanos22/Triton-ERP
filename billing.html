@@ -2,328 +2,249 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>Triton ERP - Professional Billing</title>
+    <title>Triton ERP - Έκδοση Τιμολογίου</title>
     <style>
-        /* CSS ΣΤΑΘΕΡΕΣ & TRITON COLORS */
-        :root { 
-            --triton-blue: #0ea5e9; 
-            --triton-bg: #f1f5f9; 
-            --triton-border: #cbd5e1; 
-            --triton-dark: #1e293b;
-            --triton-red: #ef4444;
+        :root { --triton-blue: #0ea5e9; --triton-dark: #1e293b; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        #invoice-container { 
+            width: 1000px; margin: auto; background: white; padding: 40px; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.1); min-height: 1100px;
         }
-
-        body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        
-        #triton-app { 
-            width: 1150px; 
-            margin: 40px auto; 
-            background: white; 
-            padding: 40px; 
-            border-radius: 8px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            min-height: 1000px;
-        }
-
-        /* HEADER */
-        .header-top-grid { display: grid; grid-template-columns: 220px 1fr 180px; gap: 20px; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 25px; }
-        .logo-area img { max-width: 100%; max-height: 90px; }
-        .company-info h1 { margin: 0; font-size: 24px; text-transform: uppercase; color: var(--triton-dark); }
-        .company-info p { margin: 2px 0; font-size: 13px; font-weight: 600; color: #475569; }
-
-        /* INFO BAR */
-        .triton-info-bar { display: flex; background: var(--triton-bg); border-radius: 4px; border: 1px solid var(--triton-border); margin-bottom: 25px; }
-        .bar-cell { flex: 1; padding: 10px 15px; border-right: 1px solid var(--triton-border); }
-        .bar-cell:last-child { border-right: none; }
-        .bar-cell label { display: block; font-size: 9px; color: var(--triton-blue); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-        .bar-cell input, .bar-cell select { border: none; outline: none; background: transparent; width: 100%; font-size: 14px; font-weight: bold; }
-
-        /* CARDS */
-        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .info-card { background: var(--triton-bg); padding: 15px; border-radius: 6px; border-left: 5px solid var(--triton-blue); }
-        .info-card label { display: block; font-size: 9px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
-        .info-card input { border: none; border-bottom: 1px solid var(--triton-border); background: transparent; padding: 5px 0; font-size: 13px; width: 100%; margin-bottom: 10px; outline: none; }
-
-        /* ΠΙΝΑΚΑΣ ΠΡΟΪΟΝΤΩΝ */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { background: #f8fafc; padding: 10px; font-size: 10px; border-bottom: 2px solid black; text-transform: uppercase; text-align: left; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .logo img { max-height: 100px; max-width: 250px; object-fit: contain; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .card { background: #f8fafc; padding: 15px; border-left: 5px solid var(--triton-blue); border-radius: 4px; }
+        input { width: 100%; border: none; border-bottom: 1px solid #cbd5e1; background: transparent; padding: 5px; margin-bottom: 8px; outline: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #000; font-size: 12px; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
-        .col-input { width: 100%; border: none; outline: none; background: transparent; font-size: 13px; }
-
-        /* FOOTER & TOTALS */
-        .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px; }
-        .totals-container { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-        .total-row { display: flex; justify-content: space-between; width: 320px; font-size: 14px; font-weight: bold; color: #475569; }
-        .final-row { border-top: 2px solid black; padding-top: 10px; margin-top: 5px; font-size: 22px; color: var(--triton-blue); font-weight: 900; }
-        
-        .profit-row { margin-top: 15px; padding: 10px; background: #f8fafc; border: 1px dashed var(--triton-blue); border-radius: 4px; width: 320px; text-align: center; }
-        .profit-label { font-size: 10px; color: var(--triton-blue); display: block; text-transform: uppercase; font-weight: bold; }
-        #totalProfitDisplay { font-size: 16px; font-weight: 900; color: #1e293b; }
-
-        .btn-print { width: 320px; padding: 15px; background: black; color: white; border-radius: 8px; font-weight: 900; cursor: pointer; border: none; font-size: 16px; margin-top: 15px; }
-
-        /* BRANCH BANNER */
-        #branchBanner {
-            position: fixed; right: -320px; top: 0; width: 300px; height: 100%;
-            background: white; box-shadow: -5px 0 20px rgba(0,0,0,0.2);
-            z-index: 9999; transition: 0.4s; padding: 30px 20px; display: flex; flex-direction: column;
-        }
-        #branchBanner.active { right: 0; }
-        .branch-item { padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 10px; cursor: pointer; font-size: 13px; }
-        .branch-item:hover { background: var(--triton-blue); color: white; }
-        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9998; }
-
-        @media print {
-            .no-print { display: none !important; }
-            #triton-app { width: 100%; margin: 0; box-shadow: none; padding: 0; }
-        }
-        #navbar-iframe { display: none !important; }
-        body { top: 0 !important; }
+        .total-section { margin-top: 30px; text-align: right; }
+        .grand-total { font-size: 24px; font-weight: bold; color: var(--triton-blue); }
+        @media print { .no-print { display: none; } #invoice-container { box-shadow: none; width: 100%; padding: 0; } }
     </style>
 </head>
 <body>
 
-<div id="branchOverlay" class="overlay" onclick="closeBranches()"></div>
-
-<div id="triton-app">
-    <div class="header-top-grid">
-        <div id="idxLogo" class="logo-area"></div>
-        <div class="company-info">
-            <h1 id="idxCompName">ΦΟΡΤΩΣΗ...</h1>
-            <p id="idxActivity">-</p>
-            <p id="idxAddress">-</p>
-            <p>ΑΦΜ: <span id="idxTaxId">-</span> | ΔΟΥ: <span id="idxTaxOffice">-</span></p>
+<div id="invoice-container">
+    <div class="header">
+        <div id="logoArea" class="logo"></div>
+        <div id="compInfo">
+            <h2 id="dispCompName" style="margin:0;">ΦΟΡΤΩΣΗ...</h2>
+            <p id="dispAddress" style="margin:0; font-size:13px;"></p>
         </div>
-        <div style="text-align: right;">
-            <div style="font-weight: 900; color: var(--triton-blue);">ΤΙΜΟΛΟΓΗΣΗ</div>
-            <div id="dtDisplay" style="font-size: 12px;">--/--/----</div>
+        <div style="text-align:right;">
+            <h3 style="color:var(--triton-blue); margin:0;">ΤΙΜΟΛΟΓΙΟ</h3>
+            <p id="currentDate">--/--/----</p>
         </div>
     </div>
 
-    <div class="triton-info-bar">
-        <div class="bar-cell"><label>Τύπος Εγγράφου</label>
-            <select id="docType">
-                <option>ΤΙΜΟΛΟΓΙΟ - ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ</option>
-                <option>ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ</option>
-                <option>ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ</option>
-            </select>
-        </div>
-        <div class="bar-cell"><label>Αρ. Παραστατικού</label>
-            <input type="text" id="docNumber" style="color: var(--triton-blue);">
-        </div>
-        <div class="bar-cell"><label>Τρόπος Πληρωμής</label>
-            <select id="paymentMethod">
-                <option>ΜΕΤΡΗΤΑ</option>
-                <option>ΚΑΡΤΑ POS</option>
-                <option>ΕΠΙ ΠΙΣΤΩΣΕΙ</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="grid-info">
-        <div class="info-card">
+    <div class="card-grid">
+        <div class="card">
             <div style="display:flex; justify-content:space-between;">
-                <label>Στοιχεία Πελάτη</label>
-                <span onclick="lookupVat()" style="cursor:pointer; color:var(--triton-blue);">🔍 Αναζήτηση ΑΦΜ</span>
+                <label style="font-size:10px; font-weight:bold;">ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ</label>
+                <button onclick="lookupMyData()" class="no-print" style="cursor:pointer; background:var(--triton-blue); color:white; border:none; border-radius:3px; padding:2px 5px; font-size:10px;">🔍 myDATA</button>
             </div>
-            <input id="cName" list="custData" placeholder="Όνομα Πελάτη..." onchange="autoFillCustomer()">
-            <div style="display:flex; gap:10px;">
-                <input id="cAfm" placeholder="ΑΦΜ" style="flex:2;">
-                <input id="cDoy" placeholder="ΔΟΥ" style="flex:1;">
-            </div>
-            <input id="cAddr" placeholder="Διεύθυνση Έδρας">
+            <input id="cName" list="custList" placeholder="Επωνυμία (ή αναζήτηση...)" onchange="autoFillCust()">
+            <input id="cAfm" placeholder="ΑΦΜ">
+            <input id="cDoy" placeholder="ΔΟΥ">
+            <input id="cAddr" placeholder="Διεύθυνση">
+            <input id="cCity" placeholder="Πόλη">
         </div>
-
-        <div class="info-card" style="border-left-color: #64748b;">
-            <label>Τόπος Παράδοσης</label>
-            <input id="deliveryAddr" placeholder="Κλικ για επιλογή υποκαταστήματος..." readonly onclick="openBranchMenu()" style="cursor:pointer; font-weight:bold; color:var(--triton-blue);">
-            
-            <label>Λοιπά Στοιχεία</label>
-            <input id="carNumber" placeholder="Αριθμός Αυτοκινήτου (π.χ. ΙΚΥ-1234)">
-            <input id="purpose" value="ΠΩΛΗΣΗ" placeholder="Σκοπός Διακίνησης">
-        </div>
+       <div class="card" style="border-left-color: #64748b;">
+    <label style="font-size:10px; font-weight:bold;">ΣΤΟΙΧΕΙΑ ΔΙΑΚΙΝΗΣΗΣ & ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ</label>
+    <input id="purpose" value="ΠΩΛΗΣΗ" placeholder="Σκοπός">
+    <input id="car" placeholder="Αρ. Αυτοκινήτου">
+    
+    <input id="delivery" list="branchList" placeholder="Τόπος Παράδοσης (Αναζήτηση...)">
+    <datalist id="branchList"></datalist>
+    
+    <input id="payment" placeholder="Τρόπος Πληρωμής">
+</div>
     </div>
 
-    <table id="invoiceTable">
+    <table id="itemsTable">
         <thead>
             <tr>
-                <th style="width:45%">Περιγραφή (Autocomplete)</th>
-                <th style="width:10%">Ποσ.</th>
-                <th style="width:12%">Τιμή</th>
-                <th style="width:8%">Εκπτ.%</th>
-                <th style="width:10%">ΦΠΑ%</th>
-                <th style="width:15%; text-align:right;">Σύνολο</th>
+                <th style="width:50%">ΠΕΡΙΓΡΑΦΗ</th>
+                <th style="width:10%">ΠΟΣ.</th>
+                <th style="width:15%">ΤΙΜΗ</th>
+                <th style="width:10%">ΦΠΑ %</th>
+                <th style="width:15%; text-align:right;">ΣΥΝΟΛΟ</th>
             </tr>
         </thead>
-        <tbody id="rowsBody"></tbody>
+        <tbody id="rows"></tbody>
     </table>
+    <button onclick="addRow()" class="no-print" style="margin-top:10px; cursor:pointer;">+ Προσθήκη</button>
 
-    <div class="footer-grid">
-        <div>
-            <label style="font-size:9px; font-weight:bold;">ΠΑΡΑΤΗΡΗΣΕΙΣ</label>
-            <textarea id="remarks" style="width:100%; height:120px; border:1px solid var(--triton-border); margin-top:5px; padding:10px; outline:none;"></textarea>
-        </div>
-        
-        <div class="totals-container">
-            <div class="total-row">
-                <span>ΚΑΘΑΡΗ ΑΞΙΑ:</span>
-                <span id="sumNet">0.00 €</span>
-            </div>
-            <div class="total-row">
-                <span>ΕΚΠΤΩΣΗ:</span>
-                <span id="sumDisc">0.00 €</span>
-            </div>
-            <div class="total-row">
-                <span>ΦΠΑ:</span>
-                <span id="sumTax">0.00 €</span>
-            </div>
-            <div class="total-row final-row">
-                <span>ΤΕΛΙΚΟ ΠΟΣΟ:</span>
-                <span id="sumGrand">0.00 €</span>
-            </div>
-
-            <div class="profit-row no-print">
-                <span class="profit-label">ΠΡΑΓΜΑΤΙΚΟ ΚΕΡΔΟΣ</span>
-                <span id="totalProfitDisplay">0.0% (0.00 €)</span>
-            </div>
-
-            <button class="btn-print no-print" onclick="finalizeAndPrint()">ΕΚΤΥΠΩΣΗ (F10)</button>
-        </div>
+    <div class="total-section">
+        <p>ΚΑΘΑΡΗ ΑΞΙΑ: <span id="netVal">0.00 €</span></p>
+        <p>ΦΠΑ: <span id="taxVal">0.00 €</span></p>
+        <p class="grand-total">ΣΥΝΟΛΟ: <span id="grandVal">0.00 €</span></p>
+        <button onclick="window.print()" class="no-print" style="padding:15px 30px; background:black; color:white; border:none; font-weight:bold; cursor:pointer; margin-top:20px;">ΕΚΤΥΠΩΣΗ</button>
     </div>
 </div>
 
-<div id="branchBanner">
-    <h2 style="font-size:18px; color:var(--triton-blue); border-bottom:2px solid black; padding-bottom:10px;">🏠 Υποκαταστήματα</h2>
-    <div id="branchList" style="margin-top:20px;"></div>
-    <button onclick="closeBranches()" style="margin-top:auto; padding:10px; border:none; background:#eee; cursor:pointer;">Κλείσιμο</button>
-</div>
-
-<datalist id="custData"></datalist>
-<datalist id="prodData"></datalist>
+<datalist id="custList"></datalist>
+<datalist id="prodList"></datalist>
 
 <script>
 window.onload = () => {
-    loadSettings(); 
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const docTypeParam = urlParams.get('type');
-
-    if (docTypeParam) {
-        const select = document.getElementById('docType');
-        if(docTypeParam === 'TIM')     select.value = "ΤΙΜΟΛΟΓΙΟ - ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
-        if(docTypeParam === 'DA')      select.value = "ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
-        if(docTypeParam === 'PIS')     select.value = "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ";
-        if(docTypeParam === 'PIS_SYS') select.value = "ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ";
-        
-        const headerLabel = document.querySelector('div[style*="color: var(--triton-blue)"]');
-        if(docTypeParam === 'A-EISP' && headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ";
-        if(docTypeParam === 'A-PLHR' && headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ";
-    }
-
-    updateDatalists();
-    addRow(); // Ξεκινάμε με μια κενή γραμμή
-    document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
+    loadProfile();
+    updateLists();
+    addRow();
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('el-GR');
 };
 
-function loadSettings() {
-    const rawData = localStorage.getItem('triton_settings');
-    if (!rawData) return; 
+function loadProfile() {
+    const s = JSON.parse(localStorage.getItem('triton_settings') || '{}');
+    document.getElementById('dispCompName').innerText = s.companyName || "TRITON ERP";
+    document.getElementById('dispAddress').innerText = `${s.address || ''}, ${s.city || ''} | ΑΦΜ: ${s.taxId || ''}`;
+    if(s.logoBase64) document.getElementById('logoArea').innerHTML = `<img src="${s.logoBase64}">`;
+}
 
-    const s = JSON.parse(rawData);
-    if(document.getElementById('idxCompName')) document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
-    if(document.getElementById('idxActivity')) document.getElementById('idxActivity').innerText = s.activity || "-";
-    if(document.getElementById('idxAddress'))  document.getElementById('idxAddress').innerText  = s.address || "-";
-    if(document.getElementById('idxTaxId'))    document.getElementById('idxTaxId').innerText    = s.taxId || "-";
-    if(document.getElementById('idxTaxOffice')) document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
-    if(document.getElementById('idxPhone'))    document.getElementById('idxPhone').innerText     = s.phone || "-";
-    
-    const logoContainer = document.getElementById('idxLogo');
-    if (s.logoBase64 && logoContainer) {
-        logoContainer.innerHTML = `<img src="${s.logoBase64}" style="max-height: 80px; max-width: 250px; object-fit: contain;">`;
+// Η ΣΥΝΔΕΣΗ ΜΕ ΤΟ API ΤΗΣ VERCEL
+async function lookupMyData() {
+    const afm = document.getElementById('cAfm').value.trim();
+    const s = JSON.parse(localStorage.getItem('triton_settings') || '{}');
+
+    if (!afm || !s.mydataUser || !s.mydataKey) {
+        alert("⚠️ Ελέγξτε το ΑΦΜ και τους κωδικούς myDATA στις Ρυθμίσεις.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/lookup?afm=${afm}&user=${s.mydataUser}&key=${s.mydataKey}`);
+        if (!res.ok) throw new Error("Αποτυχία σύνδεσης με το API");
+        
+        const xmlText = await res.text();
+        const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+        const info = {
+            name: xml.getElementsByTagName("onomasia")[0]?.textContent || "",
+            addr: xml.getElementsByTagName("dieythinsi")[0]?.textContent || "",
+            doy: xml.getElementsByTagName("doy_descr")[0]?.textContent || "",
+            city: xml.getElementsByTagName("poli")[0]?.textContent || ""
+        };
+
+        if (!info.name) {
+            alert("❌ Το ΑΦΜ δεν βρέθηκε στο myDATA.");
+            return;
+        }
+
+        document.getElementById('cName').value = info.name;
+        document.getElementById('cAddr').value = info.addr;
+        document.getElementById('cDoy').value = info.doy;
+        document.getElementById('cCity').value = info.city;
+
+        saveToCustDB(info, afm);
+        autoFillCust(); // Για να τραβήξει και τα υποκαταστήματα αν υπάρχουν ήδη
+
+    } catch (error) {
+        alert("❌ Σφάλμα: " + error.message);
     }
 }
 
-function updateDatalists() {
-    const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
-    const cDl = document.getElementById('custData');
-    cDl.innerHTML = '';
-    Object.keys(customers).forEach(name => { let o = document.createElement('option'); o.value = name; cDl.appendChild(o); });
-
-    const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
-    const pDl = document.getElementById('prodData');
-    pDl.innerHTML = '';
-    Object.keys(products).forEach(p => { let o = document.createElement('option'); o.value = p; pDl.appendChild(o); });
-}
-
-function autoFillCustomer() {
-    const name = document.getElementById('cName').value;
-    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-    const c = db[name];
-    if (c) {
-        document.getElementById('cAfm').value = c.afm || "";
-        document.getElementById('cDoy').value = c.doy || "";
-        document.getElementById('cAddr').value = c.address || "";
+function saveToCustDB(data, afm) {
+    let db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    if (!db[data.name]) {
+        db[data.name] = {
+            afm: afm,
+            doy: data.doy,
+            address: data.addr,
+            city: data.city
+        };
+        localStorage.setItem('customersDB', JSON.stringify(db));
+        updateLists(); 
+        console.log("✅ Ο πελάτης αποθηκεύτηκε αυτόματα!");
     }
 }
 
 function addRow() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td><input type="text" list="prodData" class="col-input p-name" placeholder="Προϊόν..." onchange="fillProd(this)"></td>
-        <td><input type="number" class="col-input qty" value="1" oninput="recalc()"></td>
-        <td><input type="number" class="col-input prc" oninput="recalc()"></td>
-        <td><input type="number" class="col-input dsc" value="0" oninput="recalc()"></td>
-        <td><input type="number" class="col-input tax" value="24" oninput="recalc()"></td>
+        <td><input type="text" list="prodList" class="p-name" placeholder="Προϊόν..." onchange="fillProd(this)"></td>
+        <td><input type="number" class="qty" value="1" oninput="recalc()"></td>
+        <td><input type="number" class="prc" value="0" oninput="recalc()"></td>
+        <td><input type="number" class="tax" value="" placeholder="0" oninput="recalc()"></td>
         <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
     `;
-    document.getElementById('rowsBody').appendChild(tr);
-    return tr;
+    document.getElementById('rows').appendChild(tr);
 }
 
 function fillProd(el) {
-    const productsDB = JSON.parse(localStorage.getItem('productsDB') || '{}');
-    const p = productsDB[el.value];
-    const r = el.closest('tr');
+    const db = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    const p = db[el.value];
     if (p) {
+        const r = el.closest('tr');
         r.querySelector('.prc').value = p.price || 0;
-        r.querySelector('.dsc').value = p.discount || 0;
         r.querySelector('.tax').value = p.vat || 24;
         recalc();
     }
 }
 
 function recalc() {
-    let net = 0, taxTotal = 0, discTotal = 0;
-    document.querySelectorAll('#rowsBody tr').forEach(row => {
-        const q = parseFloat(row.querySelector('.qty').value) || 0;
-        const p = parseFloat(row.querySelector('.prc').value) || 0;
-        const d = parseFloat(row.querySelector('.dsc').value) || 0;
-        const tx = parseFloat(row.querySelector('.tax').value) || 0;
-
-        const lineRaw = q * p;
-        const lineDisc = lineRaw * (d / 100);
-        const lineNet = lineRaw - lineDisc;
+    let net = 0, tax = 0;
+    document.querySelectorAll('#rows tr').forEach(r => {
+        const q = parseFloat(r.querySelector('.qty').value) || 0;
+        const p = parseFloat(r.querySelector('.prc').value) || 0;
+        const tx = parseFloat(r.querySelector('.tax').value) || 0;
+        const lineNet = q * p;
         const lineTax = lineNet * (tx / 100);
-
-        row.querySelector('.row-total').innerText = (lineNet + lineTax).toFixed(2) + " €";
-        net += lineNet; taxTotal += lineTax; discTotal += lineDisc;
+        r.querySelector('.row-total').innerText = (lineNet + lineTax).toFixed(2) + " €";
+        net += lineNet; tax += lineTax;
     });
-
-    document.getElementById('sumNet').innerText = net.toFixed(2) + " €";
-    document.getElementById('sumDisc').innerText = discTotal.toFixed(2) + " €";
-    document.getElementById('sumTax').innerText = taxTotal.toFixed(2) + " €";
-    document.getElementById('sumGrand').innerText = (net + taxTotal).toFixed(2) + " €";
+    document.getElementById('netVal').innerText = net.toFixed(2) + " €";
+    document.getElementById('taxVal').innerText = tax.toFixed(2) + " €";
+    document.getElementById('grandVal').innerText = (net + tax).toFixed(2) + " €";
 }
 
-function lookupVat() {
-    const afm = document.getElementById('cAfm').value;
-    if (!afm) return alert("Εισάγετε ΑΦΜ.");
-    window.open(`https://www.vrisko.gr/search-aade-afm/?afm=${afm}`, 'TritonHelper', 'width=800,height=600');
+function updateLists() {
+    const custs = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const prods = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    const cList = document.getElementById('custList');
+    const pList = document.getElementById('prodList');
+    cList.innerHTML = ''; pList.innerHTML = '';
+    Object.keys(custs).forEach(c => { let o = document.createElement('option'); o.value = c; cList.appendChild(o); });
+    Object.keys(prods).forEach(p => { let o = document.createElement('option'); o.value = p; pList.appendChild(o); });
 }
 
-function finalizeAndPrint() {
-    window.print();
+function autoFillCust() {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const customerName = document.getElementById('cName').value;
+    const c = db[customerName];
+    
+    // Καθαρίζουμε τη λίστα υποκαταστημάτων πριν γεμίσει με τα νέα
+    const branchList = document.getElementById('branchList');
+    if (branchList) branchList.innerHTML = ''; 
+
+    if (c) {
+        // Τα βασικά στοιχεία που ήδη είχες
+        document.getElementById('cAfm').value = c.afm || "";
+        document.getElementById('cDoy').value = c.doy || "";
+        document.getElementById('cAddr').value = (c.address || "") + " " + (c.city || "");
+        
+        // --- ΕΔΩ ΓΙΝΕΤΑΙ Η ΜΑΓΕΙΑ ΓΙΑ ΤΑ ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ ---
+        // Αν ο πελάτης έχει αποθηκευμένα υποκαταστήματα (π.χ. Σ/Μ Σκλαβενίτης -> Περιστέρι, Μενίδι)
+        if (c.branches && Array.isArray(c.branches)) {
+            c.branches.forEach(branch => {
+                let opt = document.createElement('option');
+                opt.value = branch; // Το όνομα του υποκαταστήματος
+                branchList.appendChild(opt);
+            });
+        }
+    }
 }
 </script>
 </body>
 </html>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          

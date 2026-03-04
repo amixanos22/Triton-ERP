@@ -865,38 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </main>
             
   
-  async function refreshDashboardData() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    if (!user) return;
-
-    // 1. Φέρνουμε τα τελευταία 5 τιμολόγια για τον πίνακα
-    const { data: invoices, error } = await _supabase
-        .from('invoices')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-    const tableBody = document.getElementById('recentInvoicesTable');
-    if (invoices && invoices.length > 0) {
-        tableBody.innerHTML = ""; // Καθαρίζουμε το παράδειγμα (Acme Corp)
-        
-        invoices.forEach(inv => {
-            const statusStyle = inv.status === 'paid' 
-                ? 'background: #dcfce7; color: #166534;' 
-                : 'background: #fee2e2; color: #991b1b;';
-            const statusText = inv.status === 'paid' ? 'Πληρώθηκε' : 'Εκκρεμεί';
-
-            tableBody.innerHTML += `
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 15px 0; font-weight: 600;">${inv.customer_name}</td>
-                    <td>${new Date(inv.created_at).toLocaleDateString('el-GR')}</td>
-                    <td style="font-weight: 600;">${inv.total_amount.toFixed(2)} €</td>
-                    <td><span style="${statusStyle} padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">${statusText}</span></td>
-                </tr>`;
-        });
-    }
-} 
+   
 <script>
 // --- ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΕΝΟΙΚΙΑΣΗΣ TRITON ---
 function checkLogin() {
@@ -1408,11 +1377,11 @@ function initMainChart() {
 
 <script>
 // --- ΒΗΜΑ 1: Κωδικός Ενοικίασης (Master Key) ---
-// 1. Η ΠΟΡΤΑ (Master Gate) - Χρησιμοποιούμε το .toUpperCase() για να μην "κολλάει"
 function unlockTriton() {
-    const key = document.getElementById('masterKey').value.toUpperCase(); 
+    const key = document.getElementById('masterKey').value;
     
-    if (key === "TRITON2026") {
+    if (key === "TRITON2026") { // Ο κωδικός που πουλάς
+        // Κρύβεις το πρώτο κουτί, δείχνεις το δεύτερο
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
     } else {
@@ -1420,58 +1389,46 @@ function unlockTriton() {
     }
 }
 
-// 2. Η ΣΥΝΔΕΣΗ (Real Cloud Login) - Αυτό που χρειάζεσαι για το άλλο PC
-async function completeLogin() {
+// --- ΒΗΜΑ 2: Επαλήθευση Email (Αυτό που μου έστειλες) ---
+function completeLogin() {
     const email = document.getElementById('userEmail').value;
     const pass = document.getElementById('userPass').value;
 
-    // Πραγματική σύνδεση στη βάση δεδομένων (Supabase)
-    const { data, error } = await _supabase.auth.signInWithPassword({
-        email: email,
-        password: pass
-    });
-
-    if (error) {
-        alert("❌ Λάθος στοιχεία! Ελέγξτε το Email και τον Κωδικό σας.");
+    if (!email || !email.includes('@')) {
+        alert("⚠️ Εισάγετε έγκυρο Email Επιχείρησης.");
         return;
     }
 
-    // Αν όλα πάνε καλά, αποθηκεύουμε το "login" τοπικά και μπαίνουμε
+    if (pass.length < 4) {
+        alert("⚠️ Ο κωδικός πρόσβασης πρέπει να είναι τουλάχιστον 4 ψηφία.");
+        return;
+    }
+
+    // Όλα καλά! Αποθήκευση και είσοδος
+    localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
     executeFinalEntry(); 
 }
+// --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (CLOUD & MYDATA READY) ---
+async function openSettings() {
+    // 1. Προσπαθούμε να πάρουμε τα δεδομένα από το Supabase
+    const { data: { user } } = await _supabase.auth.getUser();
+    let saved = {};
 
-// 3. Η ΕΞΟΔΟΣ (Το εφέ που σβήνει το μπλε overlay)
-function executeFinalEntry() {
-    const overlay = document.getElementById('loginOverlay');
-    if (overlay) {
-        overlay.style.transition = "opacity 0.5s ease"; // Κάνει το σβήσιμο ομαλό
-        overlay.style.opacity = "0";
-        setTimeout(() => { 
-            overlay.style.display = 'none'; 
-        }, 500);
+    if (user) {
+        const { data: profile, error } = await _supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+        
+        if (profile) {
+            saved = profile; // Χρησιμοποιούμε τα δεδομένα από το Cloud
+        } else {
+            // Αν δεν υπάρχει στο Cloud, δοκιμάζουμε το localStorage ως backup
+            saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
+        }
     }
-}
-    // 2. ΣΗΜΑΝΤΙΚΟ: Σημαδεύουμε το PC/Κινητό ότι αυτός είναι "γνωστός"
-    localStorage.setItem('triton_user_exists', 'true');
-
-    // 3. ΕΛΕΓΧΟΣ: Έχει ήδη σώσει την επιχείρησή του (saveBusinessSettings);
-    const { data: profile } = await _supabase
-        .from('profiles')
-        .select('company_name')
-        .eq('id', data.user.id)
-        .single();
-
-    if (profile && profile.company_name) {
-        // ΑΝ ΕΧΕΙ ΗΔΗ ΠΡΟΦΙΛ: Κλείνουμε το overlay και μπαίνει στις μπάρες
-        document.getElementById('loginOverlay').style.display = 'none';
-        console.log("🔱 Triton: Καλώς ήρθες πίσω!");
-    } else {
-        // ΑΝ ΕΙΝΑΙ ΝΕΟΣ: Του δείχνουμε τη φόρμα για να τη συμπληρώσει ΜΙΑ φορά
-        document.getElementById('authGate').style.display = 'none';
-        document.getElementById('businessForm').style.display = 'block'; 
-    }
-}
 
     // 2. Αντιστοίχιση των πεδίων της βάσης με τα IDs της φόρμας σου
     const fields = {
@@ -1606,40 +1563,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // 4. Εμφάνιση Hint (αν υπάρχει η συνάρτηση)
     if (typeof showTritonHint === "function") showTritonHint();
 });
-  async function loadBusinessIdentity() {
-    // 1. Παίρνουμε το ID του συνδεδεμένου χρήστη
-    const { data: { user } } = await _supabase.auth.getUser();
-    if (!user) return;
-
-    // 2. Τραβάμε το όνομα της εταιρείας από τον πίνακα profiles
-    const { data: profile, error } = await _supabase
-        .from('profiles')
-        .select('company_name')
-        .eq('id', user.id)
-        .single();
-
-    if (profile && profile.company_name) {
-        // 3. Το εμφανίζουμε στην οθόνη (υποθέτουμε ότι έχεις ένα στοιχείο με id="displayBizName")
-        const headerTitle = document.getElementById('displayBizName');
-        if (headerTitle) {
-            headerTitle.innerText = "🔱 " + profile.company_name;
-        }
-        console.log("🔱 Triton: Φορτώθηκε η επιχείρηση " + profile.company_name);
-    }
-}
-
-// Τροποποιούμε την executeFinalEntry για να τρέχει το παραπάνω
-function executeFinalEntry() {
-    const overlay = document.getElementById('loginOverlay');
-    if (overlay) {
-        overlay.style.transition = "opacity 0.5s ease";
-        overlay.style.opacity = "0";
-        setTimeout(() => { 
-            overlay.style.display = 'none'; 
-            loadBusinessIdentity(); // <--- Εδώ τραβάει το όνομα μόλις μπει!
-        }, 500);
-    }
-}
   </script>
 <script>
 // ==========================================
@@ -2342,7 +2265,36 @@ function filterModalCustomers() {
         row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
     });
 }
- 
+// ==========================================
+// 5. ΑΣΦΑΛΕΙΑ & LOGIN GATES
+// ==========================================
+function unlockTriton() {
+    const key = document.getElementById('masterKey').value;
+    if (key === "TRITON2026") {
+        document.getElementById('masterGate').style.display = 'none';
+        document.getElementById('authGate').style.display = 'block';
+    } else {
+        alert("❌ Λάθος Κωδικός Ενοικίασης!");
+    }
+}
+
+function fakeGoogleLogin() {
+    const email = prompt("🔱 TRITON GOOGLE LOGIN\nΕισάγετε το Gmail σας:");
+    if (email && email.includes('@')) {
+        localStorage.setItem('triton_user_email', email);
+        localStorage.setItem('triton_is_logged_in', 'true');
+        executeFinalEntry();
+    }
+}
+
+function executeFinalEntry() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => { overlay.style.display = 'none'; }, 500);
+    }
+}
+
 // ==========================================
 // 6. ΜΗΧΑΝΙΣΜΟΣ DRAG (Universal)
 // ==========================================
@@ -2450,21 +2402,6 @@ function makeDraggable(elmnt, header) {
             if(text) text.style.display = 'none';
         }
         reader.readAsDataURL(input.files[0]);
-    }
-}
-  async function checkLowStock() {
-    const { data: products } = await _supabase
-        .from('products')
-        .select('name, stock')
-        .lt('stock', 10); // Ειδοποίηση αν το stock είναι κάτω από 10
-
-    const list = document.getElementById('lowStockList');
-    if (products && products.length > 0) {
-        list.innerHTML = products.map(p => 
-            `<li style="margin-bottom: 5px;">⚠️ ${p.name}: <b style="color: #ef4444;">${p.stock}</b></li>`
-        ).join('');
-    } else {
-        list.innerHTML = "<li style='color: #10b981;'>✅ Όλα επαρκή</li>";
     }
 }
 </script>

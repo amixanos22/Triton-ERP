@@ -202,307 +202,127 @@
 <datalist id="prodData"></datalist>
 
 <script>
- window.onload = () => {
-    loadSettings(); // Φορτώνει τα στοιχεία που σώσαμε στην Index
+window.onload = () => {
+    loadSettings(); 
 
     const urlParams = new URLSearchParams(window.location.search);
     const docTypeParam = urlParams.get('type');
 
     if (docTypeParam) {
         const select = document.getElementById('docType');
-        
-        // 1. Αυτόματη επιλογή dropdown
         if(docTypeParam === 'TIM')     select.value = "ΤΙΜΟΛΟΓΙΟ - ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
         if(docTypeParam === 'DA')      select.value = "ΔΕΛΤΙΟ ΑΠΟΣΤΟΛΗΣ";
         if(docTypeParam === 'PIS')     select.value = "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ";
-        if(docTypeParam === 'PIS_SYS') select.value = "ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ"; // Προσθήκη
+        if(docTypeParam === 'PIS_SYS') select.value = "ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ";
         
-        // 2. Αλλαγή Τίτλου για Αποδείξεις
         const headerLabel = document.querySelector('div[style*="color: var(--triton-blue)"]');
-        
-        if(docTypeParam === 'A-EISP') {
-            if(headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ";
-            select.value = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ"; // Αν το έχεις στο dropdown
-        }
-        if(docTypeParam === 'A-PLHR') {
-            if(headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ";
-            select.value = "ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ"; // Αν το έχεις στο dropdown
-        }
+        if(docTypeParam === 'A-EISP' && headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ";
+        if(docTypeParam === 'A-PLHR' && headerLabel) headerLabel.innerText = "ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ";
     }
 
-    // Μην ξεχάσεις να καλέσεις και αυτά:
-    if(typeof setupAutoNumbering === "function") setupAutoNumbering();
-    if(typeof addRow === "function") addRow();
-    if(typeof updateDatalists === "function") updateDatalists();
-    
+    updateDatalists();
+    addRow(); // Ξεκινάμε με μια κενή γραμμή
     document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
 };
-    // ------------------------------------------------
 
-    setupAutoNumbering();
-    addRow();
-    document.getElementById('dtDisplay').innerText = new Date().toLocaleDateString('el-GR');
-};
-    function updateDatalists() {
-        const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const cDl = document.getElementById('custData');
-        cDl.innerHTML = '';
-        Object.keys(customers).forEach(name => { let o = document.createElement('option'); o.value = name; cDl.appendChild(o); });
-
-        const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
-        const pDl = document.getElementById('prodData');
-        pDl.innerHTML = '';
-        Object.keys(products).forEach(p => { let o = document.createElement('option'); o.value = p; pDl.appendChild(o); });
-    }
-
-    // --- 2. ΠΕΛΑΤΕΣ & ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ ---
-    function autoFillCustomer() {
-        const name = document.getElementById('cName').value;
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const c = db[name];
-        if (c) {
-            document.getElementById('cAfm').value = c.afm || "";
-            document.getElementById('cDoy').value = c.doy || "";
-            document.getElementById('cAddr').value = c.address || "";
-            document.getElementById('deliveryAddr').value = ""; 
-        }
-    }
-
-    function openBranchMenu() {
-        const name = document.getElementById('cName').value;
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const c = db[name];
-        if (!c) return alert("Επιλέξτε πελάτη πρώτα.");
-
-        const list = document.getElementById('branchList');
-        list.innerHTML = `<div class="branch-item" onclick="setDelivery('${c.address}')"><strong>ΕΔΡΑ:</strong> ${c.address}</div>`;
-        
-        if (c.branches) {
-            const bArray = Array.isArray(c.branches) ? c.branches : c.branches.split(',');
-            bArray.forEach(b => {
-                let div = document.createElement('div');
-                div.className = "branch-item";
-                div.innerText = b.trim();
-                div.onclick = () => setDelivery(b.trim());
-                list.appendChild(div);
-            });
-        }
-        document.getElementById('branchBanner').classList.add('active');
-        document.getElementById('branchOverlay').style.display = "block";
-    }
-
-    function setDelivery(val) {
-        document.getElementById('deliveryAddr').value = val;
-        closeBranches();
-    }
-
-    function closeBranches() {
-        document.getElementById('branchBanner').classList.remove('active');
-        document.getElementById('branchOverlay').style.display = "none";
-    }
-
-    // --- 3. ΠΙΝΑΚΑΣ ΠΡΟΪΟΝΤΩΝ & ENTER FLOW ---
-    function handleNavigation(event, currentInput) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            const row = currentInput.closest('tr');
-            
-            if (currentInput.classList.contains('p-name')) {
-                const qtyInput = row.querySelector('.qty');
-                qtyInput.focus();
-                qtyInput.select();
-            } 
-            else if (currentInput.classList.contains('qty')) {
-                const nextRow = addRow();
-                nextRow.querySelector('.p-name').focus();
-            }
-        }
-    }
-
-    function addRow() {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" list="prodData" class="col-input p-name" placeholder="Προϊόν..." onchange="fillProd(this)" onkeydown="handleNavigation(event, this)"></td>
-            <td><input type="number" class="col-input qty" value="1" oninput="recalc()" onkeydown="handleNavigation(event, this)"></td>
-            <td><input type="number" class="col-input prc" readonly tabindex="-1" style="background:#f1f5f9; color:#475569; cursor:not-allowed;"></td>
-            <td><input type="number" class="col-input dsc" readonly tabindex="-1" style="background:#f1f5f9; color:#475569; cursor:not-allowed;"></td>
-            <td><input type="number" class="col-input tax" readonly tabindex="-1" style="background:#f1f5f9; color:#475569; cursor:not-allowed;"></td>
-            <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
-        `;
-        document.getElementById('rowsBody').appendChild(tr);
-        return tr;
-    }
-
-    function fillProd(el) {
-        const productsDB = JSON.parse(localStorage.getItem('productsDB') || '{}');
-        const p = productsDB[el.value];
-        const r = el.closest('tr');
-        
-        if (p) {
-            r.querySelector('.prc').value = p.price || 0;
-            r.querySelector('.dsc').value = p.discount || 0;
-            r.querySelector('.tax').value = p.vat || 24;
-            recalc();
-            
-            const qtyInput = r.querySelector('.qty');
-            qtyInput.focus();
-            qtyInput.select();
-        }
-    }
-
-    function recalc() {
-        let net = 0, tax = 0, discTotal = 0, costTotal = 0;
-        const productsDB = JSON.parse(localStorage.getItem('productsDB') || '{}');
-
-        document.querySelectorAll('#rowsBody tr').forEach(row => {
-            const q = parseFloat(row.querySelector('.qty').value) || 0;
-            const p = parseFloat(row.querySelector('.prc').value) || 0;
-            const d = parseFloat(row.querySelector('.dsc').value) || 0;
-            const tx = parseFloat(row.querySelector('.tax').value) || 0;
-            const name = row.querySelector('.p-name').value;
-
-            const lineRaw = q * p;
-            const lineDisc = lineRaw * (d / 100);
-            const lineNet = lineRaw - lineDisc;
-            const lineTax = lineNet * (tx / 100);
-
-            row.querySelector('.row-total').innerText = (lineNet + lineTax).toFixed(2) + " €";
-            
-            net += lineNet; tax += lineTax; discTotal += lineDisc;
-
-            if (productsDB[name]) {
-                costTotal += (parseFloat(productsDB[name].priceA) || 0) * q;
-            }
-        });
-
-        document.getElementById('sumNet').innerText = net.toFixed(2) + " €";
-        document.getElementById('sumDisc').innerText = discTotal.toFixed(2) + " €";
-        document.getElementById('sumTax').innerText = tax.toFixed(2) + " €";
-        const grand = net + tax;
-        document.getElementById('sumGrand').innerText = grand.toFixed(2) + " €";
-
-        const profitVal = net - costTotal;
-        const profitPerc = net > 0 ? (profitVal / net) * 100 : 0;
-        document.getElementById('totalProfitDisplay').innerText = `${profitPerc.toFixed(1)}% (${profitVal.toFixed(2)} €)`;
-    }
-
-    function finalizeAndPrint() {
-        let current = parseInt(localStorage.getItem('triton_last_id'));
-        localStorage.setItem('triton_last_id', current + 1);
-
-        const db = JSON.parse(localStorage.getItem('productsDB') || '{}');
-        document.querySelectorAll('#rowsBody tr').forEach(row => {
-            const name = row.querySelector('.p-name').value;
-            const q = parseFloat(row.querySelector('.qty').value) || 0;
-            if (name && db[name]) db[name].stock = (parseFloat(db[name].stock) || 0) - q;
-        });
-        localStorage.setItem('productsDB', JSON.stringify(db));
-
-        window.print();
-        location.reload();
-    }
-
-    function lookupVat() {
-        const afm = document.getElementById('cAfm').value;
-        if (!afm) return alert("Εισάγετε ΑΦΜ.");
-        window.open(`https://www.vrisko.gr/search-aade-afm/?afm=${afm}`, 'TritonHelper', 'width=800,height=600');
-    }
-
-    document.addEventListener('keydown', (e) => { if (e.key === 'F10') { e.preventDefault(); finalizeAndPrint(); } });
-  function loadSettings() {
-    // 1. Διαβάζουμε το 'triton_settings' που φτιάξαμε στην Index
+function loadSettings() {
     const rawData = localStorage.getItem('triton_settings');
     if (!rawData) return; 
 
     const s = JSON.parse(rawData);
-
-    // 2. Τοποθέτηση των στοιχείων στα ID της φόρμας (Header)
-    // ΠΡΟΣΟΧΗ: Τα ID πρέπει να υπάρχουν στο HTML σου (π.χ. <div id="idxCompName">)
     if(document.getElementById('idxCompName')) document.getElementById('idxCompName').innerText = s.companyName || "✦ TRITON ERP";
     if(document.getElementById('idxActivity')) document.getElementById('idxActivity').innerText = s.activity || "-";
     if(document.getElementById('idxAddress'))  document.getElementById('idxAddress').innerText  = s.address || "-";
     if(document.getElementById('idxTaxId'))    document.getElementById('idxTaxId').innerText    = s.taxId || "-";
     if(document.getElementById('idxTaxOffice')) document.getElementById('idxTaxOffice').innerText = s.taxOffice || "-";
-    if(document.getElementById('idxPhone'))     document.getElementById('idxPhone').innerText     = s.phone || "-";
+    if(document.getElementById('idxPhone'))    document.getElementById('idxPhone').innerText     = s.phone || "-";
     
-    // 3. Εμφάνιση του Logo
     const logoContainer = document.getElementById('idxLogo');
     if (s.logoBase64 && logoContainer) {
         logoContainer.innerHTML = `<img src="${s.logoBase64}" style="max-height: 80px; max-width: 250px; object-fit: contain;">`;
     }
 }
-  let rowCount = 0;
+
+function updateDatalists() {
+    const customers = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const cDl = document.getElementById('custData');
+    cDl.innerHTML = '';
+    Object.keys(customers).forEach(name => { let o = document.createElement('option'); o.value = name; cDl.appendChild(o); });
+
+    const products = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    const pDl = document.getElementById('prodData');
+    pDl.innerHTML = '';
+    Object.keys(products).forEach(p => { let o = document.createElement('option'); o.value = p; pDl.appendChild(o); });
+}
+
+function autoFillCustomer() {
+    const name = document.getElementById('cName').value;
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const c = db[name];
+    if (c) {
+        document.getElementById('cAfm').value = c.afm || "";
+        document.getElementById('cDoy').value = c.doy || "";
+        document.getElementById('cAddr').value = c.address || "";
+    }
+}
 
 function addRow() {
-    rowCount++;
-    const tbody = document.getElementById('tableBody');
     const tr = document.createElement('tr');
-    tr.id = `row-${rowCount}`;
-
     tr.innerHTML = `
-        <td style="font-size:11px; color:#94a3b8;">${rowCount}</td>
-        <td>
-            <input class="col-input" list="prodData" placeholder="Περιγραφή..." onchange="autoFillProduct(this)">
-        </td>
-        <td><input class="col-input" placeholder="Μ.Μ." value="ΤΕΜ"></td>
-        <td><input type="number" class="col-input qty" value="1" oninput="calculateRow(this)"></td>
-        <td><input type="number" class="col-input price" value="0.00" step="0.01" oninput="calculateRow(this)"></td>
-        <td><input type="number" class="col-input disc" value="0" oninput="calculateRow(this)"></td>
-        <td>
-            <select class="col-input vat" onchange="calculateRow(this)">
-                <option value="24">24%</option>
-                <option value="13">13%</option>
-                <option value="6">6%</option>
-                <option value="0">0%</option>
-            </select>
-        </td>
-        <td style="text-align:right; font-weight:bold;">
-            <span class="row-total">0.00</span>€
-        </td>
-        <td class="no-print">
-            <button onclick="this.closest('tr').remove(); calculateTotals();" style="color:var(--triton-red); border:none; background:none; cursor:pointer; font-weight:bold;">×</button>
-        </td>
+        <td><input type="text" list="prodData" class="col-input p-name" placeholder="Προϊόν..." onchange="fillProd(this)"></td>
+        <td><input type="number" class="col-input qty" value="1" oninput="recalc()"></td>
+        <td><input type="number" class="col-input prc" oninput="recalc()"></td>
+        <td><input type="number" class="col-input dsc" value="0" oninput="recalc()"></td>
+        <td><input type="number" class="col-input tax" value="24" oninput="recalc()"></td>
+        <td class="row-total" style="text-align:right; font-weight:bold;">0.00 €</td>
     `;
-    tbody.appendChild(tr);
-}
-  function calculateRow(element) {
-    const row = element.closest('tr');
-    const qty = parseFloat(row.querySelector('.qty').value) || 0;
-    const price = parseFloat(row.querySelector('.price').value) || 0;
-    const disc = parseFloat(row.querySelector('.disc').value) || 0;
-    const vatPercent = parseFloat(row.querySelector('.vat').value) || 0;
-
-    // Υπολογισμός αξίας μετά την έκπτωση
-    const netValue = (qty * price) * (1 - disc / 100);
-    const vatAmount = netValue * (vatPercent / 100);
-    const total = netValue + vatAmount;
-
-    row.querySelector('.row-total').innerText = netValue.toFixed(2); // Δείχνουμε την καθαρή αξία στη γραμμή
-    
-    calculateTotals();
+    document.getElementById('rowsBody').appendChild(tr);
+    return tr;
 }
 
-function calculateTotals() {
-    let subtotal = 0;
-    let totalVat = 0;
+function fillProd(el) {
+    const productsDB = JSON.parse(localStorage.getItem('productsDB') || '{}');
+    const p = productsDB[el.value];
+    const r = el.closest('tr');
+    if (p) {
+        r.querySelector('.prc').value = p.price || 0;
+        r.querySelector('.dsc').value = p.discount || 0;
+        r.querySelector('.tax').value = p.vat || 24;
+        recalc();
+    }
+}
 
-    document.querySelectorAll('#tableBody tr').forEach(row => {
-        const qty = parseFloat(row.querySelector('.qty').value) || 0;
-        const price = parseFloat(row.querySelector('.price').value) || 0;
-        const disc = parseFloat(row.querySelector('.disc').value) || 0;
-        const vatPercent = parseFloat(row.querySelector('.vat').value) || 0;
+function recalc() {
+    let net = 0, taxTotal = 0, discTotal = 0;
+    document.querySelectorAll('#rowsBody tr').forEach(row => {
+        const q = parseFloat(row.querySelector('.qty').value) || 0;
+        const p = parseFloat(row.querySelector('.prc').value) || 0;
+        const d = parseFloat(row.querySelector('.dsc').value) || 0;
+        const tx = parseFloat(row.querySelector('.tax').value) || 0;
 
-        const net = (qty * price) * (1 - disc / 100);
-        const v = net * (vatPercent / 100);
+        const lineRaw = q * p;
+        const lineDisc = lineRaw * (d / 100);
+        const lineNet = lineRaw - lineDisc;
+        const lineTax = lineNet * (tx / 100);
 
-        subtotal += net;
-        totalVat += v;
+        row.querySelector('.row-total').innerText = (lineNet + lineTax).toFixed(2) + " €";
+        net += lineNet; taxTotal += lineTax; discTotal += lineDisc;
     });
 
-    // Ενημέρωση των πεδίων στο Footer (αν τα έχεις ονομάσει έτσι)
-    if(document.getElementById('subtotal')) document.getElementById('subtotal').innerText = subtotal.toFixed(2) + " €";
-    if(document.getElementById('vatTotal')) document.getElementById('vatTotal').innerText = totalVat.toFixed(2) + " €";
-    if(document.getElementById('grandTotal')) document.getElementById('grandTotal').innerText = (subtotal + totalVat).toFixed(2) + " €";
+    document.getElementById('sumNet').innerText = net.toFixed(2) + " €";
+    document.getElementById('sumDisc').innerText = discTotal.toFixed(2) + " €";
+    document.getElementById('sumTax').innerText = taxTotal.toFixed(2) + " €";
+    document.getElementById('sumGrand').innerText = (net + taxTotal).toFixed(2) + " €";
+}
+
+function lookupVat() {
+    const afm = document.getElementById('cAfm').value;
+    if (!afm) return alert("Εισάγετε ΑΦΜ.");
+    window.open(`https://www.vrisko.gr/search-aade-afm/?afm=${afm}`, 'TritonHelper', 'width=800,height=600');
+}
+
+function finalizeAndPrint() {
+    window.print();
 }
 </script>
 </body>

@@ -2091,29 +2091,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function saveSettings() {
     const settings = {
+        // Τα ονόματα που θέλει η Billing
+        companyName: document.getElementById('setName').value.trim().toUpperCase(),
+        activity: document.getElementById('setJob').value.trim(),
+        taxId: document.getElementById('setAfm').value.trim(),
+        taxOffice: document.getElementById('setDoy').value.trim(),
+        address: document.getElementById('setAddress').value.trim(),
+        phone: document.getElementById('setPhone').value.trim(),
+        logoBase64: document.getElementById('imgPreview').src,
+        
+        // Κρατάμε και τα παλιά ονόματα για το Dashboard
         name: document.getElementById('setName').value.trim().toUpperCase(),
         job: document.getElementById('setJob').value.trim(),
         afm: document.getElementById('setAfm').value.trim(),
-        doy: document.getElementById('setDoy').value.trim(),
-        address: document.getElementById('setAddress').value.trim(),
-        city: document.getElementById('setCity').value.trim(),
-        tk: document.getElementById('setTk').value.trim(),
-        phone: document.getElementById('setPhone').value.trim(),
-        gemi: document.getElementById('setGemi').value.trim(),
-        mu: document.getElementById('setMyDataUser').value.trim(),
-        mk: document.getElementById('setMyDataKey').value.trim(),
-        // ΕΔΩ ΠΡΟΣΘΕΤΟΥΜΕ ΤΟ LOGO:
-        logo: document.getElementById('imgPreview').src 
+        doy: document.getElementById('setDoy').value.trim()
     };
 
-    if (!settings.afm || !settings.name) {
+    if (!settings.taxId || !settings.companyName) {
         alert("⚠️ Το ΑΦΜ και η Επωνυμία είναι υποχρεωτικά!");
         return;
     }
 
-    // Αποθήκευση στο "κουτί" (localStorage)
+    // Σώζουμε και στα δύο κλειδιά για να "γεφυρώσουμε" Index και Billing
     localStorage.setItem('bizSettings', JSON.stringify(settings));
-    alert('🔱 Οι ρυθμίσεις της επιχείρησης Triton ενημερώθηκαν!');
+    localStorage.setItem('triton_settings', JSON.stringify(settings));
+    
+    alert('🔱 Το σύστημα Triton ενημερώθηκε επιτυχώς!');
     location.reload();
 }
 

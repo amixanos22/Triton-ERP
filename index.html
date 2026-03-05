@@ -1423,26 +1423,71 @@ function completeLogin() {
     localStorage.setItem('triton_is_logged_in', 'true');
     executeFinalEntry(); 
 }
-// --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (CLOUD & MYDATA READY) ---
-async function openSettings() {
-    // 1. Προσπαθούμε να πάρουμε τα δεδομένα από το Supabase
-    const { data: { user } } = await _supabase.auth.getUser();
-    let saved = {};
+// ==========================================
+// 6. ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΘΥΡΩΝ (MODAL MODULES)
+// ==========================================
 
-    if (user) {
-        const { data: profile, error } = await _supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-        
-        if (profile) {
-            saved = profile; // Χρησιμοποιούμε τα δεδομένα από το Cloud
-        } else {
-            // Αν δεν υπάρχει στο Cloud, δοκιμάζουμε το localStorage ως backup
-            saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
+async function openModule(url, title, icon) {
+    // 1. Έλεγχος αν το παράθυρο είναι ήδη ανοιχτό
+    if (openModules[url]) {
+        const existingWin = document.getElementById(openModules[url]);
+        if (existingWin) {
+            existingWin.style.display = 'flex';
+            bringToFront(existingWin);
+            return;
         }
     }
+
+    // 2. Δημιουργία Μοναδικού ID
+    const windowId = 'win_' + Math.random().toString(36).substr(2, 9);
+    openModules[url] = windowId;
+
+    // 3. Δημιουργία του HTML (Floating Window) - Κεντραρισμένο
+    const winHtml = `
+        <div id="${windowId}" class="triton-draggable-modal" 
+             style="position:fixed; top:50%; left:calc(130px + 50%); transform:translate(-50%, -50%); 
+                    width:1000px; height:700px; background:white; border-radius:12px; 
+                    box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; display:flex; 
+                    flex-direction:column; overflow:hidden; border:1px solid #0284c7;">
+            <div class="window-header" style="background:#0f172a; color:white; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; cursor:move;">
+                <div style="display:flex; align-items:center; gap:10px; font-weight:bold;">
+                    <span>${icon}</span> ${title}
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="document.getElementById('${windowId}').style.display='none'" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:18px;">➖</button>
+                    <button onclick="closeTritonModalID('${windowId}', '${url}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:18px;">✖</button>
+                </div>
+            </div>
+            <div style="flex:1; background:#f8fafc;">
+                <iframe src="${url}" style="width:100%; height:100%; border:none;" id="frame_${windowId}"></iframe>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', winHtml);
+    
+    const newWin = document.getElementById(windowId);
+    const header = newWin.querySelector('.window-header');
+    makeDraggable(newWin, header);
+    
+    createTaskbarTab(windowId, title, icon, url);
+
+    // --- Ο "ΤΑΧΥΔΡΟΜΟΣ" ΓΙΑ ΤΑ ΣΤΟΙΧΕΙΑ ΣΟΥ ---
+    setTimeout(async () => {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (user) {
+            const frame = document.getElementById('frame_' + windowId);
+            if (frame && frame.contentWindow) {
+                // Στέλνουμε το ID χρήστη στο iframe για να τραβήξει το προφίλ
+                frame.contentWindow.postMessage({ 
+                    type: 'authSuccess', 
+                    userId: user.id 
+                }, '*');
+                console.log("🔱 Triton Sync: Τα στοιχεία στάλθηκαν στο παράθυρο!");
+            }
+        }
+    }, 1500); // Περιμένουμε 1.5 δευτερόλεπτο να φορτώσει η σελίδα μέσα
+}
 
     // 2. Αντιστοίχιση των πεδίων της βάσης με τα IDs της φόρμας σου
     const fields = {

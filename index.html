@@ -1250,6 +1250,20 @@ function initMainChart() {
                     <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΤΗΛΕΦΩΝΟ</label>
                     <input type="text" id="setPhone" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
                 </div>
+              <div class="input-group">
+    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">EMAIL</label>
+    <input type="email" id="setEmail" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+</div>
+
+<div class="input-group">
+    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΧΩΡΑ</label>
+    <input type="text" id="setCountry" value="Ελλάδα" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+</div>
+
+<div class="input-group" style="grid-column: span 2;">
+    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">WEBSITE</label>
+    <input type="text" id="setWeb" placeholder="https://..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+</div>
                 <div class="input-group">
                     <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΑΡ. ΓΕΜΗ</label>
                     <input type="text" id="setGemi" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -1343,11 +1357,22 @@ async function saveSettings() {
         }
     }
 
-   // 3. Συλλογή όλων των στοιχείων
+   // 3. Συλλογή όλων των στοιχείων (Ενημερωμένο με Email, Χώρα, Website)
     const settings = {
         id: currentUser.id,
         company_name: document.getElementById('setName').value,
         tax_id: document.getElementById('setAfm').value,
+        
+        // --- ΝΕΑ ΠΕΔΙΑ ---
+        email: document.getElementById('setEmail').value,
+        country: document.getElementById('setCountry').value,
+        website: document.getElementById('setWeb').value,
+        // -----------------
+
+        address: document.getElementById('setAddr')?.value || "", // Αν έχεις πεδίο Διεύθυνσης
+        city: document.getElementById('setCity')?.value || "",     // Αν έχεις πεδίο Πόλης
+        zip_code: document.getElementById('setTk')?.value || "",   // Το Τ.Κ. που είδαμε πριν
+
         mydata_user: document.getElementById('setMyDataUser').value,
         mydata_key: document.getElementById('setMyDataKey').value,
         updated_at: new Date()
@@ -2331,6 +2356,9 @@ function showTritonHint() {
         document.getElementById('setAfm').value = profile.tax_id || "";
         document.getElementById('setMyDataUser').value = profile.mydata_user || "";
         document.getElementById('setMyDataKey').value = profile.mydata_key || "";
+      document.getElementById('setEmail').value = profile.email || "";
+document.getElementById('setCountry').value = profile.country || "Ελλάδα";
+document.getElementById('setWeb').value = profile.website || "";
         
         // Αν θέλεις να προσθέσεις και τα υπόλοιπα πεδία (Διεύθυνση, Πόλη κλπ)
         if(document.getElementById('setAddr')) document.getElementById('setAddr').value = profile.address || "";

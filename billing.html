@@ -181,16 +181,29 @@ function addRow() {
 }
 
 async function loadProfile(userId) {
-    const { data: profile } = await _supabase.from('profiles').select('*').eq('id', userId).single();
+    const { data: profile, error } = await _supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle(); // Πιο ασφαλές από το .single()
+
+    if (error) {
+        console.error("Σφάλμα Supabase:", error.message);
+        document.getElementById('dispCompName').innerText = "Σφάλμα Σύνδεσης";
+        return;
+    }
+
     if (profile) {
-        document.getElementById('dispCompName').innerText = profile.company_name || "TRITON ERP";
+        document.getElementById('dispCompName').innerText = profile.company_name || "ELATI PRODUCTS";
         document.getElementById('dispAddress').innerText = `${profile.address || ''}, ${profile.city || ''} | ΑΦΜ: ${profile.tax_id || ''}`;
         if (profile.logo_url) {
             document.getElementById('logoArea').innerHTML = `<img src="${profile.logo_url}" style="max-height:100px;">`;
         }
+    } else {
+        // Αν η βάση είναι άδεια, εμφάνισε τουλάχιστον το όνομα
+        document.getElementById('dispCompName').innerText = "ELATI PRODUCTS (Δεν βρέθηκε προφίλ)";
     }
 }
-
 async function updateLists(userId) {
     const { data: custs } = await _supabase.from('customers').select('name').eq('user_id', userId);
     const { data: prods } = await _supabase.from('products').select('name').eq('user_id', userId);

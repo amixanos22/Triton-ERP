@@ -2243,23 +2243,35 @@ function makeDraggable(modalId, headerId) {
 // ==========================================
 // 1. ΡΥΘΜΙΣΕΙΣ & ONBOARDING
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const biz = localStorage.getItem('bizSettings');
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Παίρνουμε τον χρήστη
+    const { data: { user } } = await _supabase.auth.getUser();
     
-    if (!biz) {
-        setTimeout(() => {
-            // Αντί για openSettings(), καλούμε απευθείας το άνοιγμα αν υπάρχει
-            const settingsModal = document.getElementById('settingsModal');
-            if(settingsModal) settingsModal.style.display = 'block';
-            console.log("🔱 Triton: Onboarding Active");
-        }, 1500);
-    } else {
-        const data = JSON.parse(biz);
-        const nameElem = document.getElementById('displayCompanyName');
-        if(nameElem) nameElem.innerText = data.name;
+    if (user) {
+        // 2. Ελέγχουμε αν υπάρχουν στοιχεία στη Supabase
+        const { data: profile, error } = await _supabase
+            .from('profiles')
+            .select('company_name')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        // 3. Αν ΔΕΝ υπάρχει προφίλ ή επωνυμία, τότε μόνο άνοιξε το Onboarding
+        if (!profile || !profile.company_name) {
+            setTimeout(() => {
+                const settingsModal = document.getElementById('settingsModal');
+                if(settingsModal) {
+                    settingsModal.style.display = 'flex';
+                    console.log("🔱 Triton: Onboarding Active - Προφίλ δεν βρέθηκε");
+                }
+            }, 1500);
+        } else {
+            // Αν υπάρχει, εμφάνισε το όνομα στην οθόνη
+            const nameElem = document.getElementById('displayCompanyName');
+            if(nameElem) nameElem.innerText = profile.company_name;
+            console.log("🔱 Triton: Dashboard Sync Complete - " + profile.company_name);
+        }
     }
 });
-
 // ==========================================
 // 2. ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΘΥΡΩΝ (NEW WINDOWS)
 // ==========================================

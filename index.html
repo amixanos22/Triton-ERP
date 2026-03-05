@@ -2303,26 +2303,34 @@ function closeTritonModalID(windowId, url) {
     if (tab) tab.remove();
     delete openModules[url];
 }
-     // ==========================================
+   // ==========================================
 // 7. ΣΥΝΔΕΣΗ ΜΕ ΤΑ ΚΟΥΜΠΙΑ ΤΩΝ ΠΑΡΑΣΤΑΤΙΚΩΝ
 // ==========================================
 
-// Αυτή η συνάρτηση "μεταφράζει" το createNewWindow σε openModule
 function createNewWindow(url, title, width, height) {
-    // Καλούμε την openModule που ήδη έχεις, περνώντας τις παραμέτρους
-    // Αν θέλεις συγκεκριμένο πλάτος/ύψος, την τροποποιούμε ελαφρώς:
+    // Καλούμε την openModule που ήδη έχεις
     openModule(url, title, title.split(' ')[0]); 
     
-    // Προσαρμογή μεγέθους στο παράθυρο που μόλις δημιουργήθηκε
     setTimeout(() => {
         const winId = openModules[url];
         const win = document.getElementById(winId);
+        
         if (win && width && height) {
+            // ΟΡΙΖΟΥΜΕ ΤΟ ΠΛΑΤΟΣ ΤΗΣ SIDEBAR (260px)
+            const sidebarWidth = 260; 
+            const availableWidth = window.innerWidth - sidebarWidth;
+            
+            // ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΠΡΑΓΜΑΤΙΚΟ ΚΕΝΤΡΟ
+            // Ξεκινάμε μετά τη sidebar + τη μισή διαφορά του ελεύθερου χώρου
+            const leftPos = sidebarWidth + (availableWidth / 2) - (width / 2);
+            const topPos = (window.innerHeight / 2) - (height / 2);
+
             win.style.width = width + "px";
             win.style.height = height + "px";
-            // Επανακεντράρισμα
-            win.style.left = (window.innerWidth / 2 - width / 2) + "px";
-            win.style.top = "80px";
+            win.style.left = leftPos + "px";
+            win.style.top = topPos + "px"; // Το βάζει και κάθετα στο κέντρο
+            
+            win.style.transform = "none"; // Καθαρίζουμε τυχόν παλιά κεντραρίσματα
         }
     }, 50);
 }

@@ -1207,15 +1207,18 @@ function initMainChart() {
     
   <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(10px); z-index: 11000; align-items: center; justify-content: center;">
     <div style="background: white; width: 95%; max-width: 650px; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-        <div style="background: #020617; color: #7dd3fc; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">⚙️ Προφίλ & Ρυθμίσεις Επιχείρησης</h3>
-            <span onclick="closeSettings()" style="cursor: pointer; font-size: 1.5rem;">×</span>
-        </div>
+      
         <div style="padding: 25px; max-height: 80vh; overflow-y: auto;">
             
             <h4 style="color: #0ea5e9; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Στοιχεία Παραστατικού</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="input-group" style="grid-column: span 2;">
+                 <div class="input-group" style="grid-column: span 2; margin-bottom: 10px;">
+    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b; display: block; margin-bottom: 5px;">ΛΟΓΟΤΥΠΟ ΕΤΑΙΡΕΙΑΣ (LOGO)</label>
+    <input type="file" id="logoInput" accept="image/*" 
+           style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; font-size: 0.85rem;">
+    <small style="color: #94a3b8; font-size: 0.7rem;">Προτεινόμενο μέγεθος: 300x100px (PNG/JPG)</small>
+</div>
                     <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΕΠΩΝΥΜΙΑ / ΟΝΟΜΑΤΕΠΩΝΥΜΟ</label>
                     <input type="text" id="setName" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
                 </div>
@@ -1315,17 +1318,57 @@ function openSettings() {
     document.getElementById('settingsModal').style.display = 'flex';
 }
 
-function saveSettings() {
+async function saveSettings() {
+    // 1. Παίρνουμε το αρχείο του logo
+    const logoFile = document.getElementById('logoInput').files[0];
+    let logoUrl = "";
+
+    // Αν υπάρχει ήδη αποθηκευμένο logo από πριν (προαιρετικά)
+    // logoUrl = currentProfile?.logo_url || ""; 
+
+    // 2. Ανέβασμα Logo στη Supabase (αν επιλέχθηκε αρχείο)
+    if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${currentUser.id}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await _supabase.storage
+            .from('logos') // Βεβαιώσου ότι έχεις φτιάξει το bucket 'logos' στη Supabase
+            .upload(fileName, logoFile, { upsert: true });
+
+        if (!uploadError) {
+            const { data } = _supabase.storage.from('logos').getPublicUrl(fileName);
+            logoUrl = data.publicUrl;
+        } else {
+            console.error("Logo Upload Error:", uploadError);
+        }
+    }
+
+   // 3. Συλλογή όλων των στοιχείων
     const settings = {
-        name: document.getElementById('setName').value,
-        afm: document.getElementById('setAfm').value,
-        mu: document.getElementById('setMyDataUser').value,
-        mk: document.getElementById('setMyDataKey').value,
-        // ... υπόλοιπα πεδία
+        id: currentUser.id,
+        company_name: document.getElementById('setName').value,
+        tax_id: document.getElementById('setAfm').value,
+        mydata_user: document.getElementById('setMyDataUser').value,
+        mydata_key: document.getElementById('setMyDataKey').value,
+        updated_at: new Date()
     };
-    if(!settings.afm || !settings.name) return alert("⚠️ ΑΦΜ και Επωνυμία είναι υποχρεωτικά!");
-    localStorage.setItem('bizSettings', JSON.stringify(settings));
-    location.reload();
+
+    // ΜΟΝΟ αν έχουμε νέο URL το προσθέτουμε στο αντικείμενο
+    if (logoUrl) {
+        settings.logo_url = logoUrl;
+    }
+
+    // 4. Αποθήκευση στη Supabase (αντί για LocalStorage)
+    const { error } = await _supabase
+        .from('profiles')
+        .upsert(settings);
+
+    if (error) {
+        alert("Σφάλμα κατά την αποθήκευση: " + error.message);
+    } else {
+        alert("✅ Οι ρυθμίσεις της ELATI PRODUCTS αποθηκεύτηκαν στο Cloud!");
+        location.reload();
+    }
 }
 // --- 1. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΚΛΕΙΝΕΙ ΤΙΣ ΡΥΘΜΙΣΕΙΣ ---
 function closeSettings() {
@@ -1841,6 +1884,17 @@ window.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = "10000");
         win.style.zIndex = "10005";
     };
+   iframe.onload = () => {
+    // Μόλις φορτώσει το iframe, του στέλνουμε τα στοιχεία της εταιρείας μας
+    // που έχουμε ήδη στην index, για να μη βλέπουμε το "ΦΟΡΤΩΣΗ..."
+    const myProfile = JSON.parse(localStorage.getItem('userProfile')); 
+    if (myProfile) {
+        iframe.contentWindow.postMessage({
+            type: 'loadProfileQuick',
+            data: myProfile
+        }, '*');
+    }
+};
 // --- ΣΥΝΕΧΕΙΑ ΤΟΥ ΚΩΔΙΚΑ ΣΟΥ ---
 
     // 1. Λειτουργία Refresh (🔄)
@@ -2167,6 +2221,9 @@ function makeDraggable(modalId, headerId) {
         <button onclick="openModule('customers.html', 'Διαχείριση Πελατών', '👥')" style="background:#0ea5e9; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">
             ⚙️ Πλήρης Διαχείριση
         </button>
+      <button onclick="openSettings()" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">
+    ⚙️ Ρυθμίσεις Εταιρείας
+</button>
     </div>
 </div><script>
 // ==========================================
@@ -2254,6 +2311,39 @@ function showTritonHint() {
         <p>Ρυθμίστε τα στοιχεία σας από το <b>ανθρωπάκι</b> πάνω δεξιά.</p>
     `;
     document.body.appendChild(hint);
+}
+          async function loadSettingsIntoForm() {
+    // 1. Παίρνουμε τα τρέχοντα στοιχεία από τη Supabase
+    const { data: profile, error } = await _supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Σφάλμα φόρτωσης ρυθμίσεων:", error.message);
+        return;
+    }
+
+    if (profile) {
+        // 2. Γεμίζουμε τα πεδία της φόρμας
+        document.getElementById('setName').value = profile.company_name || "";
+        document.getElementById('setAfm').value = profile.tax_id || "";
+        document.getElementById('setMyDataUser').value = profile.mydata_user || "";
+        document.getElementById('setMyDataKey').value = profile.mydata_key || "";
+        
+        // Αν θέλεις να προσθέσεις και τα υπόλοιπα πεδία (Διεύθυνση, Πόλη κλπ)
+        if(document.getElementById('setAddr')) document.getElementById('setAddr').value = profile.address || "";
+        if(document.getElementById('setCity')) document.getElementById('setCity').value = profile.city || "";
+
+        // 3. Προεπισκόπηση Logo αν υπάρχει
+        if (profile.logo_url) {
+            const preview = document.getElementById('logoPreview');
+            if(preview) {
+                preview.innerHTML = `<img src="${profile.logo_url}" style="max-height:100%; max-width:100%; object-fit:contain;">`;
+            }
+        }
+    }
 }
 </script>
  

@@ -1333,68 +1333,57 @@ function openSettings() {
 }
 
 async function saveSettings() {
-    // 1. Παίρνουμε το αρχείο του logo
-    const logoFile = document.getElementById('logoInput').files[0];
-    let logoUrl = "";
-
-    // Αν υπάρχει ήδη αποθηκευμένο logo από πριν (προαιρετικά)
-    // logoUrl = currentProfile?.logo_url || ""; 
-
-    // 2. Ανέβασμα Logo στη Supabase (αν επιλέχθηκε αρχείο)
-    if (logoFile) {
-        const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${currentUser.id}.${fileExt}`;
+    try {
+        // 1. Εύρεση χρήστη με ασφάλεια
+        const authRes = await _supabase.auth.getUser();
+        const user = authRes.data.user;
         
-        const { data: uploadData, error: uploadError } = await _supabase.storage
-            .from('logos') // Βεβαιώσου ότι έχεις φτιάξει το bucket 'logos' στη Supabase
-            .upload(fileName, logoFile, { upsert: true });
+        if (!user) throw new Error("Δεν είστε συνδεδεμένος.");
 
-        if (!uploadError) {
-            const { data } = _supabase.storage.from('logos').getPublicUrl(fileName);
-            logoUrl = data.publicUrl;
-        } else {
-            console.error("Logo Upload Error:", uploadError);
+        const logoFile = document.getElementById('logoInput')?.files[0];
+        let logoUrl = "";
+
+        // 2. Ανέβασμα Logo (αν υπάρχει αρχείο)
+        if (logoFile) {
+            const fileName = `${user.id}-${Date.now()}`;
+            const { error: upErr } = await _supabase.storage
+                .from('logos')
+                .upload(fileName, logoFile, { upsert: true });
+
+            if (!upErr) {
+                const { data } = _supabase.storage.from('logos').getPublicUrl(fileName);
+                logoUrl = data.publicUrl;
+            }
         }
-    }
 
-   // 3. Συλλογή όλων των στοιχείων (Ενημερωμένο με Email, Χώρα, Website)
-    const settings = {
-        id: currentUser.id,
-        company_name: document.getElementById('setName').value,
-        tax_id: document.getElementById('setAfm').value,
-        
-        // --- ΝΕΑ ΠΕΔΙΑ ---
-        email: document.getElementById('setEmail').value,
-        country: document.getElementById('setCountry').value,
-        website: document.getElementById('setWeb').value,
-        // -----------------
+        // 3. Συλλογή Στοιχείων με Optional Chaining (?.) για να μην κρασάρει
+        const settings = {
+            id: user.id,
+            company_name: document.getElementById('setName')?.value || "",
+            tax_id: document.getElementById('setAfm')?.value || "",
+            email: document.getElementById('setEmail')?.value || "",
+            website: document.getElementById('setWeb')?.value || "",
+            country: document.getElementById('setCountry')?.value || "Ελλάδα",
+            zip_code: document.getElementById('setTk')?.value || "",
+            mydata_user: document.getElementById('setMyDataUser')?.value || "",
+            mydata_key: document.getElementById('setMyDataKey')?.value || "",
+            updated_at: new Date()
+        };
 
-        address: document.getElementById('setAddr')?.value || "", // Αν έχεις πεδίο Διεύθυνσης
-        city: document.getElementById('setCity')?.value || "",     // Αν έχεις πεδίο Πόλης
-        zip_code: document.getElementById('setTk')?.value || "",   // Το Τ.Κ. που είδαμε πριν
+        if (logoUrl) settings.logo_url = logoUrl;
 
-        mydata_user: document.getElementById('setMyDataUser').value,
-        mydata_key: document.getElementById('setMyDataKey').value,
-        updated_at: new Date()
-    };
+        // 4. Upsert στη Supabase
+        const { error: dbErr } = await _supabase.from('profiles').upsert(settings);
+        if (dbErr) throw dbErr;
 
-    // ΜΟΝΟ αν έχουμε νέο URL το προσθέτουμε στο αντικείμενο
-    if (logoUrl) {
-        settings.logo_url = logoUrl;
-    }
-
-    // 4. Αποθήκευση στη Supabase (αντί για LocalStorage)
-    const { error } = await _supabase
-        .from('profiles')
-        .upsert(settings);
-
-    if (error) {
-        alert("Σφάλμα κατά την αποθήκευση: " + error.message);
-    } else {
-        alert("✅ Οι ρυθμίσεις της ELATI PRODUCTS αποθηκεύτηκαν στο Cloud!");
+        alert("✅ Επιτυχής αποθήκευση!");
         location.reload();
+
+    } catch (err) {
+        console.error("Critical Error:", err);
+        alert("⚠️ Πρόβλημα: " + err.message);
     }
-}
+} // <--- Βεβαιώσου ότι αυτή η αγκύλη υπάρχει!
 // --- 1. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΚΛΕΙΝΕΙ ΤΙΣ ΡΥΘΜΙΣΕΙΣ ---
 function closeSettings() {
     const modal = document.getElementById('settingsModal');

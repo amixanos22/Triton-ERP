@@ -779,9 +779,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="add-btn" id="quickAddBtn">＋</button>
                   <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
     
- <a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
+
+           <a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
     <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
 </a>
+                    
 
 <a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=DA', '🚚 Δελτίο Αποστολής', 1100, 800)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>🚚</span> Δελτίο Αποστολής
@@ -804,6 +806,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <a href="javascript:void(0)" onclick="createNewWindow('billing.html?type=A-PLHR', '💸 Απόδειξη Πληρωμής', 900, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
     <span>💸</span> Απόδειξη Πληρωμής
 </a>
+                    
+                    
 </div>
                   
 </div></div>
@@ -2298,6 +2302,74 @@ function closeTritonModalID(windowId, url) {
     const tab = document.getElementById('tab_' + windowId);
     if (tab) tab.remove();
     delete openModules[url];
+}
+     // ==========================================
+// 7. ΣΥΝΔΕΣΗ ΜΕ ΤΑ ΚΟΥΜΠΙΑ ΤΩΝ ΠΑΡΑΣΤΑΤΙΚΩΝ
+// ==========================================
+
+// Αυτή η συνάρτηση "μεταφράζει" το createNewWindow σε openModule
+function createNewWindow(url, title, width, height) {
+    // Καλούμε την openModule που ήδη έχεις, περνώντας τις παραμέτρους
+    // Αν θέλεις συγκεκριμένο πλάτος/ύψος, την τροποποιούμε ελαφρώς:
+    openModule(url, title, title.split(' ')[0]); 
+    
+    // Προσαρμογή μεγέθους στο παράθυρο που μόλις δημιουργήθηκε
+    setTimeout(() => {
+        const winId = openModules[url];
+        const win = document.getElementById(winId);
+        if (win && width && height) {
+            win.style.width = width + "px";
+            win.style.height = height + "px";
+            // Επανακεντράρισμα
+            win.style.left = (window.innerWidth / 2 - width / 2) + "px";
+            win.style.top = "80px";
+        }
+    }, 50);
+}
+
+// Αυτή η συνάρτηση φτιάχνει τα Tabs στην κάτω μπάρα
+function createTaskbarTab(windowId, title, icon, url) {
+    const bar = document.getElementById('minimizedBar');
+    if (!bar) return;
+
+    const tab = document.createElement('div');
+    tab.id = 'tab_' + windowId;
+    
+    // Στυλ για να κάθονται όμορφα μέσα στο flexbox της μπάρας
+    tab.style.cssText = `
+        background: #1e293b;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid #0284c7;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        min-width: 160px;
+        max-width: 200px;
+        height: 30px;
+        transition: all 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+    `;
+    
+    tab.innerHTML = `<span>${icon}</span> <span style="overflow:hidden; text-overflow:ellipsis;">${title}</span>`;
+    
+    // Hover εφέ για να φαίνεται επαγγελματικό
+    tab.onmouseover = () => { tab.style.background = "#0284c7"; };
+    tab.onmouseout = () => { tab.style.background = "#1e293b"; };
+
+    tab.onclick = () => {
+        const win = document.getElementById(windowId);
+        if (win) {
+            win.style.display = 'flex';
+            bringToFront(win);
+        }
+    };
+
+    bar.appendChild(tab);
 }
 </script>
 

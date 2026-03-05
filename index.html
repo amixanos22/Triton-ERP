@@ -7,6 +7,7 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title> index.html</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       .triton-draggable-modal {
     display: none;
@@ -604,29 +605,53 @@
 </div>
 
 <script>
-   document.addEventListener('DOMContentLoaded', () => {
-    // 1. Έλεγχος για ενημέρωση τιμών (Αυτό που είχες)
+// 1. ΑΡΧΙΚΟΠΟΙΗΣΗ (Πρέπει να γίνει ΕΔΩ για να μην βγάζει "not defined")
+ 
+  
+const _supabase = supabase.createClient('https://pizzmcznytsfqlxnttbv.supabase.co', 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G');
+
+ 
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Έλεγχος τιμών (LocalStorage)
     const lastUpdate = localStorage.getItem('lastPriceUpdate');
     if (lastUpdate) {
-        const updateDate = new Date(lastUpdate);
-        const now = new Date();
-        const diffInHours = (now - updateDate) / (1000 * 60 * 60);
+        const diffInHours = (new Date() - new Date(lastUpdate)) / (1000 * 60 * 60);
         if (diffInHours < 24) {
             const banner = document.getElementById('priceAlertBanner');
             if(banner) banner.style.display = 'flex';
         }
     }
 
-    // 2. ΝΕΟ: Έλεγχος για το "ανθρωπάκι" (Animation προφίλ)
-    const biz = localStorage.getItem('bizSettings');
-    // Σιγουρέψου ότι το class στο HTML σου είναι .user-profile ή άλλαξέ το εδώ
-    const profileBtn = document.querySelector('.user-profile'); 
+    // Έλεγχος προφίλ (Supabase)
+    try {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await _supabase
+                .from('profiles')
+                .select('company_name')
+                .eq('id', user.id)
+                .maybeSingle();
 
-    if (!biz && profileBtn) {
-        profileBtn.classList.add('blink-profile');
+            const profileBtn = document.querySelector('.user-profile');
+
+            if ((!profile || !profile.company_name) && profileBtn) {
+                profileBtn.classList.add('blink-profile');
+                const modal = document.getElementById('settingsModal');
+                if (modal) modal.style.display = 'flex';
+            }
+        }
+    } catch (err) {
+        console.error("🔱 Triton Sync Error:", err);
     }
 });
-</script>  
+
+// Η συνάρτηση για να δουλεύει το "X"
+function closeSettings() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) modal.style.display = 'none';
+}
+</script>
 
 
 

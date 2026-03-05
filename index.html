@@ -2267,8 +2267,23 @@ function makeDraggable(elmnt, header) {
     openModules[url] = windowId;
 
     // 3. Δημιουργία του HTML του παραθύρου (Floating Window)
+   // 3. Δημιουργία του HTML του παραθύρου (Floating Window)
     const winHtml = `
-        <div id="${windowId}" class="triton-draggable-modal" style="position:fixed; top:100px; left:300px; width:900px; height:600px; background:white; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; display:flex; flex-direction:column; overflow:hidden; border:1px solid #0284c7;">
+        <div id="${windowId}" class="triton-draggable-modal" 
+             style="position:fixed; 
+                    top: 50%; 
+                    left: calc(130px + 50%); 
+                    transform: translate(-50%, -50%); 
+                    width:900px; 
+                    height:600px; 
+                    background:white; 
+                    border-radius:12px; 
+                    box-shadow:0 20px 50px rgba(0,0,0,0.3); 
+                    z-index:10000; 
+                    display:flex; 
+                    flex-direction:column; 
+                    overflow:hidden; 
+                    border:1px solid #0284c7;">
             <div class="window-header" style="background:#0f172a; color:white; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; cursor:move;">
                 <div style="display:flex; align-items:center; gap:10px; font-weight:bold;">
                     <span>${icon}</span> ${title}
@@ -2283,17 +2298,6 @@ function makeDraggable(elmnt, header) {
             </div>
         </div>
     `;
-
-    document.body.insertAdjacentHTML('beforeend', winHtml);
-    
-    // 4. Ενεργοποίηση Drag & Drop
-    const newWin = document.getElementById(windowId);
-    const header = newWin.querySelector('.window-header');
-    makeDraggable(newWin, header);
-    
-    // 5. Δημιουργία Tab στην κάτω μπάρα (Taskbar)
-    createTaskbarTab(windowId, title, icon, url);
-}
 
 // Βοηθητική συνάρτηση για το οριστικό κλείσιμο
 function closeTritonModalID(windowId, url) {

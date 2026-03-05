@@ -1359,18 +1359,26 @@ function openSettings() {
 
 async function saveSettings() {
     try {
-        // 1. Εύρεση χρήστη με ασφάλεια
-        const authRes = await _supabase.auth.getUser();
-        const user = authRes.data.user;
-        
-        if (!user) throw new Error("Δεν είστε συνδεδεμένος.");
+        // 1. Έλεγχος αν ο χρήστης είναι όντως συνδεδεμένος (Το "κλειδί")
+        const { data: { user }, error: authError } = await _supabase.auth.getUser();
+        if (!user || authError) {
+            alert("⚠️ Σφάλμα: Πρέπει να συνδεθείτε πρώτα με το Google Email σας.");
+            return;
+        }
 
+        // 2. Έλεγχος Email (Αυτό που με ρώτησες)
+        const typedEmail = document.getElementById('bizEmail').value;
+        if (typedEmail !== user.email) {
+            alert("❌ Απαγορεύεται: Το email " + typedEmail + " δεν αντιστοιχεί στον λογαριασμό σας (" + user.email + ").");
+            return; // Σταματάει την αποθήκευση!
+        }
+
+        // 3. Ανέβασμα Logo (Αυτό που ήδη ξεκίνησες)
         const logoFile = document.getElementById('logoInput')?.files[0];
-        let logoUrl = "";
+        let logoUrl = document.getElementById('currentLogoPath')?.value || "";
 
-        // 2. Ανέβασμα Logo (αν υπάρχει αρχείο)
         if (logoFile) {
-            const fileName = `${user.id}-${Date.now()}`;
+            const fileName = `logo-${user.id}`;
             const { error: upErr } = await _supabase.storage
                 .from('logos')
                 .upload(fileName, logoFile, { upsert: true });
@@ -1380,6 +1388,29 @@ async function saveSettings() {
                 logoUrl = data.publicUrl;
             }
         }
+
+        // 4. Αποθήκευση στο Profiles (Η τελική ταυτοποίηση)
+        const { error: dbErr } = await _supabase
+            .from('profiles')
+            .upsert({
+                id: user.id, // Σύνδεση με το ID της Supabase
+                company_name: document.getElementById('bizName').value,
+                email: user.email,
+                website: document.getElementById('bizWebsite').value,
+                logo_url: logoUrl,
+                updated_at: new Date()
+            });
+
+        if (dbErr) throw dbErr;
+
+        alert("✅ Οι ρυθμίσεις της ELATI PRODUCTS αποθηκεύτηκαν!");
+        closeSettings(); // Κλείνει το modal μόνο αν όλα πήγαν καλά
+
+    } catch (err) {
+        console.error("Error:", err);
+        alert("❌ Σφάλμα: " + err.message);
+    }
+}
 
         // 3. Συλλογή Στοιχείων με Optional Chaining (?.) για να μην κρασάρει
         const settings = {

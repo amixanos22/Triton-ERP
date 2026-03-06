@@ -1643,7 +1643,6 @@ function checkPass() {
         passInput.value = ''; // Καθαρισμός για νέα προσπάθεια
         passInput.focus();    // Ξαναβάζει τον κέρσορα στο κουτί
     }
-}
  
 // ==========================================
 // 🛸 ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (GITHUB SYNC)
@@ -1898,10 +1897,19 @@ function createNewWindow(url, title, width = 850, height = 600) {
     win.className = 'floating-window';
     win.id = winId;
     
+    // 1. ΒΡΙΣΚΟΥΜΕ ΤΟ USER ID (Από Supabase ή LocalStorage)
+    let userId = '';
+    if (typeof _supabase !== 'undefined' && _supabase.auth.user) {
+        userId = _supabase.auth.user()?.id || '';
+    }
+    
+    // 2. ΠΡΟΣΘΕΤΟΥΜΕ ΤΟ ID ΣΤΟ URL
+    const separator = url.includes('?') ? '&' : '?';
+    const finalUrl = userId ? `${url}${separator}uid=${userId}` : url;
+
     const leftPos = (window.innerWidth - width) / 2;
     const topPos = (window.innerHeight - height) / 2;
 
-    // ΔΙΟΡΘΩΣΗ: Border χρώματος Triton (#0284c7)
     win.style.cssText = `position: fixed; top: ${topPos}px; left: ${leftPos}px; width: ${width}px; height: ${height}px; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 10005; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #0284c7; resize: both; min-width: 400px; min-height: 300px;`;
 
     win.innerHTML = `
@@ -1913,12 +1921,11 @@ function createNewWindow(url, title, width = 850, height = 600) {
                 <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;" title="Κλείσιμο">&times;</span>
             </div>
         </div>
-        <iframe src="${url}" style="flex: 1; border: none; width: 100%; height: 100%; pointer-events: auto; background: #f8fafc;"></iframe>
+        <iframe src="${finalUrl}" style="flex: 1; border: none; width: 100%; height: 100%; pointer-events: auto; background: #f8fafc;"></iframe>
     `;
 
     document.body.appendChild(win);
     
-    // Σύνδεση με τη μηχανή κίνησης και το Z-index
     if (typeof makeDraggable === "function") makeDraggable(win, win.querySelector('.win-header'));
     if (typeof bringToFront === "function") bringToFront(win);
 }

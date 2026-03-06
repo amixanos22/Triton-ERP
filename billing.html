@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -139,7 +139,7 @@ function setupDocType() {
 }
 
 
-  async function loadProfile(userId) {
+async function loadProfile(userId) {
     try {
         const { data: profile, error } = await _supabase
             .from('profiles')
@@ -147,39 +147,38 @@ function setupDocType() {
             .eq('id', userId)
             .maybeSingle();
 
-        if (error) throw error;
-
         if (profile) {
-            // Ενημέρωση Επωνυμίας
-            const nameEl = document.getElementById('dispCompName');
-            if (nameEl) nameEl.innerText = profile.company_name || "🔱 TRITON ERP";
-
-            // Ενημέρωση Διεύθυνσης & Στοιχείων
+            // Χρησιμοποιούμε || για να πιάσουμε όποιο όνομα στήλης υπάρχει στη βάση σου
+            document.getElementById('dispCompName').innerText = profile.company_name || profile.name || "ΧΩΡΙΣ ΕΠΩΝΥΜΙΑ";
+            
             const addrEl = document.getElementById('dispAddress');
             if (addrEl) {
                 const address = profile.address || '';
                 const city = profile.city || '';
-                const afm = profile.afm || profile.tax_id || '';
+                const afm = profile.tax_id || profile.afm || ''; // Εδώ τσεκάρει και τα δύο πιθανά ονόματα
                 const phone = profile.phone || '';
                 addrEl.innerHTML = `${address}, ${city}<br>ΑΦΜ: ${afm} | Τηλ: ${phone}`;
             }
-
-            // Ενημέρωση Logo (αν υπάρχει)
-            const logoArea = document.getElementById('logoArea');
-            if (logoArea && profile.logo_url) {
-                logoArea.innerHTML = `<img src="${profile.logo_url}" style="max-height:80px;">`;
-            }
-            console.log("✅ Triton: Το προφίλ εκδότη φορτώθηκε!");
         }
-    } catch (err) {
-        console.error("❌ Σφάλμα φόρτωσης προφίλ:", err.message);
-    }
+    } catch (err) { console.error("Error:", err); }
 }
-  
+// 1. Γέμισμα των Datalists (Πελάτες & Προϊόντα)
+async function updateLists(userId) {
+    const { data: custs } = await _supabase.from('customers').select('name').eq('user_id', userId).order('name');
+    const { data: prods } = await _supabase.from('products').select('name').eq('user_id', userId).order('name');
+    
+    const cL = document.getElementById('custList');
+    const pL = document.getElementById('prodList');
+    
+    if (custs) custs.forEach(c => { let o = document.createElement('option'); o.value = c.name; cL.appendChild(o); });
+    if (prods) prods.forEach(p => { let o = document.createElement('option'); o.value = p.name; pL.appendChild(o); });
+}
+
+// 2. Προσθήκη νέας γραμμής στο τιμολόγιο
 function addRow() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td><input type="text" list="prodList" class="desc" placeholder="Προϊόν..." onchange="autoFillProductPrice(this)"></td>
+        <td><input type="text" list="prodList" class="desc" placeholder="Προϊόν..." onchange="autoFillProduct(this)"></td>
         <td><input type="number" class="qty" value="1" oninput="recalc()"></td>
         <td><input type="number" class="price" value="0" oninput="recalc()"></td>
         <td><input type="number" class="tax" value="24" oninput="recalc()"></td>
@@ -188,106 +187,61 @@ function addRow() {
     document.getElementById('rows').appendChild(tr);
 }
 
- 
-async function updateLists(userId) {
-    // Φέρνουμε τα δεδομένα ταξινομημένα αλφαβητικά (.order)
-    const { data: custs } = await _supabase
-        .from('customers')
-        .select('name')
-        .eq('user_id', userId)
-        .order('name', { ascending: true });
-
-    const { data: prods } = await _supabase
-        .from('products')
-        .select('name')
-        .eq('user_id', userId)
-        .order('name', { ascending: true });
-    
-    const cL = document.getElementById('custList');
-    const pL = document.getElementById('prodList');
-    
-    if(cL) cL.innerHTML = ''; 
-    if(pL) pL.innerHTML = '';
-    
-    // Χρησιμοποιούμε .trim() για να μην έχουμε άκυρα κενά στις επιλογές
-    if (custs) {
-        custs.forEach(c => { 
-            let o = document.createElement('option'); 
-            o.value = c.name.trim(); 
-            cL.appendChild(o); 
-        });
-    }
-    
-    if (prods) {
-        prods.forEach(p => { 
-            let o = document.createElement('option'); 
-            o.value = p.name.trim(); 
-            pL.appendChild(o); 
-        });
-    }
-    console.log("Λίστες ενημερώθηκαν: ", { πελάτες: custs?.length, προϊόντα: prods?.length });
-}
-
+// 3. Υπολογισμός Συνόλων
 function recalc() {
-    let netTotal = 0;
-    let taxTotal = 0;
-    
+    let net = 0, tax = 0;
     document.querySelectorAll('#rows tr').forEach(row => {
         const q = parseFloat(row.querySelector('.qty').value) || 0;
         const p = parseFloat(row.querySelector('.price').value) || 0;
         const t = parseFloat(row.querySelector('.tax').value) || 0;
-        
         const lineNet = q * p;
         const lineTax = lineNet * (t/100);
-        const lineTotal = lineNet + lineTax;
-        
-        row.querySelector('.row-total').innerText = lineTotal.toFixed(2) + " €";
-        netTotal += lineNet;
-        taxTotal += lineTax;
+        row.querySelector('.row-total').innerText = (lineNet + lineTax).toFixed(2) + " €";
+        net += lineNet; tax += lineTax;
     });
-
-    document.getElementById('pNetVal').innerText = netTotal.toFixed(2) + " €";
-    document.getElementById('pTaxVal').innerText = taxTotal.toFixed(2) + " €";
-    document.getElementById('pGrandVal').innerText = (netTotal + taxTotal).toFixed(2) + " €";
+    document.getElementById('pNetVal').innerText = net.toFixed(2) + " €";
+    document.getElementById('pTaxVal').innerText = tax.toFixed(2) + " €";
+    document.getElementById('pGrandVal').innerText = (net + tax).toFixed(2) + " €";
 }
 
-async function autoFillProductPrice(inputElement) {
-    const productName = inputElement.value.trim().toUpperCase();
-    if (!productName || !currentUser) return;
-
-    const { data: product } = await _supabase
+// 4. Αυτόματη συμπλήρωση τιμής προϊόντος
+async function autoFillProduct(input) {
+    if (!currentUser) return;
+    const { data } = await _supabase
         .from('products')
         .select('unit_price')
         .eq('user_id', currentUser.id)
-        .eq('name', productName)
-        .single();
-
-    if (product) {
-        const row = inputElement.closest('tr');
-        const priceField = row.querySelector('.price');
-        if (priceField) {
-            priceField.value = product.unit_price;
-            recalc();
-        }
+        .eq('name', input.value)
+        .maybeSingle();
+    
+    if (data) {
+        const row = input.closest('tr');
+        row.querySelector('.price').value = data.unit_price;
+        recalc();
     }
 }
 window.onload = async () => {
     setupDocType();
     
-    // Παίρνουμε τον χρήστη από τη Supabase
-    const { data: { user }, error } = await _supabase.auth.getUser();
+    // 1. Δοκιμή κανονικής σύνδεσης
+    let { data: { user } } = await _supabase.auth.getUser();
+
+    // 2. Αν αποτύχει, τράβα το ID από το URL (σημαντικό για τα παράθυρα του Triton)
+    if (!user) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUid = urlParams.get('uid');
+        if (urlUid) {
+            user = { id: urlUid }; 
+        }
+    }
 
     if (user) {
         currentUser = user;
-        // Φορτώνουμε το προφίλ (Βεβαιώσου ότι έχεις προσθέσει τη συνάρτηση loadProfile!)
         await loadProfile(user.id);
         await updateLists(user.id);
         addRow(); 
     } else {
-        // ΑΝΤΙ ΓΙΑ REDIRECT, ΒΓΑΛΕ ΜΗΝΥΜΑ ΣΤΗΝ ΚΟΝΣΟΛΑ
-        console.warn("🔱 Triton: Δεν βρέθηκε ενεργή σύνδεση χρήστη.");
-        // Μπορείς να αφήσεις το παρακάτω αν θες να σε πηγαίνει στο login μόνο αν δεν είσαι συνδεδεμένος
-        // window.location.href = "index.html"; 
+        document.getElementById('dispCompName').innerText = "ΑΠΑΙΤΕΙΤΑΙ ΣΥΝΔΕΣΗ";
     }
     
     const dateEl = document.getElementById('currentDate');

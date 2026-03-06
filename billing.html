@@ -173,15 +173,45 @@ window.onload = async () => {
     if (user) {
         currentUser = user;
         await loadProfile(user.id);
-        const { data: ps } = await _supabase.from('products').select('*').eq('user_id', user.id);
+
+        // 1. Φόρτωση ΠΡΟΪΟΝΤΩΝ με ΑΛΦΑΒΗΤΙΚΗ ΤΑΞΙΝΟΜΗΣΗ
+        const { data: ps } = await _supabase
+            .from('products')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('name', { ascending: true }); // <--- Ταξινόμηση Α-Ω
+
         allProducts = ps || [];
-        allProducts.forEach(p => { let o = document.createElement('option'); o.value = p.name; document.getElementById('prodList').appendChild(o); });
+        const pL = document.getElementById('prodList');
+        if(pL) {
+            allProducts.forEach(p => { 
+                let o = document.createElement('option'); 
+                o.value = p.name; 
+                pL.appendChild(o); 
+            });
+        }
         
-        const { data: cs } = await _supabase.from('customers').select('name').eq('user_id', user.id);
-        if(cs) cs.forEach(c => { let o = document.createElement('option'); o.value = c.name; document.getElementById('custList').appendChild(o); });
+        // 2. Φόρτωση ΠΕΛΑΤΩΝ με ΑΛΦΑΒΗΤΙΚΗ ΤΑΞΙΝΟΜΗΣΗ
+        const { data: cs } = await _supabase
+            .from('customers')
+            .select('name')
+            .eq('user_id', user.id)
+            .order('name', { ascending: true }); // <--- Ταξινόμηση Α-Ω
+
+        const cL = document.getElementById('custList');
+        if(cs && cL) {
+            cs.forEach(c => { 
+                let o = document.createElement('option'); 
+                o.value = c.name; 
+                cL.appendChild(o); 
+            });
+        }
+
         addRow();
     }
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('el-GR');
+    
+    const dateEl = document.getElementById('currentDate');
+    if (dateEl) dateEl.innerText = new Date().toLocaleDateString('el-GR');
 };
 </script>
 </body>

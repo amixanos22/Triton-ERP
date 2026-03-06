@@ -167,39 +167,35 @@ async function autoFillCustomer(name) {
 }
 
 window.onload = async () => {
-    let { data: { user } } = await _supabase.auth.getUser();
-    if (!user) user = { id: new URLSearchParams(window.location.search).get('uid') };
+    console.log("🔱 Triton: Booting...");
+    
+    // 1. Έλεγχος Χρήστη (URL UID ή Session)
+    let user_id = new URLSearchParams(window.location.search).get('uid');
+    if (!user_id) {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (user) user_id = user.id;
+    }
 
-    if (user) {
-        currentUser = user;
-        await loadProfile(user.id);
+    if (user_id) {
+        currentUser = { id: user_id };
+        await loadProfile(user_id);
 
-        // 1. Φόρτωση ΠΡΟΪΟΝΤΩΝ με ΑΛΦΑΒΗΤΙΚΗ ΤΑΞΙΝΟΜΗΣΗ
-        const { data: ps } = await _supabase
-            .from('products')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('name', { ascending: true }); // <--- Ταξινόμηση Α-Ω
-
-        allProducts = ps || [];
-        const pL = document.getElementById('prodList');
-        if(pL) {
-            allProducts.forEach(p => { 
+        // 2. Φόρτωση ΠΡΟΪΟΝΤΩΝ (Ταξινομημένα Α-Ω)
+        const { data: ps } = await _supabase.from('products').select('*').eq('user_id', user_id).order('name', { ascending: true });
+        if (ps) {
+            allProducts = ps;
+            const pL = document.getElementById('prodList');
+            ps.forEach(p => { 
                 let o = document.createElement('option'); 
                 o.value = p.name; 
                 pL.appendChild(o); 
             });
         }
         
-        // 2. Φόρτωση ΠΕΛΑΤΩΝ με ΑΛΦΑΒΗΤΙΚΗ ΤΑΞΙΝΟΜΗΣΗ
-        const { data: cs } = await _supabase
-            .from('customers')
-            .select('name')
-            .eq('user_id', user.id)
-            .order('name', { ascending: true }); // <--- Ταξινόμηση Α-Ω
-
-        const cL = document.getElementById('custList');
-        if(cs && cL) {
+        // 3. Φόρτωση ΠΕΛΑΤΩΝ (Ταξινομημένα Α-Ω)
+        const { data: cs } = await _supabase.from('customers').select('name').eq('user_id', user_id).order('name', { ascending: true });
+        if (cs) {
+            const cL = document.getElementById('custList');
             cs.forEach(c => { 
                 let o = document.createElement('option'); 
                 o.value = c.name; 
@@ -208,6 +204,8 @@ window.onload = async () => {
         }
 
         addRow();
+    } else {
+        document.getElementById('dispCompName').innerText = "ΣΦΑΛΜΑ UID: ΔΕΝ ΒΡΕΘΗΚΕ ΧΡΗΣΤΗΣ";
     }
     
     const dateEl = document.getElementById('currentDate');

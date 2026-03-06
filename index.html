@@ -1213,7 +1213,25 @@ window.onload = function() {
 // ==========================================
 // 1. ΑΡΧΙΚΟΠΟΙΗΣΗ (FIXED - NO AUTO-OPEN)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+// Βήμα 3: Οριστικό ξεκλείδωμα μετά το Email/Pass
+function completeLogin() {
+    const email = document.getElementById('userEmail').value;
+    const pass = document.getElementById('userPass').value;
+    const overlay = document.getElementById('loginOverlay');
+
+    if (email && pass) {
+        // Εδώ μπορείς να βάλεις έλεγχο Supabase αν θες, 
+        // αλλά για τώρα το ξεκλειδώνουμε χειροκίνητα:
+        if (overlay) {
+            overlay.style.setProperty('display', 'none', 'important');
+            overlay.style.pointerEvents = 'none';
+        }
+        console.log("🔱 Triton: Χειροκίνητη Είσοδος Επιτυχής");
+    } else {
+        alert("🔱 Συμπληρώστε Email και Κωδικό!");
+    }
+}
+  document.addEventListener('DOMContentLoaded', () => {
     const biz = localStorage.getItem('bizSettings');
     
     if (!biz) {

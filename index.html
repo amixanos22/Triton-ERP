@@ -2156,4 +2156,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     console.log("🔱 Triton: Το σύστημα είναι έτοιμο και τα κουμπιά ενεργά.");
 }); // <-- Εδώ έκλεινε το σφάλμα σου!
+               // ==========================================
+// 🚀 ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΟ ΚΟΥΜΠΙ "ΕΚΚΙΝΗΣΗ"
+// ==========================================
+async function completeLogin() {
+    const email = document.getElementById('userEmail').value;
+    const pass = document.getElementById('userPass').value;
+    const overlay = document.getElementById('loginOverlay');
+
+    if (!email || !pass) {
+        alert("🔱 Παρακαλώ συμπληρώστε Email και Κωδικό!");
+        return;
+    }
+
+    // Εδώ μπορείς αργότερα να βάλεις έλεγχο Supabase. 
+    // Για τώρα, το ξεκλειδώνουμε για να μπορείς να δουλέψεις:
+    console.log("🔱 Triton: Χειροκίνητη Είσοδος για", email);
+
+    if (overlay) {
+        overlay.style.setProperty('display', 'none', 'important');
+        overlay.style.pointerEvents = 'none';
+        
+        // Αποθήκευση στο LocalStorage για να θυμάται την είσοδο
+        localStorage.setItem('triton_is_logged_in', 'true');
+    }
+
+    // Ανανέωση των στατιστικών στο φόντο
+    if (typeof updateDashboardStats === "function") updateDashboardStats();
+    
+    console.log("🔱 Triton: Το σύστημα ξεκλειδώθηκε πλήρως.");
+}
 </script>

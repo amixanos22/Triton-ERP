@@ -1828,6 +1828,16 @@ async function loadSettingsIntoForm() {
         }
     }
 }
+           async function loginWithGoogle() {
+    const { error } = await _supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            // Αυτό λέει στη Google να σε γυρίσει πίσω στη σελίδα σου μόλις τελειώσεις
+            redirectTo: window.location.origin 
+        }
+    });
+    if (error) alert("❌ Σφάλμα σύνδεσης: " + error.message);
+}
 </script>
  
  

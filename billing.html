@@ -36,18 +36,17 @@
 <body class="is-window">
 
 <div id="invoice-container">
-    <div class="header">
-        <div id="logoArea" class="logo"></div>
-        <div id="compInfo">
-            <h2 id="dispCompName" style="margin:0;">ΦΟΡΤΩΣΗ...</h2>
-            <p id="dispAddress" style="margin:0; font-size:13px;"></p>
-        </div>
-        <div style="text-align:right;">
-            <h3 id="docTitle" style="color:var(--triton-blue); margin:0; text-transform: uppercase;">ΠΑΡΑΣΤΑΤΙΚΟ</h3>
-            <p id="currentDate">--/--/----</p>
-        </div>
+   <div class="header">
+    <div id="logoArea" class="logo">
+        <h1 style="color:var(--triton-blue); margin:0;">🔱 TRITON</h1>
     </div>
-
+    <div id="compInfo" style="text-align: right;">
+        <h2 id="dispCompName" style="margin:0; color:var(--triton-dark);">ΦΟΡΤΩΣΗ...</h2>
+        <p id="dispAddress" style="margin:0; font-size:13px; color:#64748b;"></p>
+        <h3 id="docTitle" style="color:var(--triton-blue); margin:10px 0 0 0; text-transform: uppercase;">ΠΑΡΑΣΤΑΤΙΚΟ</h3>
+        <p id="currentDate" style="margin:0; font-weight:bold;">--/--/----</p>
+    </div>
+</div>
     <div class="card-grid">
         <div class="card">
             <div style="display:flex; justify-content:space-between;">
@@ -139,35 +138,44 @@ function setupDocType() {
     }
 }
 
-window.onload = async () => {
-    setupDocType();
-    const { data: { user }, error } = await _supabase.auth.getUser();
 
-    if (!user || error) {
-        // Αν δεν είμαστε σε iframe, στείλε στην index
-        if (window.self === window.top) window.location.href = "index.html";
-        return;
+  async function loadProfile(userId) {
+    try {
+        const { data: profile, error } = await _supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (profile) {
+            // Ενημέρωση Επωνυμίας
+            const nameEl = document.getElementById('dispCompName');
+            if (nameEl) nameEl.innerText = profile.company_name || "🔱 TRITON ERP";
+
+            // Ενημέρωση Διεύθυνσης & Στοιχείων
+            const addrEl = document.getElementById('dispAddress');
+            if (addrEl) {
+                const address = profile.address || '';
+                const city = profile.city || '';
+                const afm = profile.afm || profile.tax_id || '';
+                const phone = profile.phone || '';
+                addrEl.innerHTML = `${address}, ${city}<br>ΑΦΜ: ${afm} | Τηλ: ${phone}`;
+            }
+
+            // Ενημέρωση Logo (αν υπάρχει)
+            const logoArea = document.getElementById('logoArea');
+            if (logoArea && profile.logo_url) {
+                logoArea.innerHTML = `<img src="${profile.logo_url}" style="max-height:80px;">`;
+            }
+            console.log("✅ Triton: Το προφίλ εκδότη φορτώθηκε!");
+        }
+    } catch (err) {
+        console.error("❌ Σφάλμα φόρτωσης προφίλ:", err.message);
     }
-
-    currentUser = user; 
-    await loadProfile(user.id);
-    await updateLists(user.id); 
-    
-    addRow(); 
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('el-GR');
-};
-
-// Listen για μηνύματα από την index (π.χ. επιλογή πελάτη από modal)
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'loadCustomer') {
-        const c = event.data.data;
-        document.getElementById('cName').value = c.name || '';
-        document.getElementById('cAfm').value = c.afm || '';
-        document.getElementById('cAddr').value = c.address || '';
-        document.getElementById('cCity').value = c.city || '';
-    }
-});
-
+}
+  
 function addRow() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -180,41 +188,44 @@ function addRow() {
     document.getElementById('rows').appendChild(tr);
 }
 
-async function loadProfile(userId) {
-    const { data: profile, error } = await _supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle(); // Πιο ασφαλές από το .single()
-
-    if (error) {
-        console.error("Σφάλμα Supabase:", error.message);
-        document.getElementById('dispCompName').innerText = "Σφάλμα Σύνδεσης";
-        return;
-    }
-
-    if (profile) {
-        document.getElementById('dispCompName').innerText = profile.company_name || "ELATI PRODUCTS";
-        document.getElementById('dispAddress').innerText = `${profile.address || ''}, ${profile.city || ''} | ΑΦΜ: ${profile.tax_id || ''}`;
-        if (profile.logo_url) {
-            document.getElementById('logoArea').innerHTML = `<img src="${profile.logo_url}" style="max-height:100px;">`;
-        }
-    } else {
-        // Αν η βάση είναι άδεια, εμφάνισε τουλάχιστον το όνομα
-        document.getElementById('dispCompName').innerText = "ELATI PRODUCTS (Δεν βρέθηκε προφίλ)";
-    }
-}
+ 
 async function updateLists(userId) {
-    const { data: custs } = await _supabase.from('customers').select('name').eq('user_id', userId);
-    const { data: prods } = await _supabase.from('products').select('name').eq('user_id', userId);
+    // Φέρνουμε τα δεδομένα ταξινομημένα αλφαβητικά (.order)
+    const { data: custs } = await _supabase
+        .from('customers')
+        .select('name')
+        .eq('user_id', userId)
+        .order('name', { ascending: true });
+
+    const { data: prods } = await _supabase
+        .from('products')
+        .select('name')
+        .eq('user_id', userId)
+        .order('name', { ascending: true });
     
     const cL = document.getElementById('custList');
     const pL = document.getElementById('prodList');
+    
     if(cL) cL.innerHTML = ''; 
     if(pL) pL.innerHTML = '';
     
-    if (custs) custs.forEach(c => { let o = document.createElement('option'); o.value = c.name; cL.appendChild(o); });
-    if (prods) prods.forEach(p => { let o = document.createElement('option'); o.value = p.name; pL.appendChild(o); });
+    // Χρησιμοποιούμε .trim() για να μην έχουμε άκυρα κενά στις επιλογές
+    if (custs) {
+        custs.forEach(c => { 
+            let o = document.createElement('option'); 
+            o.value = c.name.trim(); 
+            cL.appendChild(o); 
+        });
+    }
+    
+    if (prods) {
+        prods.forEach(p => { 
+            let o = document.createElement('option'); 
+            o.value = p.name.trim(); 
+            pL.appendChild(o); 
+        });
+    }
+    console.log("Λίστες ενημερώθηκαν: ", { πελάτες: custs?.length, προϊόντα: prods?.length });
 }
 
 function recalc() {
@@ -260,6 +271,21 @@ async function autoFillProductPrice(inputElement) {
         }
     }
 }
+  window.onload = async () => {
+    setupDocType();
+    const { data: { user } } = await _supabase.auth.getUser();
+
+    if (user) {
+        currentUser = user;
+        await loadProfile(user.id);
+        await updateLists(user.id);
+        addRow(); // Προσθέτει την πρώτη γραμμή προϊόντος
+    } else {
+        // Αν δεν είναι συνδεδεμένος, στείλε τον στην αρχική
+        window.location.href = "index.html";
+    }
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('el-GR');
+};
 </script>
 
 </body>

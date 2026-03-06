@@ -2064,54 +2064,34 @@ function closeTritonModal() {
 // ==========================================
 // 2. ΕΝΑΡΞΗ & AUTO-ONBOARDING (ΕΝΟΠΟΙΗΜΕΝΟ)
 // ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Έλεγχος αν ο χρήστης είναι συνδεδεμένος στη Supabase
-    const { data: { user } } = await _supabase.auth.getUser();
-    
-    if (!user) {
-        // Αν ΔΕΝ είναι συνδεδεμένος, δείχνουμε τη φόρμα Login
-        setTimeout(() => {
-            if (typeof showTritonAuthForm === "function") showTritonAuthForm(); 
-        }, 1500);
-    } else {
-        // 2. Αν ΕΙΝΑΙ συνδεδεμένος, τραβάμε το προφίλ ΚΑΙ την ημερομηνία λήξης
-        const { data: profile } = await _supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+if (profile) {
+            // === ΕΛΕΓΧΟΣ ΕΝΟΙΚΙΑΣΗΣ (Βελτιωμένος) ===
+            if (profile.subscription_expires) {
+                const expiryDate = new Date(profile.subscription_expires);
+                const today = new Date();
 
-        if (profile) {
-            // === ΕΔΩ ΓΙΝΕΤΑΙ Ο ΕΛΕΓΧΟΣ ΤΗΣ ΕΝΟΙΚΙΑΣΗΣ ===
-            const expiryDate = new Date(profile.subscription_expires);
-            const today = new Date();
-
-            if (profile.subscription_expires && today > expiryDate) {
-                // ΑΝ ΕΛΗΞΕ: Δείχνουμε το Banner και σταματάμε
-                if (typeof showTritonAuthForm === "function") {
-                    showTritonAuthForm();
-                    setTimeout(() => {
-                        const h2 = document.querySelector('#tritonAuthWrapper h2');
-                        if (h2) h2.innerHTML = "❌ Η ΣΥΝΔΡΟΜΗ ΕΛΗΞΕ<br><small style='font-size:12px;'>Παρακαλώ επικοινωνήστε για ανανέωση.</small>";
-                    }, 500);
+                if (today > expiryDate) {
+                    if (typeof showTritonAuthForm === "function") {
+                        showTritonAuthForm();
+                        setTimeout(() => {
+                            const h2 = document.querySelector('#tritonAuthWrapper h2');
+                            if (h2) h2.innerHTML = "❌ Η ΣΥΝΔΡΟΜΗ ΕΛΗΞΕ<br><small style='font-size:12px;'>Παρακαλώ επικοινωνήστε για ανανέωση.</small>";
+                        }, 500);
+                    }
+                    return; 
                 }
-                return; // Σημαντικό: Δεν αφήνει το υπόλοιπο πρόγραμμα να τρέξει
             }
-            // ===========================================
+            // Αν δεν υπάρχει ημερομηνία (null), ο κώδικας προσπερνάει το if και σε αφήνει να μπεις!
 
-            // Αν όλα είναι ΟΚ, εμφανίζουμε το όνομα εταιρείας
+            // === ΕΜΦΑΝΙΣΗ ΟΝΟΜΑΤΟΣ ===
             const nameElem = document.getElementById('displayCompanyName');
-            if (nameElem) nameElem.innerText = profile.company_name;
+            if (nameElem) {
+                // Αν δεν έχεις γράψει όνομα εταιρείας ακόμα, δείξε ένα Hint
+                nameElem.innerText = profile.company_name || "🔱 Triton (Εκκρεμεί Ρύθμιση)";
+            }
             
-            // Συγχρονισμός LocalStorage
             localStorage.setItem('bizSettings', JSON.stringify(profile));
         }
-    }
-
-    // Αρχικοποίηση Dashboard (Τρέχει μόνο αν δεν έχει σταματήσει παραπάνω)
-    if (typeof refreshDashboardMetrics === "function") refreshDashboardMetrics();
-    if (typeof initMainChart === "function") initMainChart();
-});
 
 // ==========================================
 // 3. ΡΥΘΜΙΣΕΙΣ & CLOUD SYNC
@@ -2209,25 +2189,24 @@ function selectCustomerFromModal(name, afm, address, city) {
 // ==========================================
 // 5. ΑΣΦΑΛΕΙΑ & AUTH UI
 // ==========================================
-function validateTritonAccess() {
-    const inputField = document.getElementById('tritonSecurityCode');
-    if (!inputField) return;
-
-    // Εδώ βάζεις τον κωδικό που θέλεις
-    if (inputField.value.trim() === "TRITON2026") { 
-        // Σώζουμε την έγκριση στο LocalStorage
-        localStorage.setItem('triton_rent_active', 'true');
+async function validateTritonAccess() {
+    const code = document.getElementById('tritonSecurityCode').value;
+    
+    if (code === "TRITON2026") {
+        // 1. Αφαιρούμε το banner του κωδικού
+        document.getElementById('tritonAuthWrapper').remove();
         
-        const banner = document.getElementById('tritonAuthWrapper');
-        if (banner) {
-            banner.style.opacity = "0";
-            banner.style.transition = "0.4s ease";
-            setTimeout(() => banner.remove(), 400);
-        }
+        // 2. Εμφάνιση επιλογών Login (Google/Email)
+        // Εδώ καλούμε τη Supabase για Login
+        const { data, error } = await _supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin }
+        });
+
+        // Σημείωση: Αν θέλεις να ανοίξει η φόρμα ΜΕΤΑ το Login, 
+        // ο έλεγχος γίνεται στο DOMContentLoaded
     } else {
-        alert("❌ Λάθος Κωδικός Ενοικίασης!");
-        inputField.value = '';
-        inputField.focus();
+        alert("Λάθος κωδικός!");
     }
 }
 
@@ -2269,48 +2248,102 @@ function validateTritonAccess() {
 
 // 3. Ο ΕΛΕΓΧΟΣ ΚΑΘΕ ΦΟΡΑ ΠΟΥ ΑΝΟΙΓΕΙ Η ΣΕΛΙΔΑ
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Πρώτα παίρνουμε τον Χρήστη από τη Supabase
+    // 1. Έλεγχος Χρήστη
     const { data: { user } } = await _supabase.auth.getUser();
 
     if (!user) {
-        // Αν δεν έχει κάνει καν Login στη Google/Supabase, δείξε τη φόρμα
-        showTritonAuthForm();
+        showTritonAuthForm(); // Εμφάνιση Banner για κωδικό/Login
         return;
     }
 
-    // 2. Αν είναι Logged In, ελέγχουμε τη συνδρομή στη βάση (Cloud)
+    // 2. Έλεγχος Συνδρομής (Cloud)
     const isActive = await checkSubscriptionStatus(user);
 
     if (!isActive) {
-        // Αν η ημερομηνία στη Supabase έχει περάσει
-        lockSystemDueToExpiry();
+        lockSystemDueToExpiry(); // Κλείδωμα αν έληξε
         return;
     }
 
-    // 3. Αν όλα είναι OK, τότε μόνο φόρτωσε το Dashboard
-    console.log("🔱 Triton: Πρόσβαση Εγκεκριμένη");
-    
-    if (typeof refreshDashboardMetrics === "function") refreshDashboardMetrics();
-    if (typeof initMainChart === "function") initMainChart();
-
-    // Έλεγχος για το "ανθρωπάκι" (Blink αν λείπουν ρυθμίσεις)
-    const biz = localStorage.getItem('bizSettings');
-    const profileBtn = document.querySelector('.user-profile-trigger');
-    if (!biz && profileBtn) profileBtn.classList.add('blink-profile');
-});
-     async function checkSubscriptionStatus(user) {
+    // 3. Πρόσβαση Εγκεκριμένη - Φόρτωση Προφίλ
     const { data: profile } = await _supabase
         .from('profiles')
-        .select('subscription_expires')
+        .select('*')
         .eq('id', user.id)
         .single();
 
-    if (profile && profile.subscription_expires) {
-        const expiryDate = new Date(profile.subscription_expires);
-        const today = new Date();
-        return today <= expiryDate; // Επιστρέφει true αν δεν έχει λήξει
+    if (profile) {
+        const nameElem = document.getElementById('displayCompanyName');
+        
+        // ΑΝ ΔΕΝ ΕΧΕΙ ΟΝΟΜΑ ΚΑΤΑΣΤΗΜΑΤΟΣ, ΑΝΟΙΞΕ ΑΥΤΟΜΑΤΑ ΤΗ ΦΟΡΜΑ
+        if (!profile.company_name) {
+            if (nameElem) nameElem.innerText = "🔱 Εκκρεμεί Ρύθμιση";
+            openSettings(); // <--- ΑΥΤΟ ΑΝΟΙΓΕΙ ΤΟ MODAL ΣΟΥ
+        } else {
+            if (nameElem) nameElem.innerText = profile.company_name;
+        }
+        
+        localStorage.setItem('bizSettings', JSON.stringify(profile));
     }
-    return false; // Αν δεν βρει ημερομηνία, θεωρεί ότι έληξε
+
+    // 4. Φόρτωση Dashboard
+    if (typeof refreshDashboardMetrics === "function") refreshDashboardMetrics();
+    if (typeof initMainChart === "function") initMainChart();
+
+    // Blink στο ανθρωπάκι αν λείπουν στοιχεία
+    const profileBtn = document.querySelector('.user-profile-trigger');
+    if ((!profile || !profile.company_name) && profileBtn) {
+        profileBtn.classList.add('blink-profile');
+    }
+});
+
+// Συναρτήσεις για το Modal που μου έστειλες
+function openSettings() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeSettings() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) modal.style.display = 'none';
+}
+     // ΒΗΜΑ 1: Ξεκλείδωμα με τον κωδικό ενοικίασης
+function unlockTriton() {
+    const key = document.getElementById('masterKey').value;
+    const errorMsg = document.getElementById('unlockError');
+    
+    if (key === "TRITON2026") {
+        document.getElementById('masterGate').style.display = 'none';
+        document.getElementById('authGate').style.display = 'block';
+        errorMsg.style.display = 'none';
+    } else {
+        errorMsg.style.display = 'block';
+    }
+}
+
+// ΒΗΜΑ 2: Σύνδεση με Google (Supabase)
+async function fakeGoogleLogin() {
+    const { data, error } = await _supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin }
+    });
+}
+
+// ΒΗΜΑ 3: Σύνδεση με Email/Pass
+async function completeLogin() {
+    const email = document.getElementById('userEmail').value;
+    const pass = document.getElementById('userPass').value;
+
+    const { data, error } = await _supabase.auth.signInWithPassword({
+        email: email,
+        password: pass,
+    });
+
+    if (error) {
+        alert("Σφάλμα σύνδεσης: " + error.message);
+    } else {
+        // Η σελίδα θα κάνει refresh ή θα τρέξει το DOMContentLoaded
+        location.reload(); 
+    }
 }
 </script>
 

@@ -1531,9 +1531,10 @@ function refreshTritonDashboard() {
 }
 
 // ==========================================
-// 💾 3. ΣΥΣΤΗΜΑ BACKUP
+// 💾 3. ΣΥΣΤΗΜΑ BACKUP & ΡΥΘΜΙΣΕΙΣ
 // ==========================================
 
+// Λήψη όλων των δεδομένων σε αρχείο JSON
 function downloadBackup() {
     const data = {
         bizSettings: JSON.parse(localStorage.getItem('bizSettings')),
@@ -1550,6 +1551,31 @@ function downloadBackup() {
     a.click();
 }
 
+// Αποθήκευση Ρυθμίσεων myDATA και Επιχείρησης
+function saveTritonSettings() {
+    const settings = {
+        aadeUser: document.getElementById('setAadeUser')?.value || '',
+        aadeToken: document.getElementById('setAadeToken')?.value || '',
+        companyName: document.getElementById('setCompanyName')?.value || ''
+    };
+    
+    // Αποθήκευση για το Backup
+    localStorage.setItem('bizSettings', JSON.stringify(settings));
+    // Αποθήκευση για να τα βλέπει το Πελατολόγιο (myDATA)
+    localStorage.setItem('triton_settings', JSON.stringify(settings));
+    
+    alert("🔱 Οι ρυθμίσεις και οι κωδικοί myDATA αποθηκεύτηκαν!");
+    location.reload(); // Ανανέωση για να εφαρμοστούν παντού
+}
+
+// Φόρτωση των ρυθμίσεων στα πεδία του Modal (όταν ανοίγει)
+function loadSettingsToInputs() {
+    const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
+    if(document.getElementById('setAadeUser')) document.getElementById('setAadeUser').value = saved.aadeUser || '';
+    if(document.getElementById('setAadeToken')) document.getElementById('setAadeToken').value = saved.aadeToken || '';
+    if(document.getElementById('setCompanyName')) document.getElementById('setCompanyName').value = saved.companyName || '';
+}
+
 // ==========================================
 // 🚀 4. ΑΡΧΙΚΟΠΟΙΗΣΗ (INITIALIZATION)
 // ==========================================
@@ -1557,7 +1583,7 @@ function downloadBackup() {
 window.addEventListener('DOMContentLoaded', () => {
     console.log("🔱 Triton ERP: System Online.");
 
-    // Έλεγχος Login - Αν είναι συνδεδεμένος, "σκοτώνουμε" το overlay αμέσως
+    // 1. Έλεγχος Login
     if(localStorage.getItem('triton_is_logged_in') === 'true') {
         const overlay = document.getElementById('loginOverlay');
         if(overlay) {
@@ -1567,7 +1593,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Quick Add Menu Logic
+    // 2. Quick Add Menu Logic
     const quickBtn = document.getElementById('quickAddBtn');
     const quickDropdown = document.getElementById('quickAddDropdown');
 
@@ -1580,7 +1606,12 @@ window.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('click', () => { quickDropdown.style.display = 'none'; });
     }
 
-    refreshTritonDashboard();
+    // 3. Φόρτωση ρυθμίσεων αν το modal είναι ανοιχτό
+    loadSettingsToInputs();
+    
+    if (typeof refreshTritonDashboard === "function") {
+        refreshTritonDashboard();
+    }
 });
 </script>
 <script>

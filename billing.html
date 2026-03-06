@@ -271,20 +271,27 @@ async function autoFillProductPrice(inputElement) {
         }
     }
 }
-  window.onload = async () => {
+window.onload = async () => {
     setupDocType();
-    const { data: { user } } = await _supabase.auth.getUser();
+    
+    // Παίρνουμε τον χρήστη από τη Supabase
+    const { data: { user }, error } = await _supabase.auth.getUser();
 
     if (user) {
         currentUser = user;
+        // Φορτώνουμε το προφίλ (Βεβαιώσου ότι έχεις προσθέσει τη συνάρτηση loadProfile!)
         await loadProfile(user.id);
         await updateLists(user.id);
-        addRow(); // Προσθέτει την πρώτη γραμμή προϊόντος
+        addRow(); 
     } else {
-        // Αν δεν είναι συνδεδεμένος, στείλε τον στην αρχική
-        window.location.href = "index.html";
+        // ΑΝΤΙ ΓΙΑ REDIRECT, ΒΓΑΛΕ ΜΗΝΥΜΑ ΣΤΗΝ ΚΟΝΣΟΛΑ
+        console.warn("🔱 Triton: Δεν βρέθηκε ενεργή σύνδεση χρήστη.");
+        // Μπορείς να αφήσεις το παρακάτω αν θες να σε πηγαίνει στο login μόνο αν δεν είσαι συνδεδεμένος
+        // window.location.href = "index.html"; 
     }
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('el-GR');
+    
+    const dateEl = document.getElementById('currentDate');
+    if (dateEl) dateEl.innerText = new Date().toLocaleDateString('el-GR');
 };
 </script>
 

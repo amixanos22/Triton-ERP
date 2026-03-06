@@ -1364,76 +1364,69 @@ function initMainChart() {
     });
 }
 </script>
+    <script>
+  function saveSettings() {
+    // 1. Συλλογή των στοιχείων από το HTML Modal
+    const bizData = {
+        name: document.getElementById('setName').value,
+        job: document.getElementById('setJob').value,
+        afm: document.getElementById('setAfm').value,
+        doy: document.getElementById('setDoy').value,
+        address: document.getElementById('setAddress').value,
+        city: document.getElementById('setCity').value,
+        tk: document.getElementById('setTk').value,
+        phone: document.getElementById('setPhone').value,
+        gemi: document.getElementById('setGemi').value,
+        
+        // Τα κλειδιά myDATA
+        aadeUser: document.getElementById('setMyDataUser').value,
+        aadeToken: document.getElementById('setMyDataKey').value,
+        
+        // Το λογότυπο (αν υπάρχει ήδη αποθηκευμένο base64)
+        logo: document.getElementById('imgPreview').src
+    };
+
+    // 2. Αποθήκευση για το Backup & το Profile
+    localStorage.setItem('bizSettings', JSON.stringify(bizData));
+
+    // 3. Η "ΓΕΦΥΡΑ" ΓΙΑ ΤΟ ΠΕΛΑΤΟΛΟΓΙΟ (myDATA)
+    // Αυτό είναι που έλειπε και σου έβγαζε το σφάλμα!
+    const myDataSettings = {
+        aadeUser: bizData.aadeUser,
+        aadeToken: bizData.aadeToken
+    };
+    localStorage.setItem('triton_settings', JSON.stringify(myDataSettings));
+
+    alert("🔱 Triton OS: Τα στοιχεία της επιχείρησης και οι κωδικοί myDATA αποθηκεύτηκαν!");
     
-  <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(10px); z-index: 11000; align-items: center; justify-content: center;">
-    <div style="background: white; width: 95%; max-width: 650px; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-        <div style="background: #020617; color: #7dd3fc; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">⚙️ Προφίλ & Ρυθμίσεις Επιχείρησης</h3>
-            <span onclick="closeSettings()" style="cursor: pointer; font-size: 1.5rem;">×</span>
-        </div>
-        <div style="padding: 25px; max-height: 80vh; overflow-y: auto;">
-            
-            <h4 style="color: #0ea5e9; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Στοιχεία Παραστατικού</h4>
-          <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0;">
-    <div onclick="document.getElementById('setLogo').click()" style="cursor: pointer; width: 60px; height: 60px; border: 2px dashed #0ea5e9; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">
-        <img id="imgPreview" src="" style="max-width: 100%; max-height: 100%; display: none;">
-        <span id="noLogoText" style="color: #0ea5e9; font-size: 1.5rem;">+</span>
-    </div>
-    <div style="flex-grow: 1;">
-        <label style="font-size: 0.75rem; font-weight: bold; color: #64748b; display: block;">ΛΟΓΟΤΥΠΟ ΚΑΤΑΣΤΗΜΑΤΟΣ</label>
-        <input type="file" id="setLogo" accept="image/*" onchange="previewLogo(this)" style="display: none;">
-        <button type="button" onclick="document.getElementById('setLogo').click()" style="background: #f0f9ff; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 5px 12px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-top: 5px;">ΕΠΙΛΟΓΗ ΑΠΟ PC</button>
-    </div>
-</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="input-group" style="grid-column: span 2;">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΕΠΩΝΥΜΙΑ / ΟΝΟΜΑΤΕΠΩΝΥΜΟ</label>
-                    <input type="text" id="setName" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΕΠΑΓΓΕΛΜΑ</label>
-                    <input type="text" id="setJob" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">Α.Φ.Μ.</label>
-                    <input type="text" id="setAfm" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">Δ.Ο.Υ.</label>
-                    <input type="text" id="setDoy" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΔΙΕΥΘΥΝΣΗ</label>
-                    <input type="text" id="setAddress" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΠΟΛΗ</label>
-                    <input type="text" id="setCity" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">Τ.Κ.</label>
-                    <input type="text" id="setTk" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΤΗΛΕΦΩΝΟ</label>
-                    <input type="text" id="setPhone" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="input-group">
-                    <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">ΑΡ. ΓΕΜΗ</label>
-                    <input type="text" id="setGemi" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-            </div>
+    // Κλείσιμο παραθύρου
+    if (typeof closeSettings === "function") closeSettings();
+}
 
-            <h4 style="color: #0ea5e9; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin: 20px 0 15px 0;">🔑 Σύνδεση myDATA</h4>
-            <div style="background: #f0f9ff; padding: 15px; border-radius: 12px; border-left: 4px solid #0ea5e9;">
-                <input type="text" id="setMyDataUser" placeholder="User ID" style="width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #bae6fd; border-radius: 6px;">
-                <input type="password" id="setMyDataKey" placeholder="Subscription Key" style="width: 100%; padding: 10px; border: 1px solid #bae6fd; border-radius: 6px;">
-            </div>
-
-           <button onclick="saveSettings()" style="width: 100%; background: #0ea5e9; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 20px;">ΑΠΟΘΗΚΕΥΣΗ ΣΤΟΙΧΕΙΩΝ</button>
-        </div>
-    </div>
-</div> 
+// Μην ξεχάσεις να προσθέσεις αυτή τη λειτουργία για να γεμίζουν τα πεδία όταν ανοίγεις το Modal
+function loadSettingsToInputs() {
+    const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
+    if (saved.name) {
+        document.getElementById('setName').value = saved.name || '';
+        document.getElementById('setJob').value = saved.job || '';
+        document.getElementById('setAfm').value = saved.afm || '';
+        document.getElementById('setDoy').value = saved.doy || '';
+        document.getElementById('setAddress').value = saved.address || '';
+        document.getElementById('setCity').value = saved.city || '';
+        document.getElementById('setTk').value = saved.tk || '';
+        document.getElementById('setPhone').value = saved.phone || '';
+        document.getElementById('setGemi').value = saved.gemi || '';
+        document.getElementById('setMyDataUser').value = saved.aadeUser || '';
+        document.getElementById('setMyDataKey').value = saved.aadeToken || '';
+        
+        if (saved.logo && saved.logo.startsWith('data:image')) {
+            document.getElementById('imgPreview').src = saved.logo;
+            document.getElementById('imgPreview').style.display = 'block';
+            document.getElementById('noLogoText').style.display = 'none';
+        }
+    }
+}
+    </script>      
 <script>
 // ==========================================
 // 🔱 1. ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΑΣΦΑΛΕΙΑΣ

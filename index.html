@@ -1551,31 +1551,34 @@ function downloadBackup() {
     a.click();
 }
 
-// Αποθήκευση Ρυθμίσεων myDATA και Επιχείρησης
+// Αποθήκευση Ρυθμίσεων (Διορθωμένα IDs)
 function saveTritonSettings() {
     const settings = {
-        aadeUser: document.getElementById('setAadeUser')?.value || '',
-        aadeToken: document.getElementById('setAadeToken')?.value || '',
+        // Εδώ βάζουμε τα ID που έχεις στο HTML σου
+        aadeUser: document.getElementById('setMyDataUser')?.value || '', 
+        aadeToken: document.getElementById('setMyDataKey')?.value || '',
         companyName: document.getElementById('setCompanyName')?.value || ''
     };
     
-    // Αποθήκευση για το Backup
     localStorage.setItem('bizSettings', JSON.stringify(settings));
-    // Αποθήκευση για να τα βλέπει το Πελατολόγιο (myDATA)
     localStorage.setItem('triton_settings', JSON.stringify(settings));
     
-    alert("🔱 Οι ρυθμίσεις και οι κωδικοί myDATA αποθηκεύτηκαν!");
-    location.reload(); // Ανανέωση για να εφαρμοστούν παντού
+    alert("🔱 Triton OS: Οι ρυθμίσεις myDATA και Επιχείρησης αποθηκεύτηκαν!");
+    location.reload(); 
 }
 
-// Φόρτωση των ρυθμίσεων στα πεδία του Modal (όταν ανοίγει)
+// Φόρτωση Ρυθμίσεων (Διορθωμένα IDs)
 function loadSettingsToInputs() {
     const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
-    if(document.getElementById('setAadeUser')) document.getElementById('setAadeUser').value = saved.aadeUser || '';
-    if(document.getElementById('setAadeToken')) document.getElementById('setAadeToken').value = saved.aadeToken || '';
-    if(document.getElementById('setCompanyName')) document.getElementById('setCompanyName').value = saved.companyName || '';
+    
+    // Πρέπει να γεμίσουμε τα σωστά πεδία στο Modal
+    if(document.getElementById('setMyDataUser')) 
+        document.getElementById('setMyDataUser').value = saved.aadeUser || '';
+    if(document.getElementById('setMyDataKey')) 
+        document.getElementById('setMyDataKey').value = saved.aadeToken || '';
+    if(document.getElementById('setCompanyName')) 
+        document.getElementById('setCompanyName').value = saved.companyName || '';
 }
-
 // ==========================================
 // 🚀 4. ΑΡΧΙΚΟΠΟΙΗΣΗ (INITIALIZATION)
 // ==========================================

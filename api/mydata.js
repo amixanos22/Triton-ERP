@@ -1,38 +1,45 @@
-window.searchMyData = async function() {
-    const afmInput = document.getElementById('newCustAfm');
-    const afm = afmInput.value.trim();
-    const btn = event.target;
+ export default async function handler(req, res) {
+    const { afm } = req.query;
+    
+    // Εδώ βάλε τους δικούς σου κωδικούς ΑΑΔΕ
+    const USER_ID = 'ΤΟ_USER_ID_ΣΟΥ'; 
+    const SUBSCRIPTION_KEY = 'ΤΟ_KEY_ΣΟΥ';
 
-    if (afm.length !== 9) {
-        alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!");
-        return;
-    }
+    if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 
-    btn.innerText = "⏳ ΠΕΡΙΜΕΝΕ...";
-    btn.disabled = true;
+    const aadeUrl = `https://data.aade.gr/retriever/reserver/declaration/v1/afmInfo?afm=${afm}`;
 
     try {
-        // Καλούμε το API που μόλις φτιάξαμε στο φάκελο /api/
-        const response = await fetch(`/api/mydata?afm=${afm}`);
-        const data = await response.json();
+        const response = await fetch(aadeUrl, {
+            method: 'GET',
+            headers: {
+                'aade-user-id': USER_ID,
+                'ocp-apim-subscription-key': SUBSCRIPTION_KEY,
+                'Accept': 'application/xml'
+            }
+        });
 
-        if (data && data.success) {
-            // Γεμίζουμε τα πεδία αυτόματα
-            document.getElementById('newCustName').value = data.result.onomasia || "";
-            document.getElementById('newCustDoy').value = data.result.doy_descr || "";
-            document.getElementById('newCustJob').value = data.result.drastiriotita || "";
-            document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
-            document.getElementById('newCustCity').value = data.result.poli || "";
-            document.getElementById('newCustZip').value = data.result.tk || "";
-            
-            console.log("✅ Στοιχεία ελήφθησαν από το Vercel API!");
-        } else {
-            alert("❌ Το ΑΦΜ δεν βρέθηκε στο myDATA.");
-        }
+        const xmlText = await response.text();
+        
+        // Βοηθητική λειτουργία για να παίρνουμε τα στοιχεία από το XML
+        const getValue = (tag) => {
+            const match = xmlText.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`));
+            return match ? match[1].trim() : "";
+        };
+
+        // Επιστρέφουμε τα στοιχεία σε μορφή JSON που καταλαβαίνει η Index
+        res.status(200).json({
+            success: xmlText.includes('<onomasia>'),
+            result: {
+                onomasia: getValue('onomasia'),
+                doy_descr: getValue('doy_descr'),
+                drastiriotita: getValue('j031_descr'),
+                dieythinsi: getValue('ad_od_descr') + " " + getValue('ad_arith'),
+                poli: getValue('ad_poli_descr'),
+                tk: getValue('ad_tk')
+            }
+        });
     } catch (error) {
-        alert("Σφάλμα συστήματος. Βεβαιωθείτε ότι κάνατε Deploy τον φάκελο /api στο Vercel.");
-    } finally {
-        btn.innerText = "🔍 myDATA";
-        btn.disabled = false;
+        res.status(500).json({ success: false, error: "Αποτυχία σύνδεσης" });
     }
-};
+}

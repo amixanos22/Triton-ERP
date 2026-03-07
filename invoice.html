@@ -1741,7 +1741,16 @@ window.addEventListener('load', updateDashboardStats);
         <iframe id="modalFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
     </div>
 </div>
-           <script>
+          <script>
+// ==========================================
+// 🛡️ 0. TRITON SAFETY FIRST (ANTI-CRASH)
+// ==========================================
+// Αυτό εμποδίζει το ReferenceError: _supabase is not defined
+if (typeof _supabase === 'undefined') {
+    window._supabase = null; 
+    console.warn("🔱 Triton Safety: Supabase protection enabled.");
+}
+
 // ==========================================
 // 1. GLOBAL ΜΕΤΑΒΛΗΤΕΣ & STYLE
 // ==========================================
@@ -1768,7 +1777,6 @@ document.head.appendChild(tritonUI);
 // ==========================================
 // 2. Η ΜΗΧΑΝΗ ΤΩΝ ΠΑΡΑΘΥΡΩΝ (WINDOW ENGINE)
 // ==========================================
-
 window.createNewWindow = function(url, title, width = 850, height = 600) {
     const winId = 'win_' + Date.now();
     const win = document.createElement('div');
@@ -1838,10 +1846,8 @@ function makeDraggable(elmnt, header) {
 }
 
 // ==========================================
-// ==========================================
 // 🛸 3. ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (ULTRA FIX)
 // ==========================================
-
 window.openInvoiceModal = function(type = 'TIM') {
     if (typeof event !== 'undefined') event.preventDefault(); 
     const url = `invoice.html?type=${type}`;
@@ -1862,12 +1868,12 @@ window.openCustomerModal = function() {
     return false;
 };
 
-// Οι υπόλοιπες απλές συναρτήσεις
 window.openSupplierModal = function() { window.createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); };
 window.openInventoryModal = function() { window.createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); };
 window.openEispraxiModal = function()  { window.createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); };
 window.openPliromiModal = function()   { window.createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); };
 window.openDashboardModal = function() { window.createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); };
+
 // ==========================================
 // ⚙️ 4. SETTINGS & myDATA ENGINE
 // ==========================================
@@ -1884,39 +1890,26 @@ window.closeSettings = function() {
 window.searchMyData = async function(e) {
     const afmInput = document.getElementById('newCustAfm');
     if (!afmInput) return;
-    
     const afm = afmInput.value.trim();
-    const btn = e ? e.target : event.target; // Πιο σταθερή αναφορά στο κουμπί
+    const btn = e ? e.target : (window.event ? window.event.target : null);
     
-    if (afm.length !== 9) { 
-        alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!"); 
-        return; 
-    }
+    if (afm.length !== 9) { alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!"); return; }
     
-    const originalText = btn.innerText;
-    btn.innerText = "⏳...";
-    btn.disabled = true;
+    const originalText = btn ? btn.innerText : "🔍";
+    if (btn) { btn.innerText = "⏳..."; btn.disabled = true; }
     
     try {
         const response = await fetch(`/api/mydata?afm=${afm}`);
         const data = await response.json();
-        
         if (data && data.success) {
             document.getElementById('newCustName').value = data.result.onomasia || "";
             document.getElementById('newCustDoy').value = data.result.doy_descr || "";
             document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
             document.getElementById('newCustCity').value = data.result.poli || "";
             document.getElementById('newCustZip').value = data.result.tk || "";
-        } else { 
-            alert("❌ Το ΑΦΜ δεν βρέθηκε."); 
-        }
-    } catch (error) { 
-        console.error("myDATA Error:", error);
-        alert("⚠️ Σφάλμα σύνδεσης API."); 
-    } finally { 
-        btn.innerText = originalText; 
-        btn.disabled = false; 
-    }
+        } else { alert("❌ Το ΑΦΜ δεν βρέθηκε."); }
+    } catch (error) { alert("⚠️ Σφάλμα σύνδεσης API."); }
+    finally { if (btn) { btn.innerText = originalText; btn.disabled = false; } }
 };
 
 window.closeNewCustomerModal = function() {
@@ -1957,14 +1950,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         overlay.style.display = 'none';
     }
 });
-             <script>
-// ΤΟ ΒΑΖΕΙΣ ΕΔΩ ΣΤΗΝ ΑΡΧΗ ΓΙΑ ΝΑ ΜΗΝ ΚΡΑΣΑΡΕΙ ΤΟ ΣΥΣΤΗΜΑ:
-if (typeof _supabase === 'undefined') {
-    window._supabase = null; 
-    console.warn("🔱 Triton Safety: Supabase protected.");
-}
-
-// ... μετά συνεχίζει ο υπόλοιπος κώδικας σου (window.createNewWindow κλπ) ...
 </script>
 </body>
 </html>

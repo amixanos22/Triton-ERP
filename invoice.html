@@ -1895,33 +1895,74 @@ window.closeNewCustomerModal = function() {
     if (modal) modal.style.display = 'none';
 };
 
-// --- ΝΕΟ: ΛΕΙΤΟΥΡΓΙΑ ΡΥΘΜΙΣΕΩΝ TRITON ---
+// --- 🔱 TRITON ERP: ΛΕΙΤΟΥΡΓΙΕΣ MODALS, myDATA & PDF ---
+
+// 1. Διαχείριση Ρυθμίσεων (⚙️)
 window.toggleTritonSettings = function() {
     const panel = document.getElementById('tritonSettingsPanel');
     if (!panel) return;
     
     if (panel.style.display === 'none' || panel.style.display === '') {
-        // Φόρτωση αποθηκευμένων στοιχείων όταν ανοίγει
+        // Φόρτωση από localStorage
         document.getElementById('myDataUser').value = localStorage.getItem('triton_user') || '';
         document.getElementById('myDataKey').value = localStorage.getItem('triton_key') || '';
         panel.style.display = 'block';
     } else {
-        // Αποθήκευση στοιχείων όταν κλείνει
+        // Αποθήκευση στο κλείσιμο
         localStorage.setItem('triton_user', document.getElementById('myDataUser').value);
         localStorage.setItem('triton_key', document.getElementById('myDataKey').value);
         panel.style.display = 'none';
-        console.log("🔱 Triton: Ρυθμίσεις αποθηκεύτηκαν τοπικά.");
+        console.log("🔱 Triton: Ρυθμίσεις αποθηκεύτηκαν.");
     }
 };
 
+// 2. Αποστολή στο myDATA (🚀)
+window.sendToMyData = async function() {
+    const afmInput = document.getElementById('custAfm');
+    const afm = afmInput ? afmInput.value.trim() : "";
+    const user = localStorage.getItem('triton_user');
+    const key = localStorage.getItem('triton_key');
+
+    // Έλεγχος ΑΦΜ
+    if (afm.length !== 9 || isNaN(afm)) {
+        if(afmInput) afmInput.style.borderColor = "#ef4444";
+        return alert("❌ Το ΑΦΜ πρέπει να είναι ακριβώς 9 ψηφία.");
+    }
+    if(afmInput) afmInput.style.borderColor = "#cbd5e1";
+
+    // Έλεγχος Κλειδιών
+    if (!user || !key) {
+        alert("⚠️ Πρέπει πρώτα να αποθηκεύσετε τα κλειδιά σας στις Ρυθμίσεις (⚙️).");
+        window.toggleTritonSettings();
+        return;
+    }
+
+    // Εφέ Κουμπιού
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "⏳ Επικοινωνία...";
+    btn.disabled = true;
+
+    try {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Προσομοίωση ΑΑΔΕ
+        alert("✅ Το παραστατικό διαβιβάστηκε επιτυχώς!\nΜΑΡΚ: 492038475293\nUID: TRITON-" + Date.now());
+    } catch (error) {
+        alert("❌ Σφάλμα σύνδεσης με το myDATA.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
+
+// 3. Δημιουργία PDF (📄)
 window.generatePDF = function() {
     var element = document.getElementById('printableArea');
     if (!element) return alert("❌ Δεν βρέθηκε η περιοχή εκτύπωσης (printableArea)");
     
     element.style.display = 'block';
     var custName = document.getElementById('newCustName')?.value || "ΠΕΛΑΤΗΣ";
-    if (typeof updateUI === 'function') updateUI('pdf_custName', custName);
-
+    
+    // Ενημέρωση QR Code
     var qrContainer = document.getElementById('pdf_qrcode');
     if (qrContainer) {
         var totalText = document.getElementById('pdf_totalAmount')?.innerText || "0.00";

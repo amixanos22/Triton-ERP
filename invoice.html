@@ -1838,31 +1838,36 @@ function makeDraggable(elmnt, header) {
 }
 
 // ==========================================
-// 🛸 3. ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (UPDATED FOR MENU +)
 // ==========================================
-window.openCustomerModal = function() { createNewWindow('customers.html', 'Πελάτες', 1200, 800); };
-window.openSupplierModal = function() { createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); };
+// 🛸 3. ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (ULTRA FIX)
+// ==========================================
 
-// Η συνάρτηση για το Τιμολόγιο πλέον δέχεται type (π.χ. TIM)
-window.openInvoiceModal = function(type = '') { 
-    const url = type ? `invoice.html?type=${type}` : 'invoice.html';
-    createNewWindow(url, 'Έκδοση Παραστατικού', 1300, 900); 
+window.openInvoiceModal = function(type = 'TIM') {
+    if (typeof event !== 'undefined') event.preventDefault(); 
+    const url = `invoice.html?type=${type}`;
+    window.createNewWindow(url, 'Έκδοση Παραστατικού', 1300, 900);
+    return false;
 };
 
-// Η συνάρτηση για τη Λιανική/Δελτία δέχεται type (π.χ. DA, PIS)
-window.openBillingModal = function(type = '') { 
-    const url = type ? `billing.html?type=${type}` : 'billing.html';
-    createNewWindow(url, 'Διαχείριση Παραστατικού', 1200, 850); 
+window.openBillingModal = function(type = 'DA') {
+    if (typeof event !== 'undefined') event.preventDefault();
+    const url = `billing.html?type=${type}`;
+    window.createNewWindow(url, 'Διαχείριση Παραστατικού', 1200, 850);
+    return false;
 };
 
-window.openDeltioModal = function()    { createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); };
-window.openInventoryModal = function() { createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); };
-window.openShoppingModal = function()  { createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); };
-window.openRecipesModal = function()   { createNewWindow('recipes.html', 'Συνταγές Παραγωγής', 1100, 800); };
-window.openFinancialModal = function() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); };
-window.openEispraxiModal = function()  { createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); };
-window.openPliromiModal = function()   { createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); };
-window.openDashboardModal = function() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); };
+window.openCustomerModal = function() {
+    if (typeof event !== 'undefined') event.preventDefault();
+    window.createNewWindow('customers.html', 'Πελάτες', 1200, 800);
+    return false;
+};
+
+// Οι υπόλοιπες απλές συναρτήσεις
+window.openSupplierModal = function() { window.createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); };
+window.openInventoryModal = function() { window.createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); };
+window.openEispraxiModal = function()  { window.createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); };
+window.openPliromiModal = function()   { window.createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); };
+window.openDashboardModal = function() { window.createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); };
 // ==========================================
 // ⚙️ 4. SETTINGS & myDATA ENGINE
 // ==========================================

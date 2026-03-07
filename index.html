@@ -1049,57 +1049,7 @@ document.body.appendChild(hint);
         }, 600);
     }, 5500);
 }
-function saveSettings() {
-    const settings = {
-        // Αυτά τα ονόματα περιμένει η Φόρμα Τιμολογίου για να γεμίσει αυτόματα
-        companyName: document.getElementById('setName').value.trim().toUpperCase(),
-        activity:    document.getElementById('setJob').value,
-        taxId:       document.getElementById('setAfm').value,
-        taxOffice:   document.getElementById('setDoy').value,
-        address:     document.getElementById('setAddress').value + " " + document.getElementById('setCity').value,
-        phone:       document.getElementById('setPhone').value,
-        // ΠΡΟΣΟΧΗ: Το ονομάζουμε logoBase64 για να το βλέπει η φόρμα
-        logoBase64:  document.getElementById('imgPreview').src 
-    };
-
-    if(!settings.taxId || !settings.companyName) {
-        alert("⚠️ Το ΑΦΜ και η Επωνυμία είναι υποχρεωτικά!");
-        return;
-    }
-
-    // Αποθήκευση στο σωστό κλειδί
-    localStorage.setItem('triton_settings', JSON.stringify(settings));
-    
-    alert('Τα στοιχεία αποθηκεύτηκαν! Τώρα οι φόρμες θα γεμίζουν αυτόματα. 🔱');
-    
-    if(typeof closeSettings === "function") closeSettings();
-    location.reload(); 
-}
-  function loadBizBranding() {
-    const data = JSON.parse(localStorage.getItem('bizSettings'));
-    if (!data) return;
-
-    // 1. Γέμισμα Logo (αν υπάρχει)
-    const logoImg = document.getElementById('docLogo'); // Το ID στο έγγραφο
-    if (logoImg && data.logo && data.logo.startsWith('data:image')) {
-        logoImg.src = data.logo;
-        logoImg.style.display = 'block';
-    }
-
-    // 2. Γέμισμα Στοιχείων (Όνομα, ΑΦΜ κλπ)
-    const nameEl = document.getElementById('docBizName');
-    const infoEl = document.getElementById('docBizDetails');
-
-    if (nameEl) nameEl.innerText = data.name;
-    if (infoEl) {
-        infoEl.innerHTML = `
-            ${data.job}<br>
-            ΑΦΜ: ${data.afm} - ΔΟΥ: ${data.doy}<br>
-            ${data.address}, ${data.city} - ΤΚ: ${data.tk}<br>
-            Τηλ: ${data.phone}
-        `;
-    }
-}
+ 
 // --- 3. ΔΙΑΧΕΙΡΙΣΗ ΤΙΜΟΛΟΓΙΟΥ ---
 function openInvoiceForm() {
     document.getElementById('invoiceModal').style.display = 'flex';
@@ -1365,10 +1315,10 @@ function initMainChart() {
 }
 </script>
     <script>
-  function saveSettings() {
-    // 1. Συλλογή των στοιχείων από το HTML Modal
+ function saveSettings() {
+    // 1. Συλλογή των στοιχείων από το Modal
     const bizData = {
-        name: document.getElementById('setName').value,
+        name: document.getElementById('setName').value.trim().toUpperCase(),
         job: document.getElementById('setJob').value,
         afm: document.getElementById('setAfm').value,
         doy: document.getElementById('setDoy').value,
@@ -1377,55 +1327,38 @@ function initMainChart() {
         tk: document.getElementById('setTk').value,
         phone: document.getElementById('setPhone').value,
         gemi: document.getElementById('setGemi').value,
-        
-        // Τα κλειδιά myDATA
-        aadeUser: document.getElementById('setMyDataUser').value,
-        aadeToken: document.getElementById('setMyDataKey').value,
-        
-        // Το λογότυπο (αν υπάρχει ήδη αποθηκευμένο base64)
+        mu: document.getElementById('setMyDataUser').value, // myDATA User
+        mk: document.getElementById('setMyDataKey').value,  // myDATA Key
         logo: document.getElementById('imgPreview').src
     };
 
-    // 2. Αποθήκευση για το Backup & το Profile
+    // Έλεγχος απαραίτητων
+    if(!bizData.afm || !bizData.name) {
+        alert("⚠️ Το ΑΦΜ και η Επωνυμία είναι υποχρεωτικά!");
+        return;
+    }
+
+    // 2. Αποθήκευση για το Προφίλ (Backup & Index)
     localStorage.setItem('bizSettings', JSON.stringify(bizData));
 
-    // 3. Η "ΓΕΦΥΡΑ" ΓΙΑ ΤΟ ΠΕΛΑΤΟΛΟΓΙΟ (myDATA)
-    // Αυτό είναι που έλειπε και σου έβγαζε το σφάλμα!
-    const myDataSettings = {
-        aadeUser: bizData.aadeUser,
-        aadeToken: bizData.aadeToken
+    // 3. Αποθήκευση για Φόρμες & myDATA (Η Γέφυρα)
+    const bridgeSettings = {
+        companyName: bizData.name,
+        activity:    bizData.job,
+        taxId:       bizData.afm,
+        taxOffice:   bizData.doy,
+        address:     bizData.address + " " + bizData.city,
+        phone:       bizData.phone,
+        logoBase64:  bizData.logo,
+        aadeUser:    bizData.mu, // Εδώ μπαίνουν οι κωδικοί myDATA
+        aadeToken:   bizData.mk
     };
-    localStorage.setItem('triton_settings', JSON.stringify(myDataSettings));
+    localStorage.setItem('triton_settings', JSON.stringify(bridgeSettings));
 
-    alert("🔱 Triton OS: Τα στοιχεία της επιχείρησης και οι κωδικοί myDATA αποθηκεύτηκαν!");
+    alert("🔱 Triton OS: Επιτυχής αποθήκευση! Οι φόρμες και το myDATA ενεργοποιήθηκαν.");
     
-    // Κλείσιμο παραθύρου
-    if (typeof closeSettings === "function") closeSettings();
-}
-
-// Μην ξεχάσεις να προσθέσεις αυτή τη λειτουργία για να γεμίζουν τα πεδία όταν ανοίγεις το Modal
-function loadSettings() {
-    const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
-    
-    if (saved.name !== undefined) {
-        document.getElementById('setName').value = saved.name || '';
-        document.getElementById('setJob').value = saved.job || '';
-        document.getElementById('setAfm').value = saved.afm || '';
-        document.getElementById('setDoy').value = saved.doy || '';
-        document.getElementById('setAddress').value = saved.address || '';
-        document.getElementById('setCity').value = saved.city || '';
-        document.getElementById('setTk').value = saved.tk || '';
-        document.getElementById('setPhone').value = saved.phone || '';
-        document.getElementById('setGemi').value = saved.gemi || '';
-        document.getElementById('setMyDataUser').value = saved.mu || '';
-        document.getElementById('setMyDataKey').value = saved.mk || '';
-        
-        if (saved.logo && saved.logo.startsWith('data:image')) {
-            document.getElementById('imgPreview').src = saved.logo;
-            document.getElementById('imgPreview').style.display = 'block';
-            document.getElementById('noLogoText').style.display = 'none';
-        }
-    }
+    if(typeof closeSettings === "function") closeSettings();
+    location.reload(); // Ανανέωση για να "ακουστούν" οι αλλαγές
 }
     </script>      
 <script>

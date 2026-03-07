@@ -2188,34 +2188,12 @@ window.calculateTotals = function() {
     if(totalDisplay) totalDisplay.innerText = grandTotal.toFixed(2).replace('.', ',') + " €";
 };
 
-// 3. Εξαγωγή σε PDF
-window.generatePDF = async function() {
-    const element = document.getElementById('printableArea');
-    
-    if (!element) {
-        alert("Σφάλμα: Δεν βρέθηκε η περιοχή εκτύπωσης (ID: printableArea)!");
-        return;
-    }
-
-    // Εμφάνιση της περιοχής για να την "τραβήξει" το html2pdf
-    element.style.display = 'block';
-
-    try {
-        // 1. Μεταφορά στοιχείων κεφαλίδας
-        document.getElementById('pdf_custName').innerText = document.getElementById('newCustName')?.value || "---";
-        document.getElementById('pdf_custAfm').innerText = document.getElementById('newCustAfm')?.value || "---";
-        document.getElementById('pdf_custAddress').innerText = document.getElementById('newCustAddress')?.value || "---";
-        document.getElementById('pdf_date').innerText = new Date().toLocaleDateString('el-GR');
-
-      // ==========================================
-// 3. ΕΞΑΓΩΓΗ ΣΕ PDF (ΣΥΝΑΡΤΗΣΗ ASYNC)
-// ==========================================
 // ==========================================
 // 1. ΔΙΑΧΕΙΡΙΣΗ ΠΕΛΑΤΩΝ (MODAL)
 // ==========================================
 window.openNewCustomerModal = function() {
     console.log("👤 Triton: Άνοιγμα Modal Πελάτη...");
-    const modal = document.getElementById('newCustomerModal');
+    var modal = document.getElementById('newCustomerModal');
     if (modal) {
         modal.style.display = 'flex';
     } else {
@@ -2224,51 +2202,57 @@ window.openNewCustomerModal = function() {
 };
 
 window.closeNewCustomerModal = function() {
-    const modal = document.getElementById('newCustomerModal');
+    var modal = document.getElementById('newCustomerModal');
     if (modal) modal.style.display = 'none';
 };
 
 // ==========================================
-// 2. ΕΞΑΓΩΓΗ ΣΕ PDF (ASYNC ENGINE)
+// 2. ΕΞΑΓΩΓΗ ΣΕ PDF (VERSION ΧΩΡΙΣ AWAIT)
 // ==========================================
-window.generatePDF = async function() {
-    const element = document.getElementById('printableArea');
-    if (!element) return;
+window.generatePDF = function() {
+    console.log("🔱 Triton: Εκκίνηση PDF...");
+    var element = document.getElementById('printableArea');
+    if (!element) {
+        alert("Σφάλμα: Δεν βρέθηκε το printableArea");
+        return;
+    }
 
     element.style.display = 'block';
 
-    try {
-        // Μεταφορά Στοιχείων
-        if(document.getElementById('pdf_custName')) 
-            document.getElementById('pdf_custName').innerText = document.getElementById('newCustName')?.value || "---";
-        
-        const pdfTableBody = document.getElementById('invoiceItemsBody');
-        if (pdfTableBody) {
-            pdfTableBody.innerHTML = ""; 
-            let total = 0;
-            document.querySelectorAll('.item-row').forEach(row => {
-                const desc = row.querySelector('.row-desc')?.value || "";
-                const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
-                const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
-                if (desc) {
-                    total += (qty * price);
-                    pdfTableBody.innerHTML += `<tr><td style="color:white;padding:5px;">${desc}</td><td style="color:white;text-align:center;">${qty}</td><td style="color:white;text-align:right;">${price.toFixed(2)}€</td></tr>`;
-                }
-            });
-        }
-
-        const opt = {
-            margin: 0,
-            filename: 'Triton_Invoice.pdf',
-            html2canvas: { scale: 2, backgroundColor: '#020617' },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        await html2pdf().set(opt).from(element).save();
-    } catch (err) {
-        console.error("PDF Error:", err);
-    } finally {
-        element.style.display = 'none';
+    // Μεταφορά Στοιχείων Πελάτη
+    if(document.getElementById('pdf_custName')) 
+        document.getElementById('pdf_custName').innerText = document.getElementById('newCustName')?.value || "---";
+    
+    // Μεταφορά Γραμμών
+    var pdfTableBody = document.getElementById('invoiceItemsBody');
+    if (pdfTableBody) {
+        pdfTableBody.innerHTML = ""; 
+        var total = 0;
+        document.querySelectorAll('.item-row').forEach(function(row) {
+            var desc = row.querySelector('.row-desc')?.value || "";
+            var qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
+            var price = parseFloat(row.querySelector('.row-price')?.value) || 0;
+            if (desc) {
+                total += (qty * price);
+                pdfTableBody.innerHTML += '<tr><td style="color:white;padding:5px;">' + desc + '</td><td style="color:white;text-align:center;">' + qty + '</td><td style="color:white;text-align:right;">' + price.toFixed(2) + '€</td></tr>';
+            }
+        });
     }
+
+    var opt = {
+        margin: 0,
+        filename: 'Triton_Invoice.pdf',
+        html2canvas: { scale: 2, backgroundColor: '#020617' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Χρήση .then() αντί για await για αποφυγή SyntaxError
+    html2pdf().set(opt).from(element).save().then(function() {
+        console.log("✅ PDF Saved Successfully");
+        element.style.display = 'none';
+    }).catch(function(err) {
+        console.error("PDF Error:", err);
+        element.style.display = 'none';
+    });
 };
 </script>

@@ -2863,12 +2863,12 @@ function updateBranchListUI() {
 
 // 3. ΠΡΑΓΜΑΤΙΚΗ ΑΝΑΖΗΤΗΣΗ myDATA (Μέσω IDEX/AAΔΕ)
 window.searchMyData = async function(e) {
-    // 1. Σωστή λήψη του κουμπιού για να μην χτυπάει σφάλμα
-    const btn = e ? e.target : (window.event ? window.event.target : null);
-    const afmInput = document.getElementById('customerAfm'); // Βεβαιώσου ότι το ID είναι σωστό
+    if (e) e.preventDefault();
     
+    // 1. ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ: Το ID πρέπει να είναι 'customerAfm' (ή όπως το έχεις στο input)
+    const afmInput = document.getElementById('customerAfm'); 
     if (!afmInput) {
-        console.error("🔱 Triton: Δεν βρέθηκε το πεδίο ΑΦΜ");
+        alert("🔱 Triton: Δεν βρέθηκε το πεδίο ΑΦΜ (ID: customerAfm)");
         return;
     }
 
@@ -2878,29 +2878,32 @@ window.searchMyData = async function(e) {
         return;
     }
 
-    // 2. Visual Feedback
-    const originalText = btn ? btn.innerText : "🔍 myDATA";
-    if (btn) { btn.innerText = "⏳..."; btn.disabled = true; }
-
     try {
-        // 3. Το Fetch πρέπει να χτυπάει τη σωστή διαδρομή
+        // 2. Καλεί το αρχείο που ήδη ανέβασες στο GitHub/Vercel
         const response = await fetch(`/api/mydata?afm=${afm}`);
         const data = await response.json();
 
         if (data && data.success) {
-            // Συμπλήρωση πεδίων
-            if(document.getElementById('customerName')) document.getElementById('customerName').value = data.result.onomasia || "";
-            if(document.getElementById('customerDoy')) document.getElementById('customerDoy').value = data.result.doy_descr || "";
-            if(document.getElementById('customerAddress')) document.getElementById('customerAddress').value = data.result.dieythinsi || "";
-            if(document.getElementById('customerCity')) document.getElementById('customerCity').value = data.result.poli || "";
+            // 3. ΓΕΜΙΖΟΥΜΕ ΤΑ ΠΕΔΙΑ (Σιγουρέψου ότι τα IDs είναι σωστά)
+            if(document.getElementById('customerName')) 
+                document.getElementById('customerName').value = data.result.onomasia;
+            
+            if(document.getElementById('customerAddress')) 
+                document.getElementById('customerAddress').value = data.result.dieythinsi;
+            
+            if(document.getElementById('customerCity')) 
+                document.getElementById('customerCity').value = data.result.poli;
+            
+            if(document.getElementById('customerDoy')) 
+                document.getElementById('customerDoy').value = data.result.doy_descr;
+
+            console.log("🔱 Triton: Τα στοιχεία ήρθαν από την ΑΑΔΕ!");
         } else {
-            alert("❌ Το ΑΦΜ δεν βρέθηκε στη βάση της ΑΑΔΕ.");
+            alert("❌ Η ΑΑΔΕ δεν επέστρεψε στοιχεία. Ελέγξτε τους κωδικούς σας στο api/mydata.js");
         }
     } catch (error) {
-        console.error("🔱 myDATA Error:", error);
-        alert("⚠️ Σφάλμα σύνδεσης. Βεβαιωθείτε ότι το αρχείο api/mydata.js υπάρχει στο Vercel.");
-    } finally {
-        if (btn) { btn.innerText = originalText; btn.disabled = false; }
+        console.error("🔱 Error:", error);
+        alert("⚠️ Το API στο Vercel δεν απαντάει.");
     }
 };
 </script>

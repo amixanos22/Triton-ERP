@@ -1825,10 +1825,15 @@ function closeAllLists() {
                         <label style="font-weight:bold; display:block; margin-bottom:5px;">Επωνυμία Επιχείρησης</label>
                         <input type="text" id="newV_name" style="width:100%; height:38px; border:1px solid #cbd5e1; border-radius:5px; padding:0 10px;">
                     </div>
-                    <div class="input-group">
-                        <label style="font-weight:bold; display:block; margin-bottom:5px;">Α.Φ.Μ.</label>
-                        <input type="text" id="newV_afm" maxlength="9" style="width:100%; height:38px; border:1px solid #cbd5e1; border-radius:5px; padding:0 10px;">
-                    </div>
+                   <div class="input-group">
+    <label style="font-weight:bold; display:block; margin-bottom:5px;">Α.Φ.Μ.</label>
+    <div style="display: flex; gap: 5px;">
+        <input type="text" id="newV_afm" maxlength="9" style="flex: 1; height: 38px; border: 1px solid #cbd5e1; border-radius: 5px; padding: 0 10px;">
+        <button type="button" onclick="searchVendorMyData(event)" style="background: #020617; color: #7dd3fc; border: none; padding: 0 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            🔍
+        </button>
+    </div>
+</div>
                     <div class="input-group">
                         <label style="font-weight:bold; display:block; margin-bottom:5px;">Δ.Ο.Υ.</label>
                         <input type="text" id="newV_doy" style="width:100%; height:38px; border:1px solid #cbd5e1; border-radius:5px; padding:0 10px;">
@@ -2803,107 +2808,139 @@ document.addEventListener('keydown', function(e) {
     }
 });
 </script>
-                      <script>
-// ==========================================
+                    
+                    <script>  // ==========================================
 // TRITON ERP - GLOBAL ENGINE (GitHub/Vercel)
 // ==========================================
 
-// 1. ΔΙΑΧΕΙΡΙΣΗ MODAL ΠΕΛΑΤΗ
-window.openNewCustomerModal = function() {
-    const modal = document.getElementById('newCustomerModal');
-    if(modal) {
-        modal.style.display = 'flex';
-        console.log("🔓 Modal Ανοιχτό");
-    }
-};
+// 1. ΔΙΑΧΕΙΡΙΣΗ MODAL
+window.openNewCustomerModal = () => document.getElementById('newCustomerModal').style.display = 'flex';
+window.closeNewCustomerModal = () => document.getElementById('newCustomerModal').style.display = 'none';
+window.closeNewVendorModal = () => document.getElementById('newVendorModal').style.display = 'none';
 
-window.closeNewCustomerModal = function() {
-    const modal = document.getElementById('newCustomerModal');
-    if(modal) {
-        modal.style.display = 'none';
-        console.log("🔒 Modal Κλειστό");
-    }
-};
-
-// 2. ΔΙΑΧΕΙΡΙΣΗ ΥΠΟΚΑΤΑΣΤΗΜΑΤΩΝ (TEMP LIST)
-let tempBranches = [];
-
-window.addBranchToTempList = function() {
-    const code = document.getElementById('tempBranchCode').value;
-    const addr = document.getElementById('tempBranchAddress').value;
-    const city = document.getElementById('tempBranchCity').value;
-
-    if(!code || !addr) {
-        alert("Συμπληρώστε τουλάχιστον Κωδικό και Διεύθυνση!");
-        return;
-    }
-
-    const branch = { code, addr, city, 
-                     zip: document.getElementById('tempBranchZip').value,
-                     phone: document.getElementById('tempBranchPhone').value,
-                     email: document.getElementById('tempBranchEmail').value 
-                   };
-    
-    tempBranches.push(branch);
-    updateBranchListUI();
-    
-    // Καθαρισμός πεδίων υποκαταστήματος
-    document.querySelectorAll('[id^="tempBranch"]').forEach(el => el.value = "");
-};
-
-function updateBranchListUI() {
-    const list = document.getElementById('newCustBranchesList');
-    list.innerHTML = tempBranches.map((b, index) => `
-        <div style="display:flex; justify-content:space-between; padding:5px; font-size:11px; border-bottom:1px solid #eee;">
-            <span><strong>[${b.code}]</strong> ${b.addr}, ${b.city}</span>
-            <span onclick="tempBranches.splice(${index},1); updateBranchListUI();" style="color:red; cursor:pointer;">&times;</span>
-        </div>
-    `).join('');
+// 2. ΑΝΑΖΗΤΗΣΗ ΑΑΔΕ (ΚΟΙΝΟΣ ΜΗΧΑΝΙΣΜΟΣ)
+async function fetchAadeData(afm) {
+    const response = await fetch(`/api/mydata?afm=${afm}`);
+    return await response.json();
 }
 
-// 3. ΠΡΑΓΜΑΤΙΚΗ ΑΝΑΖΗΤΗΣΗ myDATA (Μέσω IDEX/AAΔΕ)
+// ΑΝΑΖΗΤΗΣΗ ΓΙΑ ΠΕΛΑΤΕΣ
 window.searchMyData = async function(e) {
     if (e) e.preventDefault();
-    
-    // 1. ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ: Το ID πρέπει να είναι 'customerAfm' (ή όπως το έχεις στο input)
-    const afmInput = document.getElementById('customerAfm'); 
-    if (!afmInput) {
-        alert("🔱 Triton: Δεν βρέθηκε το πεδίο ΑΦΜ (ID: customerAfm)");
-        return;
-    }
+    const afmInput = document.getElementById('newCustAfm');
+    const afm = afmInput ? afmInput.value.trim() : "";
 
-    const afm = afmInput.value.trim();
-    if (afm.length !== 9) {
-        alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!");
-        return;
-    }
+    if (afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!");
 
     try {
-        // 2. Καλεί το αρχείο που ήδη ανέβασες στο GitHub/Vercel
-        const response = await fetch(`/api/mydata?afm=${afm}`);
-        const data = await response.json();
-
+        const data = await fetchAadeData(afm);
         if (data && data.success) {
-            // 3. ΓΕΜΙΖΟΥΜΕ ΤΑ ΠΕΔΙΑ (Σιγουρέψου ότι τα IDs είναι σωστά)
-            if(document.getElementById('customerName')) 
-                document.getElementById('customerName').value = data.result.onomasia;
-            
-            if(document.getElementById('customerAddress')) 
-                document.getElementById('customerAddress').value = data.result.dieythinsi;
-            
-            if(document.getElementById('customerCity')) 
-                document.getElementById('customerCity').value = data.result.poli;
-            
-            if(document.getElementById('customerDoy')) 
-                document.getElementById('customerDoy').value = data.result.doy_descr;
-
-            console.log("🔱 Triton: Τα στοιχεία ήρθαν από την ΑΑΔΕ!");
+            document.getElementById('newCustName').value = data.result.onomasia || "";
+            document.getElementById('newCustDoy').value = data.result.doy_descr || "";
+            document.getElementById('newCustJob').value = data.result.drastiriotita || "";
+            document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
+            document.getElementById('newCustCity').value = data.result.poli || "";
+            document.getElementById('newCustZip').value = data.result.tk || "";
+            console.log("🔱 Triton: Στοιχεία Πελάτη ΟΚ");
         } else {
-            alert("❌ Η ΑΑΔΕ δεν επέστρεψε στοιχεία. Ελέγξτε τους κωδικούς σας στο api/mydata.js");
+            alert("❌ Η ΑΑΔΕ δεν επέστρεψε στοιχεία.");
         }
-    } catch (error) {
-        console.error("🔱 Error:", error);
-        alert("⚠️ Το API στο Vercel δεν απαντάει.");
-    }
+    } catch (error) { alert("⚠️ Σφάλμα API"); }
+};
+
+// ΑΝΑΖΗΤΗΣΗ ΓΙΑ ΠΡΟΜΗΘΕΥΤΕΣ
+window.searchVendorMyData = async function(e) {
+    if (e) e.preventDefault();
+    const afmInput = document.getElementById('newV_afm');
+    const afm = afmInput ? afmInput.value.trim() : "";
+
+    if (afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!");
+
+    try {
+        const data = await fetchAadeData(afm);
+        if (data && data.success) {
+            document.getElementById('newV_name').value = data.result.onomasia || "";
+            document.getElementById('newV_doy').value = data.result.doy_descr || "";
+            document.getElementById('newV_job').value = data.result.drastiriotita || "";
+            document.getElementById('newV_address').value = data.result.dieythinsi || "";
+            document.getElementById('newV_city').value = data.result.poli || "";
+            document.getElementById('newV_zip').value = data.result.tk || "";
+            console.log("🔱 Triton: Στοιχεία Προμηθευτή ΟΚ");
+        }
+    } catch (error) { alert("⚠️ Σφάλμα API"); }
+};
+
+// 3. ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ (ΜΕ ΕΛΕΓΧΟ ΔΙΠΛΟΕΓΓΡΑΦΗΣ & AUTO-SELECT)
+window.saveCustomer = async function() {
+    const customerData = {
+        onomasia: document.getElementById('newCustName').value,
+        afm: document.getElementById('newCustAfm').value,
+        doy: document.getElementById('newCustDoy').value,
+        job: document.getElementById('newCustJob').value,
+        dieythinsi: document.getElementById('newCustAddress').value,
+        poli: document.getElementById('newCustCity').value,
+        tk: document.getElementById('newCustZip').value,
+        email: document.getElementById('newCustEmail').value,
+        phone: document.getElementById('newCustPhone').value,
+        created_at: new Date()
+    };
+
+    if (!customerData.afm || !customerData.onomasia) return alert("⚠️ Επωνυμία και ΑΦΜ υποχρεωτικά!");
+
+    try {
+        // ΕΛΕΓΧΟΣ ΔΙΠΛΟΕΓΓΡΑΦΗΣ
+        const { data: exist } = await _supabase.from('customers').select('afm').eq('afm', customerData.afm).single();
+        if (exist) return alert("⚠️ Ο πελάτης υπάρχει ήδη!");
+
+        // INSERT
+        const { error } = await _supabase.from('customers').insert([customerData]);
+        if (error) throw error;
+
+        alert("✅ Επιτυχής Αποθήκευση!");
+        
+        // AUTO-SELECT ΣΤΟ DROPDOWN
+        const sel = document.getElementById('customerSelect');
+        if (sel) {
+            const opt = new Option(customerData.onomasia, customerData.afm, true, true);
+            sel.add(opt);
+            $(sel).trigger('change');
+        }
+        closeNewCustomerModal();
+    } catch (err) { alert("❌ Σφάλμα: " + err.message); }
+};
+
+// 4. ΑΠΟΘΗΚΕΥΣΗ ΠΡΟΜΗΘΕΥΤΗ
+window.saveVendor = async function() {
+    const vendorData = {
+        name: document.getElementById('newV_name').value,
+        afm: document.getElementById('newV_afm').value,
+        doy: document.getElementById('newV_doy').value,
+        job: document.getElementById('newV_job').value,
+        address: document.getElementById('newV_address').value,
+        city: document.getElementById('newV_city').value,
+        zip: document.getElementById('newV_zip').value,
+        phone: document.getElementById('newV_phone').value,
+        email: document.getElementById('newV_email').value,
+        created_at: new Date()
+    };
+
+    try {
+        // ΕΛΕΓΧΟΣ ΔΙΠΛΟΕΓΓΡΑΦΗΣ
+        const { data: existV } = await _supabase.from('vendors').select('afm').eq('afm', vendorData.afm).single();
+        if (existV) return alert("⚠️ Ο προμηθευτής υπάρχει ήδη!");
+
+        const { error } = await _supabase.from('vendors').insert([vendorData]);
+        if (error) throw error;
+
+        alert("✅ Επιτυχής Αποθήκευση!");
+        
+        const vSel = document.getElementById('vendorSelect');
+        if (vSel) {
+            const optV = new Option(vendorData.name, vendorData.afm, true, true);
+            vSel.add(optV);
+            $(vSel).trigger('change');
+        }
+        closeNewVendorModal();
+    } catch (err) { alert("❌ Σφάλμα αποθήκευσης"); }
 };
 </script>

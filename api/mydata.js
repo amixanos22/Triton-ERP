@@ -1,13 +1,14 @@
- export default async function handler(req, res) {
+  export default async function handler(req, res) {
     const { afm } = req.query;
     
-    // Εδώ βάλε τους δικούς σου κωδικούς ΑΑΔΕ
+    // ⚠️ ΒΕΒΑΙΩΣΟΥ ΟΤΙ ΑΥΤΑ ΕΙΝΑΙ ΤΑ ΣΩΣΤΑ Subscription Keys από το myDATA portal
     const USER_ID = 'wrapp1693208337'; 
     const SUBSCRIPTION_KEY = '4c245d648733e2decccc879d631c633c';
 
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 
-    const aadeUrl = `https://data.aade.gr/retriever/reserver/declaration/v1/afmInfo?afm=${afm}`;
+    // 🔱 ΤΟ ΣΩΣΤΟ URL ΓΙΑ ΒΑΣΙΚΑ ΣΤΟΙΧΕΙΑ ΜΗΤΡΩΟΥ
+    const aadeUrl = `https://www.aade.gr/taxisnet/mytaxisnet/v1/opendata/rgwsBasikaStoixeiaN?afm=${afm}`;
 
     try {
         const response = await fetch(aadeUrl, {
@@ -21,15 +22,22 @@
 
         const xmlText = await response.text();
         
-        // Βοηθητική λειτουργία για να παίρνουμε τα στοιχεία από το XML
+        // Debugging: Αν θέλεις να δεις τι απαντάει η ΑΑΔΕ στην κονσόλα του Vercel
+        console.log("AADE Response:", xmlText);
+
         const getValue = (tag) => {
-            const match = xmlText.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`));
+            const match = xmlText.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`, 'i'));
             return match ? match[1].trim() : "";
         };
 
-        // Επιστρέφουμε τα στοιχεία σε μορφή JSON που καταλαβαίνει η Index
+        // Έλεγχος αν η ΑΑΔΕ επέστρεψε σφάλμα (π.χ. λάθος κωδικοί)
+        if (xmlText.includes('error_descr') || xmlText.includes('faultstring')) {
+            const errorMsg = getValue('error_descr') || "Λάθος κωδικοί ΑΑΔΕ ή μη εξουσιοδοτημένη πρόσβαση";
+            return res.status(200).json({ success: false, error: errorMsg });
+        }
+
         res.status(200).json({
-            success: xmlText.includes('<onomasia>'),
+            success: xmlText.includes('onomasia'),
             result: {
                 onomasia: getValue('onomasia'),
                 doy_descr: getValue('doy_descr'),
@@ -40,6 +48,7 @@
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: "Αποτυχία σύνδεσης" });
+        console.error("Fetch Error:", error);
+        res.status(500).json({ success: false, error: "Αποτυχία σύνδεσης με ΑΑΔΕ" });
     }
 }

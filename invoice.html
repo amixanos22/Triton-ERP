@@ -2207,10 +2207,35 @@ window.generatePDF = async function() {
         document.getElementById('pdf_custAddress').innerText = document.getElementById('newCustAddress')?.value || "---";
         document.getElementById('pdf_date').innerText = new Date().toLocaleDateString('el-GR');
 
-        // 2. Μεταφορά γραμμών στον πίνακα του PDF
+        // 3. Εξαγωγή σε PDF
+// Χρησιμοποιούμε async για να επιτρέψουμε το await μέσα στο σώμα της συνάρτησης
+window.generatePDF = async function() {
+    console.log("🔱 Triton PDF Engine: Starting generation...");
+    
+    const element = document.getElementById('printableArea');
+    if (!element) {
+        alert("Σφάλμα: Δεν βρέθηκε το στοιχείο με ID 'printableArea'!");
+        return;
+    }
+
+    // 1. Εμφάνιση του template για το snapshot
+    element.style.display = 'block';
+
+    try {
+        // 2. Μεταφορά Στοιχείων Πελάτη
+        const custName = document.getElementById('newCustName')?.value || "---";
+        const custAfm = document.getElementById('newCustAfm')?.value || "---";
+        const custAddr = document.getElementById('newCustAddress')?.value || "---";
+
+        if(document.getElementById('pdf_custName')) document.getElementById('pdf_custName').innerText = custName;
+        if(document.getElementById('pdf_custAfm')) document.getElementById('pdf_custAfm').innerText = custAfm;
+        if(document.getElementById('pdf_custAddress')) document.getElementById('pdf_custAddress').innerText = custAddr;
+        if(document.getElementById('pdf_date')) document.getElementById('pdf_date').innerText = new Date().toLocaleDateString('el-GR');
+
+        // 3. Μεταφορά Προϊόντων στον πίνακα του PDF
         const pdfTableBody = document.getElementById('invoiceItemsBody');
         if (pdfTableBody) {
-            pdfTableBody.innerHTML = ""; // Καθαρισμός παλιών δεδομένων
+            pdfTableBody.innerHTML = ""; 
             let netAmount = 0;
 
             document.querySelectorAll('.item-row').forEach(row => {
@@ -2232,37 +2257,30 @@ window.generatePDF = async function() {
                 }
             });
 
-            // 3. Ενημέρωση συνόλων στο PDF
+            // 4. Υπολογισμός Συνόλων (24% ΦΠΑ)
             const vat = netAmount * 0.24;
-            if (document.getElementById('pdf_netAmount')) {
-                document.getElementById('pdf_netAmount').innerText = netAmount.toFixed(2) + " €";
-            }
-            if (document.getElementById('pdf_totalAmount')) {
-                document.getElementById('pdf_totalAmount').innerText = (netAmount + vat).toFixed(2) + " €";
-            }
+            if(document.getElementById('pdf_netAmount')) document.getElementById('pdf_netAmount').innerText = netAmount.toFixed(2) + " €";
+            if(document.getElementById('pdf_totalAmount')) document.getElementById('pdf_totalAmount').innerText = (netAmount + vat).toFixed(2) + " €";
         }
 
-        // 4. Ρυθμίσεις και Παραγωγή PDF
+        // 5. Ρυθμίσεις Βιβλιοθήκης html2pdf
         const opt = {
             margin: 0,
             filename: 'Triton_Invoice_' + new Date().getTime() + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: '#020617' // Τα χρώματα του Triton
-            },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#020617' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Εδώ το await είναι πλέον έγκυρο γιατί η function είναι async
+        // 6. ΕΚΤΕΛΕΣΗ (Το await τώρα είναι 100% έγκυρο εδώ)
         await html2pdf().set(opt).from(element).save();
+        console.log("✅ PDF Generated Successfully!");
 
-    } catch (error) {
-        console.error("Σφάλμα κατά την παραγωγή του PDF:", error);
-        alert("❌ Αποτυχία δημιουργίας PDF. Δείτε το console για λεπτομέρειες.");
+    } catch (err) {
+        console.error("❌ PDF Error:", err);
+        alert("Σφάλμα κατά την παραγωγή του PDF: " + err.message);
     } finally {
-        // Κρύβουμε πάλι το template για να μη χαλάει το UI
+        // Κρύβουμε πάλι το template για να μη χαλάει το UI της σελίδας
         element.style.display = 'none';
     }
 };

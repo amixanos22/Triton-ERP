@@ -1,14 +1,16 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
   <title>Τιμολόγηση - Πωλήσεις</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // 🔱 ΔΙΟΡΘΩΜΕΝΟ URL (Πρέπει να ξεκινάει με https:// και να τελειώνει σε .supabase.co)
-    const supabaseUrl = 'https://wrapp1693208337.supabase.co';
-    const supabaseKey = '4c245d648733e2decccc879d631c633c';
-    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    // 🔱 Μία δήλωση, καθαρή και σωστή
+    const _supabase = supabase.createClient(
+        'https://wrapp1693208337.supabase.co', 
+        '4c245d648733e2decccc879d631c633c'
+    );
+    console.log("🔱 Triton: Supabase Client Initialized.");
 </script>
   <style type="text/css">
     /* 1. ΒΑΣΙΚΟ LAYOUT & ΧΡΩΜΑΤΑ (ΑΠΟ ΤΟΝ ΚΑΛΟ ΣΟΥ ΚΩΔΙΚΑ) */
@@ -644,10 +646,12 @@ window.onclick = function(event) {
 // TRITON CLOUD CONNECTION & APP LOGIC
 // ==========================================
 
-var db;
- allProducts = [];
+// Χρησιμοποιούμε var ή ελέγχουμε αν υπάρχει ήδη για να αποφύγουμε το "Redeclaration Error"
+var db = db || null;
+var allProducts = allProducts || [];
 
-const firebaseConfig = {
+// Χρησιμοποιούμε var αντί για const για το config, ώστε αν υπάρχει δύο φορές να μην "κρασάρει" η σελίδα
+var firebaseConfig = {
     apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
     authDomain: "triton-invoicing.firebaseapp.com",
     projectId: "triton-invoicing",
@@ -668,6 +672,19 @@ try {
 } catch (error) {
     console.error("❌ Σφάλμα Firebase:", error);
 }
+
+// ΟΤΑΝ ΦΟΡΤΩΣΕΙ Η ΣΕΛΙΔΑ (Async για να δουλεύουν τα await)
+window.onload = async function() {
+    console.log("🔱 Triton: Εκκίνηση...");
+    if (typeof fillDateTime === 'function') fillDateTime();
+    
+    // Εδώ καλούμε τη φόρτωση προϊόντων με await
+    if (typeof loadProductsFromFirebase === 'function') {
+        await loadProductsFromFirebase(); 
+    }
+    
+    if (typeof addNewLine === 'function') addNewLine();
+};
 
 // ΟΤΑΝ ΦΟΡΤΩΣΕΙ Η ΣΕΛΙΔΑ
 window.onload = function() {

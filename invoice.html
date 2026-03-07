@@ -195,6 +195,28 @@ input:focus, select:focus {
 </style>
    
    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    .autocomplete-items {
+        position: absolute;
+        border: 1px solid #334155;
+        background: #1e293b;
+        z-index: 99;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+    .autocomplete-items div {
+        padding: 10px;
+        cursor: pointer;
+        color: white;
+        border-bottom: 1px solid #334155;
+    }
+    .autocomplete-items div:hover {
+        background-color: #0ea5e9;
+    }
+</style>
 </head>
  <body>
 
@@ -1308,6 +1330,174 @@ async function fetchCustomerToPDF(customerId) {
         element.style.display = 'none';
     }
 }
+// 1. ΑΥΤΟΜΑΤΗ ΗΜΕΡΟΜΗΝΙΑ ΚΑΙ ΩΡΑ
+function initDateTime() {
+    const τωρα = new Date();
+    const isoDate = τωρα.toISOString().split('T')[0];
+    const isoTime = τωρα.getHours().toString().padStart(2, '0') + ":" + 
+                    τωρα.getMinutes().toString().padStart(2, '0');
+    
+    // Ενημέρωση στα input της φόρμας
+    if(document.getElementById('docDate')) document.getElementById('docDate').value = isoDate;
+    if(document.getElementById('docTime')) document.getElementById('docTime').value = isoTime;
+    
+    // Ενημέρωση στο PDF template
+    if(document.getElementById('pdf_date')) document.getElementById('pdf_date').innerText = τωρα.toLocaleDateString('el-GR');
+}
+
+ 
+function calculateRow(element) {
+    const row = element.closest('tr');
+    const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.row-price').value) || 0;
+    const vatRate = parseFloat(row.querySelector('.row-vat').value) || 0;
+
+    const netAmount = qty * price;
+    const totalAmount = netAmount * (1 + vatRate / 100);
+
+    // Ενημέρωση της γραμμής (Εμφανίζουμε την καθαρή αξία ή το σύνολο με ΦΠΑ αναλόγως τι προτιμάς)
+    row.querySelector('.row-total').innerText = netAmount.toFixed(2) + "€";
+    
+    // Εδώ μπορείς να καλέσεις μια άλλη συνάρτηση για να ενημερώσεις τα γενικά σύνολα του PDF
+    updateFullInvoiceTotals();
+}
+// Εκκίνηση
+window.onload = initDateTime;
+     function addNewLine(productData = null) {
+    const tbody = document.getElementById('invoiceItemsBody');
+    if (!tbody) return;
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'item-row';
+    
+    // Αν έχουμε δεδομένα από την καρτέλα, τα βάζουμε. Αλλιώς κενά.
+    const desc = productData ? productData.name : "";
+    const price = productData ? productData.price : "0.00";
+    const vat = productData ? productData.vat : "24"; // Default 24 αν δεν υπάρχει στην καρτέλα
+
+    newRow.innerHTML = `
+        <td><input type="text" class="row-desc" value="${desc}" placeholder="Περιγραφή..." style="width:100%; border:none; background:transparent; color:white;"></td>
+        <td><input type="number" class="row-qty" value="1" style="width:60px; text-align:center; background:transparent; color:white; border:1px solid #334155;"></td>
+        <td><input type="number" class="row-price" value="${price}" style="width:80px; text-align:right; background:transparent; color:white; border:1px solid #334155;"></td>
+        <input type="hidden" class="row-vat" value="${vat}">
+        <td class="row-total" style="text-align:right; color:#7dd3fc;">0.00€</td>
+    `;
+    
+    tbody.appendChild(newRow);
+
+    // Αν ήρθε από επιλογή προϊόντος, πήγαινε κατευθείαν στην Ποσότητα
+    if (productData) {
+        newRow.querySelector('.row-qty').focus();
+    } else {
+        newRow.querySelector('.row-desc').focus();
+    }
+}
+     // 1. ΣΥΝΑΡΤΗΣΗ ΑΝΑΖΗΤΗΣΗΣ ΠΡΟΪΟΝΤΩΝ
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('row-desc')) {
+        const query = e.target.value.toLowerCase();
+        if (query.length < 2) return; // Ξεκίνα την αναζήτηση μετά από 2 χαρακτήρες
+
+        // Εδώ υποθέτουμε ότι έχεις τα προϊόντα σου σε μια μεταβλητή allProducts
+        // Αν όχι, θα τα τραβήξουμε από τη Firebase
+        const matches = allProducts.filter(p => p.name.toLowerCase().includes(query));
+        
+        showProductSuggestions(e.target, matches);
+    }
+});
+
+// 2. ΕΜΦΑΝΙΣΗ ΛΙΣΤΑΣ ΠΡΟΤΑΣΕΩΝ
+function showProductSuggestions(inputEl, matches) {
+    // Διαγραφή προηγούμενης λίστας αν υπάρχει
+    closeAllLists();
+    
+    if (matches.length === 0) return;
+
+    const listContainer = document.createElement("DIV");
+    listContainer.setAttribute("class", "autocomplete-items");
+    inputEl.parentNode.appendChild(listContainer);
+
+    matches.forEach(product => {
+        const item = document.createElement("DIV");
+        item.innerHTML = `<strong>${product.name}</strong> - ${product.price}€ (ΦΠΑ ${product.vat}%)`;
+        
+        item.addEventListener("click", function() {
+            // Μόλις γίνει η επιλογή, γεμίζουμε τη γραμμή
+            const row = inputEl.closest('tr');
+            inputEl.value = product.name;
+            row.querySelector('.row-price').value = product.price;
+            row.querySelector('.row-vat').value = product.vat; // Ενημέρωση κρυφού πεδίου ΦΠΑ
+            
+            calculateRow(row.querySelector('.row-price')); // Υπολογισμός συνόλου
+            closeAllLists();
+            row.querySelector('.row-qty').focus(); // Μεταπήδηση στην ποσότητα
+        });
+        listContainer.appendChild(item);
+    });
+}
+
+function closeAllLists() {
+    const items = document.getElementsByClassName("autocomplete-items");
+    while (items.length > 0) {
+        items[0].parentNode.removeChild(items[0]);
+    }
+}
+     let allProducts = []; // Εδώ θα αποθηκευτούν τα προϊόντα από το Cloud
+
+// 1. ΦΟΡΤΩΣΗ ΠΡΟΪΟΝΤΩΝ ΑΠΟ ΤΗ FIREBASE
+function loadProductsFromFirebase() {
+    db.ref('products').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Μετατρέπουμε το object της Firebase σε array για εύκολη αναζήτηση
+            allProducts = Object.keys(data).map(key => ({
+                id: key,
+                name: data[key].name,
+                price: data[key].price,
+                vat: data[key].vat || "24" // Αν δεν έχει ΦΠΑ η καρτέλα, βάζουμε 24%
+            }));
+            console.log("✅ Τα προϊόντα φορτώθηκαν:", allProducts.length);
+        }
+    }).catch(err => console.error("Σφάλμα φόρτωσης προϊόντων:", err));
+}
+
+// 2. ΕΚΤΕΛΕΣΗ ΜΕ ΤΟ ΑΝΟΙΓΜΑ ΤΗΣ ΣΕΛΙΔΑΣ
+window.addEventListener('load', () => {
+    updateDateTime();          // Η λειτουργία για την ώρα που φτιάξαμε
+    loadProductsFromFirebase(); // Φόρτωσε τα προϊόντα για το Autocomplete
+});
+     function updateFullInvoiceTotals() {
+    let totalNet = 0;
+    let vatAnalysis = { "24": 0, "13": 0, "6": 0, "0": 0 };
+    
+    document.querySelectorAll('.item-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+        const price = parseFloat(row.querySelector('.row-price').value) || 0;
+        const vatRate = row.querySelector('.row-vat').value; // Το ΦΠΑ από την καρτέλα
+        
+        const rowNet = qty * price;
+        totalNet += rowNet;
+        
+        if (vatAnalysis.hasOwnProperty(vatRate)) {
+            vatAnalysis[vatRate] += rowNet * (parseFloat(vatRate) / 100);
+        }
+    });
+
+    // Ενημέρωση των πεδίων στο PDF Template σου
+    document.getElementById('pdf_netAmount').innerText = totalNet.toFixed(2) + " €";
+    
+    let totalVat = 0;
+    let vatHtml = "";
+    for (let rate in vatAnalysis) {
+        if (vatAnalysis[rate] > 0) {
+            totalVat += vatAnalysis[rate];
+            vatHtml += `<tr><td style="font-size:12px;">ΦΠΑ ${rate}%:</td><td style="text-align:right;">${vatAnalysis[rate].toFixed(2)} €</td></tr>`;
+        }
+    }
+    
+    document.getElementById('pdf_vat_analysis').innerHTML = vatHtml;
+    document.getElementById('pdf_totalAmount').innerText = (totalNet + totalVat).toFixed(2) + " €";
+}
 </script>
  <div id="newCustomerModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow-y:auto; align-items:center; justify-content:center; padding: 20px;">
     <div style="background:white; width:95%; max-width:850px; margin:auto; padding:25px; border-radius:15px; font-family: sans-serif; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 8px solid #020617;">
@@ -1668,7 +1858,41 @@ async function fetchCustomerToPDF(customerId) {
       🔍 ΤΕΛΙΚΟΣ ΕΛΕΓΧΟΣ
    </button>
 </div>
-
+<div id="branchPickerModal" style="display:none; position:fixed; z-index:11000; left:0; top:0; width:100%; height:100%; background:rgba(2, 6, 23, 0.7); backdrop-filter: blur(4px); align-items:center; justify-content:center;">
+    <div style="background:white; width:95%; max-width:500px; border-radius:16px; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border-top: 6px solid #0ea5e9;">
+        <div style="background:#020617; color:white; padding:15px 20px; display:flex; justify-content:space-between; align-items:center;">
+            <h4 style="margin:0; font-size:14px; letter-spacing:1px;">🏢 ΕΠΙΛΟΓΗ ΥΠΟΚΑΤΑΣΤΗΜΑΤΟΣ</h4>
+            <span onclick="document.getElementById('branchPickerModal').style.display='none'" style="cursor:pointer; font-size:24px;">&times;</span>
+        </div>
+        <div style="padding:15px; background:#f1f5f9; border-bottom:1px solid #e2e8f0;">
+            <input type="text" id="branchSearchInput" placeholder="🔍 Αναζήτηση με Κωδικό ή Διεύθυνση..." 
+                   style="width:100%; padding:12px; border:2px solid #0ea5e9; border-radius:10px; font-size:14px; outline:none;"
+                   oninput="filterBranches()">
+        </div>
+        <div id="branchPickerList" style="padding:15px; display:flex; flex-direction:column; gap:8px; max-height:350px; overflow-y:auto; background:#f8fafc;">
+            </div>
+    </div>
+</div>
+     
+   <div id="customerTransactionsModal" style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); align-items:center; justify-content:center; padding: 20px; box-sizing: border-box;">
+    <div style="background:#ffffff; width:100%; max-width:1200px; height:90vh; border-radius:16px; display:flex; flex-direction:column; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #334155; position: relative;">
+        
+        <div style="background:#020617; color:#7dd3fc; padding:20px 30px; display:flex; justify-content:space-between; align-items:center; border-bottom: 4px solid #0ea5e9; flex-shrink: 0;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span style="font-size:1.8rem;">📊</span>
+                <div>
+                    <div style="display:flex; align-items:center; gap:15px;">
+    <span style="font-size:1.8rem;">📊</span>
+    <div>
+        <h2 style="margin:0; font-size:1.3rem; letter-spacing:1px; text-transform:uppercase; color: white;">
+            ΚΑΡΤΕΛΑ: <span id="transCustomerName" style="color:#7dd3fc;">---</span>
+        </h2>
+        
+        <div style="margin-top: 5px; font-size: 0.85rem; color: #94a3b8; display: flex; gap: 15px;">
+            <span id="transDate">📅 --/--/----</span>
+            <span id="transTime">🕒 --:--</span>
+    </div>
+</div>
 <script>
 function debugFirebase() {
     try {
@@ -1970,99 +2194,170 @@ function closeNewCustomerModal() {
         element.style.display = 'none'; // Κρύψιμο ξανά
     }
 }
-</script>
-<div id="newCustomerModal">
-    <div class="modal-box" style="max-width: 600px;">
-        <div class="modal-header">
-            <h3 style="margin:0; font-size: 1.1rem;">🆕 ΚΑΤΑΧΩΡΗΣΗ ΝΕΟΥ ΠΕΛΑΤΗ</h3>
-            <span onclick="closeNewCustomerModal()" style="cursor:pointer; font-size:24px;">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="input-group" style="grid-column: span 2;">
-                    <label>Επωνυμία / Ονοματεπώνυμο *</label>
-                    <input type="text" id="newCustName" placeholder="π.χ. ΠΑΠΑΔΟΠΟΥΛΟΣ ΙΩΑΝΝΗΣ" style="border: 2px solid #e2e8f0;">
-                </div>
-                <div class="input-group">
-                    <label>Α.Φ.Μ.</label>
-                    <input type="text" id="newCustAfm" maxlength="9">
-                </div>
-                <div class="input-group">
-                    <label>Δ.Ο.Υ.</label>
-                    <input type="text" id="newCustDoy">
-                </div>
-                <div class="input-group" style="grid-column: span 2;">
-                    <label>Δραστηριότητα / Επάγγελμα</label>
-                    <input type="text" id="newCustJob">
-                </div>
-                <div class="input-group">
-                    <label>Διεύθυνση</label>
-                    <input type="text" id="newCustAddress">
-                </div>
-                <div class="input-group">
-                    <label>Πόλη & Τ.Κ.</label>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="text" id="newCustCity" placeholder="Πόλη" style="flex: 2;">
-                        <input type="text" id="newCustZip" placeholder="ΤΚ" style="flex: 1;">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Τηλέφωνο</label>
-                    <input type="text" id="newCustPhone">
-                </div>
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" id="newCustEmail">
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeNewCustomerModal()" style="background: #64748b; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">ΑΚΥΡΩΣΗ</button>
-            <button onclick="saveFullCustomer()" style="background: #0ea5e9; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD 💾</button>
-        </div>
-    </div>
-</div>   
-   <div id="newCustomerModal">
-    <div id="customerRegistryModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(2, 6, 23, 0.9); overflow-y:auto; align-items:center; justify-content:center; backdrop-filter: blur(8px);">
-    <div style="background:#ffffff; width:98%; max-width:1400px; height:90vh; border-radius:16px; display:flex; flex-direction:column; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #334155;">
+// 1. ΑΥΤΟΜΑΤΗ ΗΜΕΡΟΜΗΝΙΑ ΚΑΙ ΩΡΑ (ΤΡΕΧΕΙ ΜΕ ΤΟ ΠΟΥ ΑΝΟΙΓΕΙ Η ΣΕΛΙΔΑ)
+function initializeDateTime() {
+    const now = new Date();
+    const dateField = document.getElementById('docDate');
+    const timeField = document.getElementById('docTime');
+
+    if (dateField) dateField.value = now.toISOString().split('T')[0];
+    if (timeField) timeField.value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+}
+
+// 2. ΔΗΜΙΟΥΡΓΙΑ ΝΕΑΣ ΓΡΑΜΜΗΣ ΣΤΑ ΠΡΟΪΟΝΤΑ
+function addNewInvoiceRow() {
+    const tableBody = document.querySelector('#invoiceTable tbody');
+    if (!tableBody) return;
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'item-row';
+    newRow.innerHTML = `
+        <td><input type="text" class="row-desc" placeholder="Περιγραφή..." onkeydown="manageEnter(event, this)"></td>
+        <td><input type="number" class="row-qty" value="1" onkeydown="manageEnter(event, this)"></td>
+        <td><input type="number" class="row-price" value="0.00" onkeydown="manageEnter(event, this)"></td>
+        <td><input type="number" class="row-disc" value="0" onkeydown="manageEnter(event, this)"></td>
+        <td>
+            <select class="row-vat">
+                <option value="24">24%</option>
+                <option value="13">13%</option>
+                <option value="0">0%</option>
+            </select>
+        </td>
+        <td><button type="button" onclick="this.closest('tr').remove()" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button></td>
+    `;
+    tableBody.appendChild(newRow);
+    newRow.querySelector('.row-desc').focus(); // Αυτόματο focus στην περιγραφή
+}
+
+// 3. ΔΙΑΧΕΙΡΙΣΗ ENTER ΓΙΑ ΠΕΛΑΤΗ ΚΑΙ ΠΡΟΪΟΝΤΑ
+function manageEnter(event, element) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Σταματάει το submit της φόρμας
         
-        <div style="background:#020617; color:#7dd3fc; padding:20px 30px; display:flex; justify-content:space-between; align-items:center; border-bottom: 4px solid #0ea5e9;">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <span style="font-size:1.8rem;">📂</span>
-                <div>
-                    <h2 style="margin:0; font-size:1.3rem; letter-spacing:1px; text-transform:uppercase;">Κεντρικό Μητρώο Πελατών</h2>
-                    <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Διαχείριση και Επεξεργασία Πελατολογίου Triton ERP</p>
-                </div>
-            </div>
-            <button onclick="document.getElementById('customerRegistryModal').style.display='none'" style="background:#1e293b; border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:24px;">&times;</button>
-        </div>
+        // Αν είμαστε στην τιμή (row-price), προσθέτει νέα γραμμή
+        if (element.classList.contains('row-price') || element.classList.contains('row-disc')) {
+            addNewInvoiceRow();
+        } else {
+            // Αλλιώς πάει στο επόμενο input της ίδιας γραμμής
+            const row = element.closest('tr');
+            const inputs = Array.from(row.querySelectorAll('input'));
+            const index = inputs.indexOf(element);
+            if (inputs[index + 1]) inputs[index + 1].focus();
+        }
+    }
+}
 
-        <div style="padding:20px 30px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; gap:20px; align-items:center;">
-            <div style="flex:1;">
-                <input type="text" id="regSearch" placeholder="🔍 Αναζήτηση με Επωνυμία, ΑΦΜ..." onkeyup="filterRegistry()" 
-                       style="width:100%; padding:14px 20px; border-radius:12px; border:2px solid #cbd5e1; font-size:1rem; outline:none;">
-            </div>
-            <button onclick="openNewCustomerModal()" style="background:#10b981; color:white; border:none; padding:14px 25px; border-radius:12px; cursor:pointer; font-weight:bold;">
-                ➕ ΝΕΟΣ ΠΕΛΑΤΗΣ
-            </button>
-        </div>
+// 4. ΣΥΝΔΕΣΗ ΤΩΝ ΚΟΥΜΠΙΩΝ (EVENT LISTENERS)
+document.addEventListener('DOMContentLoaded', () => {
+    initializeDateTime();
 
-        <div style="flex:1; overflow:auto; padding:20px 30px;">
-            <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-                <thead>
-    <tr style="background: #f8fafc; border-bottom: 2px solid #020617;">
-        <th style="text-align: left; padding: 10px; font-size: 11px;">ΠΕΡΙΓΡΑΦΗ</th>
-        <th style="text-align: right; padding: 10px; font-size: 11px;">ΠΟΣ.</th>
-        <th style="text-align: right; padding: 10px; font-size: 11px;">ΤΙΜΗ</th>
-        <th style="text-align: right; padding: 10px; font-size: 11px;">ΦΠΑ</th> <th style="text-align: right; padding: 10px; font-size: 11px;">ΣΥΝΟΛΟ</th>
-    </tr>
-</thead>
-                <tbody id="registryTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    // Σύνδεση κουμπιού "Νέος Πελάτης"
+    const btnNewCust = document.getElementById('btnNewCustomer'); // Βεβαιώσου ότι το κουμπί σου έχει αυτό το ID
+    if (btnNewCust) {
+        btnNewCust.addEventListener('click', () => {
+            document.getElementById('newCustomerModal').style.display = 'flex';
+        });
+    }
 
+    // Ανίχνευση Enter στο Master Key (Αρχική φόρμα)
+    const masterKeyInput = document.getElementById('masterKey');
+    if (masterKeyInput) {
+        masterKeyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') unlockTriton();
+        });
+    }
+});
+  function updateDateTime() {
+    const τωρα = new Date();
+    
+    // Μορφή Ημερομηνίας: ΕΕΕΕ-ΜΜ-ΗΗ (όπως τη θέλει το input type="date")
+    const ημερομηνια = τωρα.toISOString().split('T')[0];
+    
+    // Μορφή Ώρας: ΩΩ:ΛΛ
+    const ωρα = τωρα.getHours().toString().padStart(2, '0') + ":" + 
+                τωρα.getMinutes().toString().padStart(2, '0');
+    
+    // Τοποθέτηση στα πεδία
+    const dateInput = document.getElementById('docDate');
+    const timeInput = document.getElementById('docTime');
+    
+    if (dateInput) dateInput.value = ημερομηνια;
+    if (timeInput) timeInput.value = ωρα;
+}
+
+// --- ΑΥΤΟΜΑΤΗ ΗΜΕΡΟΜΗΝΙΑ & ΩΡΑ ---
+function updateDateTime() {
+    const τωρα = new Date();
+    const ημερομηνια = τωρα.toISOString().split('T')[0];
+    const ωρα = τωρα.getHours().toString().padStart(2, '0') + ":" + 
+                τωρα.getMinutes().toString().padStart(2, '0');
+    
+    if(document.getElementById('docDate')) document.getElementById('docDate').value = ημερομηνια;
+    if(document.getElementById('docTime')) document.getElementById('docTime').value = ωρα;
+}
+
+// --- ΑΝΟΙΓΜΑ MODAL (FIX) ---
+function openNewCustomerModal() {
+    // Κλείνουμε το Registry αν είναι ανοιχτό
+    const registry = document.getElementById('customerRegistryModal');
+    if(registry) registry.style.display = 'none';
+    
+    // Ανοίγουμε τη φόρμα καταχώρησης
+    const modal = document.getElementById('newCustomerFormModal');
+    if(modal) {
+        modal.style.display = 'flex';
+        document.getElementById('newCustName').focus(); // Focus αυτόματα στο όνομα
+    }
+}
+
+function closeNewCustomerModal() {
+    document.getElementById('newCustomerFormModal').style.display = 'none';
+}
+
+// --- ΔΙΑΧΕΙΡΙΣΗ ENTER ---
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const active = document.activeElement;
+
+        // Αν είμαστε στη φόρμα Πελάτη, πήγαινε στο επόμενο input
+        if (active.id.startsWith('newCust')) {
+            e.preventDefault();
+            const inputs = Array.from(document.querySelectorAll('#newCustomerFormModal input'));
+            const index = inputs.indexOf(active);
+            if (inputs[index + 1]) inputs[index + 1].focus();
+        }
+        
+        // Αν είμαστε στον πίνακα προϊόντων και πατήσουμε Enter στην τιμή, βάλε νέα γραμμή
+        if (active.classList.contains('row-price')) {
+            e.preventDefault();
+            addNewInvoiceRow();
+        }
+    }
+});
+
+// --- ΝΕΑ ΓΡΑΜΜΗ ΠΡΟΪΟΝΤΟΣ ---
+function addNewInvoiceRow() {
+    const tbody = document.getElementById('invoiceItemsBody');
+    const newRow = document.createElement('tr');
+    newRow.className = 'item-row';
+    newRow.innerHTML = `
+        <td><input type="text" class="row-desc" placeholder="Περιγραφή..." style="width:100%; border:none; background:transparent; color:white;"></td>
+        <td><input type="number" class="row-qty" value="1" style="width:60px; text-align:center; background:transparent; color:white; border:1px solid #334155;"></td>
+        <td><input type="number" class="row-price" value="0.00" style="width:80px; text-align:right; background:transparent; color:white; border:1px solid #334155;"></td>
+        <td>
+            <select class="row-vat" style="background:#1e293b; color:white; border:none;">
+                <option value="24">24%</option>
+                <option value="13">13%</option>
+                <option value="0">0%</option>
+            </select>
+        </td>
+        <td style="text-align:right; color:#7dd3fc;" class="row-total">0.00€</td>
+    `;
+    tbody.appendChild(newRow);
+    newRow.querySelector('.row-desc').focus();
+}
+
+window.onload = updateDateTime;
 <div id="newCustomerModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow-y:auto; display:flex; align-items:center; justify-content:center; padding: 20px;">
     <div style="background:white; width:95%; max-width:700px; padding:25px; border-radius:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 8px solid #020617;">
         

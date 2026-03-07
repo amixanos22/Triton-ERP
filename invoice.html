@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
@@ -612,37 +612,15 @@ async function saveFullCustomer() {
         createdAt: firebase.database.ServerValue.TIMESTAMP
     };
 
-   try {
-        // 1. Αποθήκευση στη Firebase Cloud
+    try {
         await db.ref('customers').push(customerData);
-        alert("✅ Ο πελάτης " + name + " αποθηκεύτηκε με επιτυχία!");
-
-        // 2. Ενημέρωση του Dropdown στο τιμολόγιο χωρίς Refresh
-        const selectElement = document.getElementById('customerSelect');
-        if (selectElement) {
-            const option = new Option(name, name);
-            selectElement.add(option);
-            selectElement.value = name; // Επιλογή του νέου πελάτη αμέσως
-            
-            // Γέμισμα των πεδίων (ΑΦΜ, ΔΟΥ κλπ) στο τιμολόγιο
-            if (typeof fillCustomerData === 'function') fillCustomerData(name);
-        }
-
-        // 3. Καθαρισμός και αυτόματο κλείσιμο του Modal
+        alert("✅ Ο πελάτης " + name + " αποθηκεύτηκε!");
         document.querySelectorAll('#newCustomerModal input').forEach(i => i.value = "");
-        if (document.getElementById('branchesContainer')) {
-            document.getElementById('branchesContainer').innerHTML = "";
-        }
-        
-        // Κλείσιμο του Modal (είτε με Bootstrap είτε με τη δική σου συνάρτηση)
-        if (typeof closeNewCustomerModal === "function") {
-            closeNewCustomerModal();
-        }
+        document.getElementById('branchesContainer').innerHTML = "";
+        if (typeof closeNewCustomerModal === "function") closeNewCustomerModal();
+    } catch (e) { alert("❌ Σφάλμα: " + e.message); }
+}
 
-    } catch (e) { 
-        console.error("🔱 Triton Save Error:", e);
-        alert("❌ Σφάλμα κατά την αποθήκευση: " + e.message); 
-    }
 // --- 4. ΒΟΗΘΗΤΙΚΕΣ (Modal & Close) ---
 
 function openVendorModal() {
@@ -823,49 +801,60 @@ function updateCustomerDatalist() {
 }
 
 async function fillCustomerData(selectedName) {
-    if (!selectedName || !window.db) return;
+    // 1. Έλεγχος εγκυρότητας (Προσθήκη window.db ή db)
+    const database = window.db || (typeof db !== 'undefined' ? db : null);
+    if (!selectedName || !database) {
+        console.warn("🔱 Triton: Λείπει το όνομα ή η σύνδεση με τη βάση.");
+        return;
+    }
 
     try {
-        // Χρησιμοποιούμε await για να περιμένουμε τη Firebase
-        (async () => {
-    try {
-        const snapshot = await db.ref('customers').once('value');
-        // ... ο υπόλοιπος κώδικας που ακολουθεί και χρησιμοποιεί το snapshot
-    } catch (e) {
-        console.error("🔱 Triton Sync Error:", e);
-    }
-})();
+        console.log("🔱 Triton: Αναζήτηση στοιχείων για:", selectedName);
+        
+        // 2. Λήψη δεδομένων με await
+        const snapshot = await database.ref('customers').once('value');
         const data = snapshot.val();
         
-        if (data) {
-            // Ψάχνουμε τον πελάτη με βάση το όνομα
-            const customer = Object.values(data).find(c => (c.name || c.custName) === selectedName);
-            
-            if (customer) {
-                // Λίστα με τα IDs και τις αντίστοιχες τιμές από τη βάση
-                const fields = {
-                    'custAfm': customer.afm,
-                    'custDoy': customer.doy,
-                    'custJob': customer.job,
-                    'custAddress': customer.address || customer.dieythinsi, // Υποστήριξη και για τα δύο ονόματα
-                    'custCity': customer.city || customer.poli,
-                    'custZip': customer.zip || customer.tk,
-                    'custEmail': customer.email,
-                    'custPhone': customer.phone
-                };
+        if (!data) {
+            console.warn("🔱 Triton: Η βάση πελατών είναι άδεια.");
+            return;
+        }
 
-                // Αυτόματη συμπλήρωση όλων των πεδίων στην οθόνη
-                for (let id in fields) {
-                    let element = document.getElementById(id);
-                    if (element) {
-                        element.value = fields[id] || "";
-                    }
+        // 3. Εύρεση πελάτη (Case Insensitive & Trim για σιγουριά)
+        const customer = Object.values(data).find(c => {
+            const nameInDB = (c.name || c.custName || "").toString().trim().toLowerCase();
+            return nameInDB === selectedName.toString().trim().toLowerCase();
+        });
+        
+        if (customer) {
+            // 4. Χάρτης πεδίων (Mapping)
+            const fields = {
+                'custAfm': customer.afm,
+                'custDoy': customer.doy,
+                'custJob': customer.job,
+                'custAddress': customer.address || customer.dieythinsi,
+                'custCity': customer.city || customer.poli,
+                'custZip': customer.zip || customer.tk,
+                'custEmail': customer.email,
+                'custPhone': customer.phone || customer.mobile // Υποστήριξη και για κινητό
+            };
+
+            // 5. Αυτόματη συμπλήρωση με έλεγχο ύπαρξης στοιχείου
+            for (const [id, value] of Object.entries(fields)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = value || "";
+                    // Προαιρετικά: trigger input event για να ενημερωθούν τυχόν listeners
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                console.log("🔱 Triton: Τα στοιχεία του πελάτη " + selectedName + " φορτώθηκαν!");
             }
+            
+            console.log("✅ Triton: Τα στοιχεία του πελάτη φορτώθηκαν επιτυχώς!");
+        } else {
+            console.warn("🔱 Triton: Ο πελάτης δεν βρέθηκε στη βάση.");
         }
     } catch (error) {
-        console.error("❌ Σφάλμα κατά τη φόρτωση στοιχείων πελάτη:", error);
+        console.error("❌ Triton Error κατά τη φόρτωση:", error);
     }
 }
 
@@ -1142,13 +1131,20 @@ function showInvoice() {
     document.getElementById('invoiceForm').style.display = 'block';
 }
 
-// Φόρτωση από Firebase
+// 🔱 Φόρτωση από Firebase - Διορθωμένο από Triton ERP
 function loadFullCustomerList() {
     const tbody = document.getElementById('registryTableBody');
     if (!tbody) return;
 
+    // Σιγουρευόμαστε ότι η db είναι έτοιμη
+    if (typeof db === 'undefined' || !db) {
+        console.warn("🔱 Triton: Η σύνδεση με τη Firebase δεν είναι έτοιμη ακόμα...");
+        return;
+    }
+
     db.ref('customers').on('value', (snapshot) => {
-        tbody.innerHTML = "";
+        tbody.innerHTML = ""; // Καθαρισμός πίνακα
+        
         snapshot.forEach((child) => {
             const c = child.val();
             const key = child.key;
@@ -1156,12 +1152,19 @@ function loadFullCustomerList() {
             const tr = document.createElement('tr');
             // Στυλ γραμμής: Λευκό φόντο, ελαφρύ περίγραμμα και hover εφέ
             tr.style = "background: white; border-bottom: 1px solid #e2e8f0; transition: all 0.2s;";
-            tr.onmouseover = () => { tr.style.backgroundColor = "#f8fafc"; tr.style.transform = "scale(1.002)"; };
-            tr.onmouseout = () => { tr.style.backgroundColor = "white"; tr.style.transform = "scale(1)"; };
+            
+            tr.onmouseover = () => { 
+                tr.style.backgroundColor = "#f8fafc"; 
+                tr.style.transform = "scale(1.002)"; 
+            };
+            tr.onmouseout = () => { 
+                tr.style.backgroundColor = "white"; 
+                tr.style.transform = "scale(1)"; 
+            };
 
             tr.innerHTML = `
                 <td style="padding: 15px; border-left: 4px solid #0ea5e9;">
-                    <div style="font-weight: 800; color: #020617; font-size: 0.95rem;">${c.name}</div>
+                    <div style="font-weight: 800; color: #020617; font-size: 0.95rem;">${c.name || 'Χωρίς Όνομα'}</div>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">💼 ${c.job || '-'}</div>
                 </td>
 
@@ -1194,6 +1197,9 @@ function loadFullCustomerList() {
             `;
             tbody.appendChild(tr);
         });
+        console.log("🔱 Triton: Το μητρώο πελατών ενημερώθηκε!");
+    }, (error) => {
+        console.error("❌ Triton Sync Error:", error);
     });
 }
 // Η Αναζήτηση που ζήτησες
@@ -2868,7 +2874,29 @@ window.calculateTotal = function() {
     if(totalDisplay) totalDisplay.innerText = grandTotal.toFixed(2).replace('.', ',') + " €";
 };
 
- 
+// 3. INITIALIZATION
+document.addEventListener('DOMContentLoaded', function() {
+    // Σύνδεση Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
+        authDomain: "triton-invoicing.firebaseapp.com",
+        projectId: "triton-invoicing",
+        databaseURL: "https://triton-invoicing-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+    }
+
+    // Ημερομηνία
+    const now = new Date();
+    const dInput = document.getElementById('invoiceDate');
+    if(dInput) dInput.value = now.toISOString().split('T')[0];
+
+    // Πρώτη Γραμμή
+    window.addNewLine();
+});
 
 // 4. ENTER NAVIGATION
 document.addEventListener('keydown', function(e) {

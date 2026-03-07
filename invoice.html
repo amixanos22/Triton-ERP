@@ -1957,6 +1957,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         overlay.style.display = 'none';
     }
 });
+             <script>
+// ΤΟ ΒΑΖΕΙΣ ΕΔΩ ΣΤΗΝ ΑΡΧΗ ΓΙΑ ΝΑ ΜΗΝ ΚΡΑΣΑΡΕΙ ΤΟ ΣΥΣΤΗΜΑ:
+if (typeof _supabase === 'undefined') {
+    window._supabase = null; 
+    console.warn("🔱 Triton Safety: Supabase protected.");
+}
+
+// ... μετά συνεχίζει ο υπόλοιπος κώδικας σου (window.createNewWindow κλπ) ...
 </script>
 </body>
 </html>

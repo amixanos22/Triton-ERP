@@ -2,8 +2,8 @@
     const { afm } = req.query;
     
     // Εδώ βάλε τους δικούς σου κωδικούς ΑΑΔΕ
-    const USER_ID = 'ΤΟ_USER_ID_ΣΟΥ'; 
-    const SUBSCRIPTION_KEY = 'ΤΟ_KEY_ΣΟΥ';
+    const USER_ID = 'wrapp1693208337'; 
+    const SUBSCRIPTION_KEY = '4c245d648733e2decccc879d631c633c';
 
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 

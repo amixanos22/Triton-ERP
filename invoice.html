@@ -787,33 +787,36 @@ function updateCustomerDatalist() {
 }
 
 async function fillCustomerData(selectedName) {
-    // 1. Έλεγχος εγκυρότητας (Προσθήκη window.db ή db)
+   // 🔱 Triton ERP: Αυτόματη Συμπλήρωση Στοιχείων Πελάτη
+async function fillCustomerData(selectedName) {
+    // 1. Σύνδεση με τη βάση (window.db ή db)
     const database = window.db || (typeof db !== 'undefined' ? db : null);
+    
     if (!selectedName || !database) {
         console.warn("🔱 Triton: Λείπει το όνομα ή η σύνδεση με τη βάση.");
         return;
     }
 
     try {
-        console.log("🔱 Triton: Αναζήτηση στοιχείων για:", selectedName);
+        console.log("🔱 Triton: Ανάκτηση δεδομένων για:", selectedName);
         
-        // 2. Λήψη δεδομένων με await
+        // 2. Λήψη δεδομένων από Firebase
         const snapshot = await database.ref('customers').once('value');
         const data = snapshot.val();
         
         if (!data) {
-            console.warn("🔱 Triton: Η βάση πελατών είναι άδεια.");
+            console.warn("🔱 Triton: Η βάση δεδομένων είναι κενή.");
             return;
         }
 
-        // 3. Εύρεση πελάτη (Case Insensitive & Trim για σιγουριά)
+        // 3. Εύρεση πελάτη (Case Insensitive)
         const customer = Object.values(data).find(c => {
             const nameInDB = (c.name || c.custName || "").toString().trim().toLowerCase();
             return nameInDB === selectedName.toString().trim().toLowerCase();
         });
         
         if (customer) {
-            // 4. Χάρτης πεδίων (Mapping)
+            // 4. Χάρτης πεδίων (Mapping IDs)
             const fields = {
                 'custAfm': customer.afm,
                 'custDoy': customer.doy,
@@ -822,28 +825,32 @@ async function fillCustomerData(selectedName) {
                 'custCity': customer.city || customer.poli,
                 'custZip': customer.zip || customer.tk,
                 'custEmail': customer.email,
-                'custPhone': customer.phone || customer.mobile // Υποστήριξη και για κινητό
+                'custPhone': customer.phone || customer.mobile
             };
 
-            // 5. Αυτόματη συμπλήρωση με έλεγχο ύπαρξης στοιχείου
+            // 5. Αυτόματη ενημέρωση των Inputs
             for (const [id, value] of Object.entries(fields)) {
                 const element = document.getElementById(id);
                 if (element) {
                     element.value = value || "";
-                    // Προαιρετικά: trigger input event για να ενημερωθούν τυχόν listeners
+                    // Ενημέρωση της σελίδας ότι το πεδίο άλλαξε
                     element.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
             
-            console.log("✅ Triton: Τα στοιχεία του πελάτη φορτώθηκαν επιτυχώς!");
+            // 6. Έλεγχος για υποκαταστήματα (Branches)
+            if (customer.branches && customer.branches.length > 0) {
+                console.log("🔱 Triton: Ο πελάτης έχει " + customer.branches.length + " υποκαταστήματα.");
+            }
+
+            console.log("✅ Triton: Τα στοιχεία του πελάτη '" + selectedName + "' φορτώθηκαν!");
         } else {
-            console.warn("🔱 Triton: Ο πελάτης δεν βρέθηκε στη βάση.");
+            console.warn("🔱 Triton: Ο πελάτης δεν βρέθηκε στο Cloud.");
         }
     } catch (error) {
-        console.error("❌ Triton Error κατά τη φόρτωση:", error);
+        console.error("❌ Triton Error:", error);
     }
 }
-
 function addBranchRow(valCode = "", valAddr = "") {
     const container = document.getElementById('branchesContainer');
     const div = document.createElement('div');

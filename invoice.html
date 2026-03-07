@@ -1600,45 +1600,33 @@ function checkPass() {
     }
 }
  
-// ==========================================
-// 🛸 ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (GITHUB SYNC)
+ 
+
+ // ==========================================
+// 🛸 ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (ΔΙΟΡΘΩΜΕΝΗ)
 // ==========================================
 
 // --- ΠΕΛΑΤΕΣ & ΠΡΟΜΗΘΕΥΤΕΣ ---
-function openCustomerModal()  { window.createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
-function openSupplierModal()  { window.createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); }
+function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
+function openSupplierModal()  { createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); }
 
 // --- ΠΩΛΗΣΕΙΣ & ΕΚΔΟΣΗ ---
-function openInvoiceModal()   { window.createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); }
-function openBillingModal()   { window.createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); }
-function openDeltioModal()    { window.createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); }
-
-// --- ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ ---
-function openInventoryModal() { window.createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); }
-function openShoppingModal()  { window.createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); }
+function openInvoiceModal()   { createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); }
+function openBillingModal()   { createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); }
+function openDeltioModal()    { createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); }
 
 // --- ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ ---
 function openInventoryModal() { createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); }
-function openShoppingModal()  { createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); }
-function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές Παραγωγής', 1100, 800); }
+function openShoppingModal()  { createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); }
+function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές Παραγωγής', 1100, 800); }
 
 // --- ΟΙΚΟΝΟΜΙΚΑ ---
 function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
-// 1. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΕΙΣΠΡΑΞΗ (Έσοδο)
-// Διόρθωση: Το 'income.html' γίνεται 'eispraxi.html'
-function openEispraxiModal() { 
-    createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); 
-}
+function openEispraxiModal()  { createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); }
+function openPliromiModal()   { createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); }
 
-// Διόρθωση: Το 'expense.html' γίνεται 'pliromi.html'
-function openPliromiModal() { 
-    createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); 
-}
 // --- ΣΤΑΤΙΣΤΙΚΑ ---
 function openDashboardModal() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); }
-
- 
-  
 </script>
   <script>       
 // ==========================================
@@ -1755,11 +1743,7 @@ window.addEventListener('load', updateDashboardStats);
         <iframe id="modalFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
     </div>
 </div>
-             <script>
-          
-          
- 
- 
+           <script>
 // ==========================================
 // 1. GLOBAL ΜΕΤΑΒΛΗΤΕΣ & STYLE
 // ==========================================
@@ -1816,23 +1800,19 @@ window.createNewWindow = function(url, title, width = 850, height = 600) {
     win.addEventListener('mousedown', () => bringToFront(win));
 };
 
-// Ενοποιημένη Ελαχιστοποίηση
 window.minimizeWindow = function(winId, title) {
     const win = document.getElementById(winId);
-    const bar = document.getElementById('taskbar-apps'); // Χρήση του ID από το HTML σου
-    
+    const bar = document.getElementById('taskbar-apps'); 
     if (win && bar) {
         win.style.display = 'none';
         const tab = document.createElement('div');
         tab.className = 'taskbar-tab pulse-active';
         tab.innerHTML = `💠 ${title}`;
-        
         tab.onclick = function() {
             win.style.display = 'flex';
             bringToFront(win);
             tab.remove();
         };
-        
         bar.appendChild(tab);
         setTimeout(() => tab.classList.remove('pulse-active'), 2000);
     }
@@ -1860,151 +1840,83 @@ function makeDraggable(elmnt, header) {
 }
 
 // ==========================================
-// ⚙️ 3. SETTINGS & PROFILE MANAGEMENT
+// 🛸 3. ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (RE-ADDED)
 // ==========================================
+window.openCustomerModal = function() { createNewWindow('customers.html', 'Πελάτες', 1200, 800); };
+window.openSupplierModal = function() { createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); };
+window.openInvoiceModal = function() { createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); };
+window.openBillingModal = function() { createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); };
+window.openDeltioModal = function()  { createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); };
+window.openInventoryModal = function() { createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); };
+window.openShoppingModal = function()  { createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); };
+window.openRecipesModal = function()   { createNewWindow('recipes.html', 'Συνταγές Παραγωγής', 1100, 800); };
+window.openFinancialModal = function() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); };
+window.openEispraxiModal = function()  { createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); };
+window.openPliromiModal = function()   { createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); };
+window.openDashboardModal = function() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); };
 
-function openSettings() { 
-    document.getElementById('settingsModal').style.display = 'flex'; 
-    loadSettings(); // Φορτώνει τα στοιχεία στα inputs μόλις ανοίξει
-}
-
-function closeSettings() { 
-    document.getElementById('settingsModal').style.display = 'none'; 
-}
-
-// Προεπισκόπηση Λογοτύπου
-function previewLogo(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = document.getElementById('imgPreview');
-            img.src = e.target.result;
-            img.style.display = 'block';
-            document.getElementById('noLogoText').style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function saveSettings() {
-    // 1. Μαζεύουμε ΟΛΑ τα στοιχεία από το Modal
-    const settings = {
-        name: document.getElementById('setName').value,
-        job: document.getElementById('setJob').value,
-        afm: document.getElementById('setAfm').value,
-        doy: document.getElementById('setDoy').value,
-        address: document.getElementById('setAddress').value,
-        city: document.getElementById('setCity').value,
-        tk: document.getElementById('setTk').value,
-        phone: document.getElementById('setPhone').value,
-        gemi: document.getElementById('setGemi').value,
-        mu: document.getElementById('setMyDataUser').value, // Το User ID
-        mk: document.getElementById('setMyDataKey').value,   // Το Subscription Key
-        logo: document.getElementById('imgPreview').src
-    };
-
-    // 2. Αποθήκευση για το Προφίλ και το Backup
-    localStorage.setItem('bizSettings', JSON.stringify(settings));
-
-    // 3. Η ΓΕΦΥΡΑ: Αποθήκευση ειδικά για το myDATA ώστε να τη βλέπει το Πελατολόγιο
-    // Εδώ είναι το μυστικό για να σταματήσει το σφάλμα!
-    localStorage.setItem('triton_settings', JSON.stringify({
-        aadeUser: settings.mu,
-        aadeToken: settings.mk
-    }));
-
-    alert("🔱 Triton OS: Επιτυχής αποθήκευση στοιχείων και myDATA!");
-    closeSettings();
-    
-    // Προαιρετικά: Ανανέωση για να περάσουν οι αλλαγές παντού
-    // location.reload(); 
-}
 // ==========================================
-// 4. AUTH & MAIN INIT (ΔΙΟΡΘΩΜΕΝΟ)
+// ⚙️ 4. SETTINGS & myDATA ENGINE
 // ==========================================
+window.openSettings = function() { document.getElementById('settingsModal').style.display = 'flex'; loadSettings(); }
+window.closeSettings = function() { document.getElementById('settingsModal').style.display = 'none'; }
 
-// 1. Συναρτήσεις Login & Ξεκλειδώματος
-function unlockTriton() {
+window.searchMyData = async function() {
+    const afmInput = document.getElementById('newCustAfm');
+    if (!afmInput) return;
+    const afm = afmInput.value.trim();
+    const btn = event.target;
+    if (afm.length !== 9) { alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!"); return; }
+    btn.innerText = "⏳...";
+    btn.disabled = true;
+    try {
+        const response = await fetch(`/api/mydata?afm=${afm}`);
+        const data = await response.json();
+        if (data && data.success) {
+            document.getElementById('newCustName').value = data.result.onomasia || "";
+            document.getElementById('newCustDoy').value = data.result.doy_descr || "";
+            document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
+            document.getElementById('newCustCity').value = data.result.poli || "";
+            document.getElementById('newCustZip').value = data.result.tk || "";
+        } else { alert("❌ Το ΑΦΜ δεν βρέθηκε."); }
+    } catch (error) { alert("⚠️ Σφάλμα σύνδεσης API."); }
+    finally { btn.innerText = "🔍 myDATA"; btn.disabled = false; }
+};
+
+window.closeNewCustomerModal = function() {
+    const modal = document.getElementById('newCustomerModal');
+    if (modal) modal.style.display = 'none';
+    const floatingWin = document.querySelector('.floating-window');
+    if (floatingWin) floatingWin.remove();
+};
+
+// ==========================================
+// 🔐 5. AUTH & INITIALIZATION
+// ==========================================
+window.unlockTriton = function() {
     const key = document.getElementById('masterKey').value;
     if (key === "TRITON2026") {
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
-    } else {
-        document.getElementById('unlockError').style.display = 'block';
-    }
-}
+    } else { document.getElementById('unlockError').style.display = 'block'; }
+};
 
-async function completeLogin() {
+window.completeLogin = async function() {
     const overlay = document.getElementById('loginOverlay');
     if (overlay) {
-        // Η ΕΝΤΟΛΗ ΠΟΥ "ΣΚΟΤΩΝΕΙ" ΤΟ ΑΟΡΑΤΟ ΤΕΙΧΟΣ:
         overlay.style.setProperty('display', 'none', 'important');
         overlay.style.pointerEvents = 'none';
         overlay.style.zIndex = "-1";
-        
-        // Για σιγουριά, το αφαιρούμε τελείως από το οπτικό πεδίο
-        overlay.style.opacity = '0';
-        overlay.style.visibility = 'hidden';
     }
     localStorage.setItem('triton_is_logged_in', 'true');
-    console.log("🔱 Triton OS: Ξεκλειδώθηκε και τα κουμπιά είναι ενεργά!");
-}
+};
 
-// 2. Ενιαίος Έλεγχος DOMContentLoaded
 document.addEventListener('DOMContentLoaded', async () => {
     const overlay = document.getElementById('loginOverlay');
-
-    // Αν είναι ήδη logged in, το "εξαφανίζουμε" πριν προλάβει να μπλοκάρει
-    if (localStorage.getItem('triton_is_logged_in') === 'true') {
-        if (overlay) {
-            overlay.style.setProperty('display', 'none', 'important');
-            overlay.style.pointerEvents = 'none';
-            overlay.style.zIndex = "-1";
-        }
-    }
-
-    try {
-        const { data: { user } } = await _supabase.auth.getUser();
-        
-        if (user) {
-            if (overlay) {
-                overlay.style.setProperty('display', 'none', 'important');
-                overlay.style.pointerEvents = 'none';
-                overlay.style.zIndex = "-1";
-            }
-            
-            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
-            if (profile) {
-                const nameElem = document.getElementById('displayCompanyName');
-                if (nameElem) nameElem.innerText = profile.company_name || "🔱 Triton OS";
-            }
-        } else {
-            // Αν δεν υπάρχει χρήστης, δείξε το login μόνο αν δεν είναι ξεκλειδωμένο τοπικά
-            if (localStorage.getItem('triton_is_logged_in') !== 'true') {
-                if (overlay) overlay.style.display = 'flex';
-            }
-        }
-    } catch (err) {
-        console.log("🔱 Triton Auth Error:", err);
+    if (localStorage.getItem('triton_is_logged_in') === 'true' && overlay) {
+        overlay.style.display = 'none';
     }
 });
- 
-// --- TRITON ERP CUSTOMER ENGINE ---
-
-    // 1. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΝΑ ΚΛΕΙΝΕΙ ΤΟ ΠΑΡΑΘΥΡΟ (ΤΟ "Χ" ΚΑΙ Η "ΑΚΥΡΩΣΗ")
-    window.closeNewCustomerModal = function() {
-        console.log("🔒 Κλείσιμο Modal Πελάτη");
-        const modal = document.getElementById('newCustomerModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-        // Αν το modal είναι μέσα σε floating window, το κλείνουμε έτσι:
-        const floatingWin = document.querySelector('.floating-window');
-        if (floatingWin) floatingWin.remove();
-    };
-
-  // 2. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΗΝ ΑΝΑΖΗΤΗΣΗ ΣΤΟ myDATA (ΣΥΝΔΕΔΕΜΕΝΗ ΜΕ ΤΟ API)
-    
 </script>
 </body>
 </html>

@@ -486,21 +486,7 @@ var db;
 
     allProducts = [];
 
-// 1. ΣΥΝΔΕΣΗ TRITON CLOUD
-const firebaseConfig = {
-    apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
-    authDomain: "triton-invoicing.firebaseapp.com",
-    projectId: "triton-invoicing",
-    databaseURL: "https://triton-invoicing-default-rtdb.europe-west1.firebasedatabase.app",
-    storageBucket: "triton-invoicing.firebasestorage.app",
-    messagingSenderId: "196208578290",
-    appId: "1:196208578290:web:a46480eda06d10b30e8a6b"
-};
-
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-db = firebase.database();
-window.db = db;
-
+ 
 // --- ΕΚΚΙΝΗΣΗ ΕΦΑΡΜΟΓΗΣ ---
 window.onload = function() {
     initTritonSession();
@@ -2874,28 +2860,35 @@ window.calculateTotal = function() {
     if(totalDisplay) totalDisplay.innerText = grandTotal.toFixed(2).replace('.', ',') + " €";
 };
 
-// 3. INITIALIZATION
+// 🔱 ΜΟΝΑΔΙΚΗ ΡΥΘΜΙΣΗ FIREBASE
+var firebaseConfig = {
+    apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
+    authDomain: "triton-invoicing.firebaseapp.com",
+    projectId: "triton-invoicing",
+    databaseURL: "https://triton-invoicing-default-rtdb.europe-west1.firebasedatabase.app",
+    storageBucket: "triton-invoicing.firebasestorage.app",
+    messagingSenderId: "196208578290",
+    appId: "1:196208578290:web:a46480eda06d10b30e8a6b"
+};
+
+// Έλεγχος και Εκκίνηση
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    window.db = firebase.database();
+}
+var db = window.db;
+
+// 🔱 INITIALIZATION ΜΟΝΟ ΜΙΑ ΦΟΡΑ
 document.addEventListener('DOMContentLoaded', function() {
-    // Σύνδεση Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
-        authDomain: "triton-invoicing.firebaseapp.com",
-        projectId: "triton-invoicing",
-        databaseURL: "https://triton-invoicing-default-rtdb.europe-west1.firebasedatabase.app"
-    };
-
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-    }
-
+    console.log("🔱 Triton ERP: Initializing...");
+    
     // Ημερομηνία
-    const now = new Date();
     const dInput = document.getElementById('invoiceDate');
-    if(dInput) dInput.value = now.toISOString().split('T')[0];
-
-    // Πρώτη Γραμμή
-    window.addNewLine();
+    if(dInput) dInput.value = new Date().toISOString().split('T')[0];
+    
+    // Πρώτη Γραμμή & Προϊόντα
+    if (typeof addNewLine === 'function') addNewLine();
+    if (typeof loadProductsFromFirebase === 'function') loadProductsFromFirebase();
 });
 
 // 4. ENTER NAVIGATION

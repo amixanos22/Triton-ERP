@@ -1,13 +1,15 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
   <title>Τιμολόγηση - Πωλήσεις</title>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-    // Χρησιμοποιούμε var για να είναι σίγουρα global και προσβάσιμη παντού
     var _supabase; 
     
     try {
+        // Τώρα το 'supabase' υπάρχει και η εντολή θα δουλέψει!
         _supabase = supabase.createClient(
             'https://wrapp1693208337.supabase.co', 
             '4c245d648733e2decccc879d631c633c'

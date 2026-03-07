@@ -2003,7 +2003,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (floatingWin) floatingWin.remove();
     };
 
-    // 2. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΗΝ ΑΝΑΖΗΤΗΣΗ ΣΤΟ myDATA
+  // 2. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΗΝ ΑΝΑΖΗΤΗΣΗ ΣΤΟ myDATA (ΣΥΝΔΕΔΕΜΕΝΗ ΜΕ ΤΟ API)
     window.searchMyData = async function() {
         const afmInput = document.getElementById('newCustAfm');
         if (!afmInput) return;
@@ -2020,6 +2020,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = true;
 
         try {
+            // Κλήση στο δικό σου API στο Vercel
             const response = await fetch(`/api/mydata?afm=${afm}`);
             const data = await response.json();
 
@@ -2029,17 +2030,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
                 document.getElementById('newCustCity').value = data.result.poli || "";
                 document.getElementById('newCustZip').value = data.result.tk || "";
+                console.log("✅ Επιτυχία ανάκτησης");
             } else {
-                alert("❌ Το ΑΦΜ δεν βρέθηκε.");
+                alert("❌ Το ΑΦΜ δεν βρέθηκε. Ελέγξτε τις ρυθμίσεις σας.");
             }
         } catch (error) {
-            alert("⚠️ Σφάλμα σύνδεσης με το API.");
+            alert("⚠️ Σφάλμα σύνδεσης. Βεβαιωθείτε ότι το api/mydata.js υπάρχει στο GitHub.");
         } finally {
             btn.innerText = "🔍 myDATA";
             btn.disabled = false;
         }
     };
-// ΠΡΟΣΟΧΗ: ΚΛΕΙΝΟΥΜΕ ΤΟ SCRIPT ΜΙΑ ΦΟΡΑ ΚΑΙ ΜΕΤΑ ΤΟ BODY
+
+    // 3. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΚΛΕΙΣΙΜΟ ΤΟΥ MODAL
+    window.closeNewCustomerModal = function() {
+        const modal = document.getElementById('newCustomerModal');
+        if (modal) modal.style.display = 'none';
+        const floatingWin = document.querySelector('.floating-window');
+        if (floatingWin) floatingWin.remove();
+    };
+
 </script>
 </body>
 </html>

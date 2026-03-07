@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="el">
 <head>
   
@@ -721,13 +721,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="#" class="nav-item">📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span></a>
         
    <div class="nav-item-container">
-   <a href="javascript:void(0)" class="nav-item">
+    <a href="#" class="nav-item">
         💎 <span class="translate" data-el="Πληρωμές" data-en="Payments">Πληρωμές</span>
     </a>
-   <div class="submenu">
-    <a href="javascript:void(0)" onclick="openEispraxiModal()" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
-    <a href="javascript:void(0)" onclick="openPliromiModal()" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
-</div>
+    <div class="submenu">
+        <a href="javascript:void(0)" onclick="openEispraxiModal()" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
+        <a href="javascript:void(0)" onclick="openPliromiModal()" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
+    </div>
 </div>
 
 <a href="javascript:void(0)" onclick="openCustomerModal()" class="nav-item">
@@ -744,14 +744,11 @@ document.addEventListener('DOMContentLoaded', () => {
     <span>🧪</span> 
     <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
 </a>
-
-<a href="javascript:void(0)" onclick="openDashboardModal()" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">  
+      <a href="dashboard.html" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">  
+    📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
+</a> 
+      <a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #f59e0b; margin-top: 5px;">
     <span>📊</span> 
-    <span class="translate" data-el="ΟΙΚΟΝΟΜΙΚΟ DASHBOARD" data-en="FINANCIAL DASHBOARD">ΟΙΚΟΝΟΜΙΚΟ DASHBOARD</span>
-</a>
-
-<a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #06b6d4; margin-top: 5px;">
-    <span>📈</span> 
     <span class="translate" data-el="Οικονομικό Πλάνο (Κέρδη/Έξοδα)" data-en="Financial Plan (Profit/Expenses)">
         Οικονομικό Πλάνο (Κέρδη/Έξοδα)
     </span>
@@ -798,27 +795,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     
 
-<a href="javascript:void(0)" 
-   onclick="openInvoiceModal('TIM')" 
-   style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px;">
-   <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
-</a>
+<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ', '📄 Τιμολόγιο Πώλησης', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>📄</span> Τιμολόγιο Πώλησης
+    </a>
 
-<a href="javascript:void(0)" onclick="openBillingModal('DA')" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-    <span>🚚</span> Δελτίο Αποστολής
-</a>
+    <a href="javascript:void(0)" onclick="createNewWindow('delivery_note.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>🚚</span> Δελτίο Αποστολής
+    </a>
 
-<a href="javascript:void(0)" onclick="openBillingModal('PIS')" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-    <span>🔄</span> Πιστωτικό Τιμολόγιο
-</a>
+    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ', '🔄 Πιστωτικό Τιμολόγιο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>🔄</span> Πιστωτικό Τιμολόγιο
+    </a>
 
-<a href="javascript:void(0)" onclick="openBillingModal('A-EISP')" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-    <span>💰</span> Απόδειξη Είσπραξης
-</a>
+    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ', '🔗 Πιστωτικό Συσχετιζόμενο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>🔗</span> Πιστωτικό Συσχετιζόμενο
+    </a>
 
-<a href="javascript:void(0)" onclick="openBillingModal('A-PLHR')" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-    <span>💸</span> Απόδειξη Πληρωμής
-</a>
+    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>💰</span> Απόδειξη Είσπραξης
+    </a>
+
+    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+        <span>💸</span> Απόδειξη Πληρωμής
+    </a>
                     
 </div>
                   

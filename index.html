@@ -602,6 +602,18 @@
     70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
 }
+     /* Το εφέ που κάνει το προφίλ να αναβοσβήνει */
+.blink-profile {
+    animation: triton-pulse 1.5s infinite;
+    border: 2px solid #0ea5e9 !important;
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+}
+
+@keyframes triton-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; border-color: #ef4444; }
+    100% { transform: scale(1); opacity: 1; }
+} 
 </style>
     
 </head>
@@ -663,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px;">Enter Access Key to Unlock</p>
         
         <input type="password" id="masterKey" 
-               onkeypress="if(event.key === 'Enter') unlockTriton()"
+               onkeypress="if(event.key === 'Enter') unlockTriton()" 
                placeholder="Κωδικός Ενοικίασης" 
                style="width: 100%; padding: 14px; border-radius: 10px; background: #1e293b; color: white; border: 1px solid #334155; text-align: center; font-size: 1.1rem; outline: none;">
         
@@ -671,23 +683,17 @@ document.addEventListener('DOMContentLoaded', () => {
         <p id="unlockError" style="color: #ef4444; font-size: 0.8rem; margin-top: 15px; display: none; font-weight: bold;">❌ Μη έγκυρο κλειδί πρόσβασης.</p>
     </div>
 
-    <div id="authGate" style="display: none; background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #1e293b;">
-    <h2 style="color: #7dd3fc; margin-bottom: 10px;">🚀 Είσοδος</h2>
-    <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px;">Συνδεθείτε στον λογαριασμό σας</p>
+    <div id="authGate" style="display: none; background: #0f172a; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #1e293b; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+        <h2 style="color: #7dd3fc; margin-bottom: 10px;">🚀 Είσοδος</h2>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px;">Συνδεθείτε στον λογαριασμό σας</p>
 
-    <button onclick="completeLogin()" style="background: #0284c7; color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; width: 100%; font-weight: bold;">
-        Είσοδος στο Σύστημα
-    </button>
-</div>
-   
-        
         <input type="email" id="userEmail" placeholder="Email Επιχείρησης" 
-               style="width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #1e293b; border-radius: 10px; background: #1e293b; color: white; outline: none;">
+               style="width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #334155; border-radius: 10px; background: #1e293b; color: white; outline: none;">
         
         <input type="password" id="userPass" 
                onkeypress="if(event.key === 'Enter') completeLogin()"
                placeholder="Ο Κωδικός σας" 
-               style="width: 100%; padding: 14px; margin-bottom: 20px; border: 1px solid #1e293b; border-radius: 10px; background: #1e293b; color: white; outline: none;">
+               style="width: 100%; padding: 14px; margin-bottom: 20px; border: 1px solid #334155; border-radius: 10px; background: #1e293b; color: white; outline: none;">
         
         <button onclick="completeLogin()" style="width: 100%; padding: 14px; background: #0ea5e9; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ΕΚΚΙΝΗΣΗ</button>
 
@@ -696,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <hr style="position: absolute; top: 50%; left: 0; width: 100%; border: 0; border-top: 1px solid #1e293b;">
         </div>
 
-        <button onclick="fakeGoogleLogin()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px;">
+        <button onclick="fakeGoogleLogin()" style="width: 100%; padding: 12px; background: white; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
             <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> 
             Σύνδεση με Google
         </button>
@@ -1599,14 +1605,17 @@ function checkPass() {
 // ==========================================
 
 // --- ΠΕΛΑΤΕΣ & ΠΡΟΜΗΘΕΥΤΕΣ ---
-function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
-function openSupplierModal()  { createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); }
+function openCustomerModal()  { window.createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
+function openSupplierModal()  { window.createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); }
 
 // --- ΠΩΛΗΣΕΙΣ & ΕΚΔΟΣΗ ---
-function openInvoiceModal()   { createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); }
-function openBillingModal()   { createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); }
-function openDeltioModal()    { createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); }
-function openReturnsModal()   { createNewWindow('returns.html', 'Επιστροφές / Πιστωτικά', 1100, 800); }
+function openInvoiceModal()   { window.createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); }
+function openBillingModal()   { window.createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); }
+function openDeltioModal()    { window.createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); }
+
+// --- ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ ---
+function openInventoryModal() { window.createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); }
+function openShoppingModal()  { window.createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); }
 
 // --- ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ ---
 function openInventoryModal() { createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); }

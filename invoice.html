@@ -2016,11 +2016,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        btn.innerText = "⏳ ΠΕΡΙΜΕΝΕ...";
+        btn.innerText = "⏳...";
         btn.disabled = true;
 
         try {
-            // Αυτό καλεί το αρχείο api/mydata.js που θα φτιάξεις στο GitHub
             const response = await fetch(`/api/mydata?afm=${afm}`);
             const data = await response.json();
 
@@ -2030,18 +2029,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
                 document.getElementById('newCustCity').value = data.result.poli || "";
                 document.getElementById('newCustZip').value = data.result.tk || "";
-                console.log("✅ Επιτυχία!");
             } else {
-                alert("❌ Το ΑΦΜ δεν βρέθηκε. Ελέγξτε τους κωδικούς στην IDEX.");
+                alert("❌ Το ΑΦΜ δεν βρέθηκε.");
             }
         } catch (error) {
-            alert("⚠️ Σφάλμα! Πρέπει να δημιουργήσετε τον φάκελο api/mydata.js στο GitHub.");
+            alert("⚠️ Σφάλμα σύνδεσης με το API.");
         } finally {
             btn.innerText = "🔍 myDATA";
             btn.disabled = false;
         }
     };
-
-</script> 
+// ΠΡΟΣΟΧΗ: ΚΛΕΙΝΟΥΜΕ ΤΟ SCRIPT ΜΙΑ ΦΟΡΑ ΚΑΙ ΜΕΤΑ ΤΟ BODY
+</script>
 </body>
 </html>

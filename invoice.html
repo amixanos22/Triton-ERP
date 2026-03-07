@@ -924,25 +924,17 @@ async function updateVendorDatalist() {
     }
 }
 
-async function saveNewVendorCloud() {
-    const name = document.getElementById('newV_name').value.trim();
-    if (!name) return alert("⚠️ Δώστε όνομα προμηθευτή!");
-
-    const vendorData = {
-        name: name,
-        afm: document.getElementById('newV_afm').value.trim(),
-        doy: document.getElementById('newV_doy').value.trim(),
-        address: document.getElementById('newV_address').value.trim(),
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    };
-
+// 🔱 Triton Sync: Αρχική φόρτωση προμηθευτών
+(async () => {
     try {
-        await db.ref('vendors').push(vendorData);
-        alert("✅ Ο προμηθευτής αποθηκεύτηκε!");
-        updateVendorDatalist();
-        if (typeof closeNewVendorModal === "function") closeNewVendorModal();
-    } catch (e) { alert("❌ Σφάλμα: " + e.message); }
-}
+        if (typeof updateVendorDatalist === 'function') {
+            await updateVendorDatalist();
+            console.log("✅ Triton: Η λίστα προμηθευτών ενημερώθηκε!");
+        }
+    } catch (e) {
+        console.error("❌ Triton Vendor Sync Error:", e);
+    }
+})();
 
 // ==========================================
 // 4. ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ (INVENTORY)

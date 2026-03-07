@@ -3,14 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <title>Τιμολόγηση - Πωλήσεις</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // 🔱 Μία δήλωση, καθαρή και σωστή
-    const _supabase = supabase.createClient(
-        'https://wrapp1693208337.supabase.co', 
-        '4c245d648733e2decccc879d631c633c'
-    );
-    console.log("🔱 Triton: Supabase Client Initialized.");
+    // Χρησιμοποιούμε var για να είναι σίγουρα global και προσβάσιμη παντού
+    var _supabase; 
+    
+    try {
+        _supabase = supabase.createClient(
+            'https://wrapp1693208337.supabase.co', 
+            '4c245d648733e2decccc879d631c633c'
+        );
+        console.log("✅ Triton: Supabase Client Ready!");
+    } catch (e) {
+        console.error("❌ Triton: Σφάλμα αρχικοποίησης Supabase:", e);
+    }
 </script>
   <style type="text/css">
     /* 1. ΒΑΣΙΚΟ LAYOUT & ΧΡΩΜΑΤΑ (ΑΠΟ ΤΟΝ ΚΑΛΟ ΣΟΥ ΚΩΔΙΚΑ) */
@@ -605,15 +610,37 @@ async function saveFullCustomer() {
         createdAt: firebase.database.ServerValue.TIMESTAMP
     };
 
-    try {
+   try {
+        // 1. Αποθήκευση στη Firebase Cloud
         await db.ref('customers').push(customerData);
-        alert("✅ Ο πελάτης " + name + " αποθηκεύτηκε!");
-        document.querySelectorAll('#newCustomerModal input').forEach(i => i.value = "");
-        document.getElementById('branchesContainer').innerHTML = "";
-        if (typeof closeNewCustomerModal === "function") closeNewCustomerModal();
-    } catch (e) { alert("❌ Σφάλμα: " + e.message); }
-}
+        alert("✅ Ο πελάτης " + name + " αποθηκεύτηκε με επιτυχία!");
 
+        // 2. Ενημέρωση του Dropdown στο τιμολόγιο χωρίς Refresh
+        const selectElement = document.getElementById('customerSelect');
+        if (selectElement) {
+            const option = new Option(name, name);
+            selectElement.add(option);
+            selectElement.value = name; // Επιλογή του νέου πελάτη αμέσως
+            
+            // Γέμισμα των πεδίων (ΑΦΜ, ΔΟΥ κλπ) στο τιμολόγιο
+            if (typeof fillCustomerData === 'function') fillCustomerData(name);
+        }
+
+        // 3. Καθαρισμός και αυτόματο κλείσιμο του Modal
+        document.querySelectorAll('#newCustomerModal input').forEach(i => i.value = "");
+        if (document.getElementById('branchesContainer')) {
+            document.getElementById('branchesContainer').innerHTML = "";
+        }
+        
+        // Κλείσιμο του Modal (είτε με Bootstrap είτε με τη δική σου συνάρτηση)
+        if (typeof closeNewCustomerModal === "function") {
+            closeNewCustomerModal();
+        }
+
+    } catch (e) { 
+        console.error("🔱 Triton Save Error:", e);
+        alert("❌ Σφάλμα κατά την αποθήκευση: " + e.message); 
+    }
 // --- 4. ΒΟΗΘΗΤΙΚΕΣ (Modal & Close) ---
 
 function openVendorModal() {
@@ -798,7 +825,14 @@ async function fillCustomerData(selectedName) {
 
     try {
         // Χρησιμοποιούμε await για να περιμένουμε τη Firebase
+        (async () => {
+    try {
         const snapshot = await db.ref('customers').once('value');
+        // ... ο υπόλοιπος κώδικας που ακολουθεί και χρησιμοποιεί το snapshot
+    } catch (e) {
+        console.error("🔱 Triton Sync Error:", e);
+    }
+})();
         const data = snapshot.val();
         
         if (data) {
@@ -2832,29 +2866,7 @@ window.calculateTotal = function() {
     if(totalDisplay) totalDisplay.innerText = grandTotal.toFixed(2).replace('.', ',') + " €";
 };
 
-// 3. INITIALIZATION
-document.addEventListener('DOMContentLoaded', function() {
-    // Σύνδεση Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
-        authDomain: "triton-invoicing.firebaseapp.com",
-        projectId: "triton-invoicing",
-        databaseURL: "https://triton-invoicing-default-rtdb.europe-west1.firebasedatabase.app"
-    };
-
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-    }
-
-    // Ημερομηνία
-    const now = new Date();
-    const dInput = document.getElementById('invoiceDate');
-    if(dInput) dInput.value = now.toISOString().split('T')[0];
-
-    // Πρώτη Γραμμή
-    window.addNewLine();
-});
+ 
 
 // 4. ENTER NAVIGATION
 document.addEventListener('keydown', function(e) {

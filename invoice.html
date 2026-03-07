@@ -467,7 +467,8 @@ input:focus, select:focus {
 // ==========================================
 
 var db;
-let allProducts = [];
+
+    allProducts = [];
 
 // 1. ΣΥΝΔΕΣΗ TRITON CLOUD
 const firebaseConfig = {
@@ -637,7 +638,7 @@ window.onclick = function(event) {
 // ==========================================
 
 var db;
-let allProducts = [];
+ allProducts = [];
 
 const firebaseConfig = {
     apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
@@ -714,26 +715,17 @@ document.addEventListener('keydown', function(e) {
 });
 
 // --- 4. ΦΟΡΤΩΣΗ ΠΡΟΪΟΝΤΩΝ (AUTOCOMPLETE) ---
-function loadProductsFromFirebase() {
-    if (!db) return;
-    db.ref('products').once('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            allProducts = Object.keys(data).map(key => ({
-                name: data[key].name,
-                price: data[key].price,
-                vat: data[key].vat || "24"
-            }));
-            console.log("📦 Προϊόντα Triton έτοιμα!");
-        }
-    });
-}
-
 function calculateRow(input) {
     const row = input.closest('tr');
     const q = parseFloat(row.querySelector('.row-qty').value) || 0;
     const p = parseFloat(row.querySelector('.row-price').value) || 0;
-    row.querySelector('.row-total').innerText = (q * p).toFixed(2) + "€";
+    
+    // Υπολογισμός καθαρής αξίας
+    const netAmount = q * p;
+    row.querySelector('.row-total').innerText = netAmount.toFixed(2) + "€";
+    
+    // Αν έχεις και συνολικό άθροισμα σελίδας, κάλεσέ το εδώ
+    if (window.updateFinalTotals) updateFinalTotals();
 }
 </script>
    <script>
@@ -777,25 +769,44 @@ function updateCustomerDatalist() {
     });
 }
 
-function fillCustomerData(selectedName) {
+async function fillCustomerData(selectedName) {
     if (!selectedName || !window.db) return;
-    db.ref('customers').once('value').then((snapshot) => {
+
+    try {
+        // Χρησιμοποιούμε await για να περιμένουμε τη Firebase
+        const snapshot = await db.ref('customers').once('value');
         const data = snapshot.val();
+        
         if (data) {
+            // Ψάχνουμε τον πελάτη με βάση το όνομα
             const customer = Object.values(data).find(c => (c.name || c.custName) === selectedName);
+            
             if (customer) {
+                // Λίστα με τα IDs και τις αντίστοιχες τιμές από τη βάση
                 const fields = {
-                    'custAfm': customer.afm, 'custDoy': customer.doy, 'custJob': customer.job,
-                    'custAddress': customer.address, 'custCity': customer.city, 'custZip': customer.zip,
-                    'custEmail': customer.email, 'custPhone': customer.phone
+                    'custAfm': customer.afm,
+                    'custDoy': customer.doy,
+                    'custJob': customer.job,
+                    'custAddress': customer.address || customer.dieythinsi, // Υποστήριξη και για τα δύο ονόματα
+                    'custCity': customer.city || customer.poli,
+                    'custZip': customer.zip || customer.tk,
+                    'custEmail': customer.email,
+                    'custPhone': customer.phone
                 };
+
+                // Αυτόματη συμπλήρωση όλων των πεδίων στην οθόνη
                 for (let id in fields) {
                     let element = document.getElementById(id);
-                    if (element) element.value = fields[id] || "";
+                    if (element) {
+                        element.value = fields[id] || "";
+                    }
                 }
+                console.log("🔱 Triton: Τα στοιχεία του πελάτη " + selectedName + " φορτώθηκαν!");
             }
         }
-    });
+    } catch (error) {
+        console.error("❌ Σφάλμα κατά τη φόρτωση στοιχείων πελάτη:", error);
+    }
 }
 
 function addBranchRow(valCode = "", valAddr = "") {
@@ -2830,7 +2841,6 @@ window.searchMyData = async function(e) {
     const afmInput = document.getElementById('newCustAfm');
     const afm = afmInput ? afmInput.value.trim() : "";
 
-    if (afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!");
 
     try {
         const data = await fetchAadeData(afm);
@@ -2870,43 +2880,66 @@ window.searchVendorMyData = async function(e) {
     } catch (error) { alert("⚠️ Σφάλμα API"); }
 };
 
-// 3. ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ (ΜΕ ΕΛΕΓΧΟ ΔΙΠΛΟΕΓΓΡΑΦΗΣ & AUTO-SELECT)
+// 3. ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ (ΣΩΣΤΑ ΔΟΜΗΜΕΝΗ)
 window.saveCustomer = async function() {
+    // 1. Έλεγχος αν η Supabase είναι έτοιμη
+    if (typeof _supabase === 'undefined') {
+        return alert("❌ Η σύνδεση με τη βάση δεδομένων δεν έχει ολοκληρωθεί ακόμα.");
+    }
+
     const customerData = {
-        onomasia: document.getElementById('newCustName').value,
-        afm: document.getElementById('newCustAfm').value,
-        doy: document.getElementById('newCustDoy').value,
-        job: document.getElementById('newCustJob').value,
-        dieythinsi: document.getElementById('newCustAddress').value,
-        poli: document.getElementById('newCustCity').value,
-        tk: document.getElementById('newCustZip').value,
-        email: document.getElementById('newCustEmail').value,
-        phone: document.getElementById('newCustPhone').value,
+        onomasia: document.getElementById('newCustName')?.value || "",
+        afm: document.getElementById('newCustAfm')?.value || "",
+        doy: document.getElementById('newCustDoy')?.value || "",
+        job: document.getElementById('newCustJob')?.value || "",
+        dieythinsi: document.getElementById('newCustAddress')?.value || "",
+        poli: document.getElementById('newCustCity')?.value || "",
+        tk: document.getElementById('newCustZip')?.value || "",
+        email: document.getElementById('newCustEmail')?.value || "",
+        phone: document.getElementById('newCustPhone')?.value || "",
         created_at: new Date()
     };
 
-    if (!customerData.afm || !customerData.onomasia) return alert("⚠️ Επωνυμία και ΑΦΜ υποχρεωτικά!");
+    if (!customerData.afm || !customerData.onomasia) {
+        return alert("⚠️ Επωνυμία και ΑΦΜ υποχρεωτικά!");
+    }
 
     try {
         // ΕΛΕΓΧΟΣ ΔΙΠΛΟΕΓΓΡΑΦΗΣ
-        const { data: exist } = await _supabase.from('customers').select('afm').eq('afm', customerData.afm).single();
-        if (exist) return alert("⚠️ Ο πελάτης υπάρχει ήδη!");
+        const { data: exist, error: checkError } = await _supabase
+            .from('customers')
+            .select('afm')
+            .eq('afm', customerData.afm)
+            .maybeSingle(); // Το maybeSingle δεν πετάει error αν δεν βρει τίποτα
+
+        if (exist) {
+            return alert("⚠️ Ο πελάτης με αυτό το ΑΦΜ υπάρχει ήδη!");
+        }
 
         // INSERT
-        const { error } = await _supabase.from('customers').insert([customerData]);
-        if (error) throw error;
+        const { error: insertError } = await _supabase
+            .from('customers')
+            .insert([customerData]);
 
-        alert("✅ Επιτυχής Αποθήκευση!");
+        if (insertError) throw insertError;
+
+        alert("✅ Ο πελάτης αποθηκεύτηκε επιτυχώς!");
         
-        // AUTO-SELECT ΣΤΟ DROPDOWN
+        // ΕΝΗΜΕΡΩΣΗ DROPDOWN
         const sel = document.getElementById('customerSelect');
         if (sel) {
             const opt = new Option(customerData.onomasia, customerData.afm, true, true);
             sel.add(opt);
-            $(sel).trigger('change');
+            // Αν χρησιμοποιείς Select2 ή παρόμοιο
+            if (typeof $ !== 'undefined') $(sel).trigger('change');
         }
-        closeNewCustomerModal();
-    } catch (err) { alert("❌ Σφάλμα: " + err.message); }
+        
+        if (typeof closeNewCustomerModal === 'function') closeNewCustomerModal();
+
+    } catch (err) { 
+        console.error("🔱 Triton Save Error:", err);
+        alert("❌ Σφάλμα: " + err.message); 
+    }
 };
 
 // 4. ΑΠΟΘΗΚΕΥΣΗ ΠΡΟΜΗΘΕΥΤΗ

@@ -1471,20 +1471,48 @@ function initDateTime() {
   
   
  
-    
   // --- 1. ΜΕΤΑΒΛΗΤΕΣ & ΕΚΚΙΝΗΣΗ ---  
-    
+
+// Δήλωση ΜΙΑ φορά στην αρχή - ΜΗΝ ΤΗΝ ΞΑΝΑΔΗΛΩΣΕΙΣ ΠΑΡΑΚΑΤΩ
 let allProducts = [];
 
 window.onload = function() {
     initTritonApp();
 };
 
-function initTritonApp() {
-    fillDateTime();            // Ενημέρωση Ημερομηνίας/Ώρας
-    loadProductsFromFirebase(); // Φόρτωση Προϊόντων
+// Την κάνουμε async για να επιτρέπονται τα await μέσα της
+async function initTritonApp() {
+    console.log("🔱 Triton: Εκκίνηση εφαρμογής...");
     
-    // Δημιουργία πρώτης γραμμής αν ο πίνακας είναι άδειος
+    // Ενημέρωση Ημερομηνίας
+    if (typeof fillDateTime === 'function') fillDateTime(); 
+    
+    try {
+        // Φόρτωση Προϊόντων με await για να είμαστε σίγουροι ότι ήρθαν
+        if (typeof loadProductsFromFirebase === 'function') {
+            await loadProductsFromFirebase(); 
+        }
+
+        // Δημιουργία πρώτης γραμμής αν ο πίνακας είναι άδειος
+        const tbody = document.getElementById('invoiceItemsBody');
+        if (tbody && tbody.children.length === 0) {
+            if (typeof addNewLine === 'function') addNewLine();
+        }
+        
+        console.log("🔱 Triton: Έτοιμο για χρήση!");
+    } catch (error) {
+        console.error("❌ Σφάλμα κατά την εκκίνηση:", error);
+    }
+}
+// Την κάνουμε async για να υποστηρίζει τα await που έχουμε παρακάτω
+async function initTritonApp() {
+    console.log("🔱 Triton: Εκκίνηση εφαρμογής...");
+    
+    fillDateTime(); 
+    
+    // Περιμένουμε να φορτώσουν τα προϊόντα πριν κάνουμε οτιδήποτε άλλο
+    await loadProductsFromFirebase(); 
+
     const tbody = document.getElementById('invoiceItemsBody');
     if (tbody && tbody.children.length === 0) {
         addNewLine();

@@ -942,63 +942,111 @@ async function updateVendorDatalist() {
 // 4. ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ (INVENTORY)
 // ==========================================
 async function saveItemToTriton() {
-    const name = document.getElementById('item_name').value.trim();
-    if (!name) return alert("⚠️ Δώστε όνομα είδους!");
+    const nameElem = document.getElementById('item_name');
+    if (!nameElem || !nameElem.value.trim()) return alert("⚠️ Δώστε όνομα είδους!");
+
+    // Χρήση του Global DB του Triton
+    const database = window.db || (typeof db !== 'undefined' ? db : null);
+    if (!database) return alert("❌ Σφάλμα: Η σύνδεση με τη βάση δεδομένων απέτυχε.");
 
     const itemData = {
         type: document.getElementById('item_type').value,
-        name: name,
+        name: nameElem.value.trim(),
         price: parseFloat(document.getElementById('item_price').value) || 0,
         stock: parseFloat(document.getElementById('item_initial_stock')?.value) || 0,
         createdAt: firebase.database.ServerValue.TIMESTAMP
     };
 
     try {
-        await db.ref('inventory').push(itemData);
-        alert("✅ Το είδος αποθηκεύτηκε!");
+        await database.ref('inventory').push(itemData);
+        alert("✅ Το είδος '" + itemData.name + "' αποθηκεύτηκε επιτυχώς!");
         if (typeof closeItemModal === "function") closeItemModal();
-    } catch (e) { alert("❌ Σφάλμα."); }
+    } catch (e) { 
+        console.error("🔱 Triton Inventory Error:", e);
+        alert("❌ Σφάλμα κατά την αποθήκευση στην αποθήκη."); 
+    }
 }
 
 // ==========================================
-// 5. myDATA SEARCH
+// 5. myDATA SEARCH (ΑΑΔΕ)
 // ==========================================
-async function searchMyData() {
-    const afm = document.getElementById('newCustAfm').value.trim();
+async function searchMyData(event) {
+    const afmInput = document.getElementById('newCustAfm');
+    if (!afmInput) return;
+    
+    const afm = afmInput.value.trim();
     const userID = "wrapp1693208337"; 
     const subscriptionKey = "4c245d648733e2decccc879d631c633c"; 
 
-    if (afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να είναι 9 ψηφία.");
+    if (afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να είναι ακριβώς 9 ψηφία.");
 
-    const btn = event.target;
-    btn.innerText = "⏳...";
+    // Αλλαγή κατάστασης κουμπιού
+    const btn = event ? (event.target || event.srcElement) : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "⏳ Αναμονή...";
+    }
     
     try {
+        // Proxy για παράκαμψη περιορισμών CORS
         const proxy = "https://cors-anywhere.herokuapp.com/";
         const targetUrl = `https://www.aade.gr/myDATA/v1/RequestVatInfo?vatNumber=${afm}`;
+        
         const response = await fetch(proxy + targetUrl, {
             method: 'GET',
-            headers: { 'aade-user-id': userID, 'ocp-apim-subscription-key': subscriptionKey }
+            headers: { 
+                'aade-user-id': userID, 
+                'ocp-apim-subscription-key': subscriptionKey 
+            }
         });
 
         if (response.ok) {
             const xmlText = await response.text();
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            
+            // Ανάκτηση στοιχείων από την απάντηση της ΑΑΔΕ
             const name = xmlDoc.getElementsByTagName("name")[0]?.textContent || "";
+            const doy = xmlDoc.getElementsByTagName("doyDescr")[0]?.textContent || "";
+            const street = xmlDoc.getElementsByTagName("addressStreet")[0]?.textContent || "";
+            const number = xmlDoc.getElementsByTagName("addressNumber")[0]?.textContent || "";
+            const city = xmlDoc.getElementsByTagName("addressCity")[0]?.textContent || "";
+            const zip = xmlDoc.getElementsByTagName("addressZipCode")[0]?.textContent || "";
+
             if (name) {
-                document.getElementById('newCustName').value = name;
-                alert("✅ Στοιχεία ανακτήθηκαν!");
+                // Αυτόματη συμπλήρωση πεδίων στο Modal
+                if (document.getElementById('newCustName')) document.getElementById('newCustName').value = name;
+                if (document.getElementById('newCustDoy')) document.getElementById('newCustDoy').value = doy;
+                if (document.getElementById('newCustAddress')) document.getElementById('newCustAddress').value = street + " " + number;
+                if (document.getElementById('newCustCity')) document.getElementById('newCustCity').value = city;
+                if (document.getElementById('newCustZip')) document.getElementById('newCustZip').value = zip;
+                
+                alert("✅ Επιτυχής ανάκτηση από myDATA!");
+            } else {
+                alert("⚠️ Το ΑΦΜ είναι έγκυρο, αλλά δεν επιστράφηκαν στοιχεία επιχείρησης.");
             }
+        } else {
+            throw new Error("Αδυναμία επικοινωνίας με τον διακομιστή της ΑΑΔΕ.");
         }
-    } catch (e) { alert("⚠️ Σφάλμα myDATA."); }
-    finally { btn.innerText = "🔍 myDATA"; }
+    } catch (e) { 
+        console.error("🔱 myDATA Search Error:", e);
+        alert("⚠️ Σφάλμα myDATA: Βεβαιωθείτε ότι έχετε ενεργοποιήσει το CORS Proxy."); 
+    } finally { 
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "🔍 myDATA";
+        }
+    }
 }
 
 // === ΒΟΗΘΗΤΙΚΕΣ ===
 function initDateTime() {
     const τωρα = new Date();
-    if(document.getElementById('invoiceDate')) document.getElementById('invoiceDate').value = τωρα.toISOString().split('T')[0];
+    const dateInput = document.getElementById('invoiceDate');
+    if (dateInput) {
+        // Μορφή YYYY-MM-DD για το input type="date"
+        dateInput.value = τωρα.toISOString().split('T')[0];
+    }
 }
 
 function calculateTotal() {

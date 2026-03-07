@@ -924,10 +924,13 @@ async function updateVendorDatalist() {
     }
 }
 
-// 🔱 Triton Sync: Αρχική φόρτωση προμηθευτών
+// 🔱 Triton Sync: Αρχική φόρτωση προμηθευτών (Διόρθωση Γραμμής 1500)
 (async () => {
     try {
-        if (typeof updateVendorDatalist === 'function') {
+        // Περιμένουμε τη σύνδεση της βάσης
+        const database = window.db || (typeof db !== 'undefined' ? db : null);
+        
+        if (database && typeof updateVendorDatalist === 'function') {
             await updateVendorDatalist();
             console.log("✅ Triton: Η λίστα προμηθευτών ενημερώθηκε!");
         }
@@ -935,7 +938,6 @@ async function updateVendorDatalist() {
         console.error("❌ Triton Vendor Sync Error:", e);
     }
 })();
-
 // ==========================================
 // 4. ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ (INVENTORY)
 // ==========================================

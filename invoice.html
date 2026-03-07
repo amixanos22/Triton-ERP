@@ -1,12 +1,14 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
   <title>Τιμολόγηση - Πωλήσεις</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // Αντικατάστησε με τα δικά σου στοιχεία από το Supabase Dashboard
-    const _supabase = supabase.createClient('wrapp1693208337', '4c245d648733e2decccc879d631c633c');
+    // 🔱 ΔΙΟΡΘΩΜΕΝΟ URL (Πρέπει να ξεκινάει με https:// και να τελειώνει σε .supabase.co)
+    const supabaseUrl = 'https://wrapp1693208337.supabase.co';
+    const supabaseKey = '4c245d648733e2decccc879d631c633c';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 </script>
   <style type="text/css">
     /* 1. ΒΑΣΙΚΟ LAYOUT & ΧΡΩΜΑΤΑ (ΑΠΟ ΤΟΝ ΚΑΛΟ ΣΟΥ ΚΩΔΙΚΑ) */

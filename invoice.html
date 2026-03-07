@@ -2191,55 +2191,78 @@ window.calculateTotals = function() {
 // 3. Εξαγωγή σε PDF
 window.generatePDF = async function() {
     const element = document.getElementById('printableArea');
-    if(!element) return alert("Σφάλμα: Δεν βρέθηκε η περιοχή εκτύπωσης!");
+    
+    if (!element) {
+        alert("Σφάλμα: Δεν βρέθηκε η περιοχή εκτύπωσης (ID: printableArea)!");
+        return;
+    }
 
-    element.style.display = 'block'; 
+    // Εμφάνιση της περιοχής για να την "τραβήξει" το html2pdf
+    element.style.display = 'block';
 
     try {
-        // Στοιχεία Πελάτη από τα input της Supabase/Modal
+        // 1. Μεταφορά στοιχείων κεφαλίδας
         document.getElementById('pdf_custName').innerText = document.getElementById('newCustName')?.value || "---";
         document.getElementById('pdf_custAfm').innerText = document.getElementById('newCustAfm')?.value || "---";
         document.getElementById('pdf_custAddress').innerText = document.getElementById('newCustAddress')?.value || "---";
         document.getElementById('pdf_date').innerText = new Date().toLocaleDateString('el-GR');
 
-        // Μεταφορά στοιχείων στον πίνακα του PDF
-        const pdfTableBody = document.getElementById('invoiceItemsBody'); 
-        pdfTableBody.innerHTML = ""; 
-        let netAmount = 0;
+        // 2. Μεταφορά γραμμών στον πίνακα του PDF
+        const pdfTableBody = document.getElementById('invoiceItemsBody');
+        if (pdfTableBody) {
+            pdfTableBody.innerHTML = ""; // Καθαρισμός παλιών δεδομένων
+            let netAmount = 0;
 
-        document.querySelectorAll('.item-row').forEach(row => {
-            const desc = row.querySelector('.row-desc').value;
-            const qty = row.querySelector('.row-qty').value;
-            const price = parseFloat(row.querySelector('.row-price').value);
-            const lineTotal = qty * price; // Εδώ μπορείς να προσθέσεις και το disc αν θες
+            document.querySelectorAll('.item-row').forEach(row => {
+                const desc = row.querySelector('.row-desc')?.value || "";
+                const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
+                const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
+                const lineTotal = qty * price;
 
-            if(desc) {
-                netAmount += lineTotal;
-                pdfTableBody.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px; color: white;">${desc}</td>
-                        <td style="text-align: center; color: white;">${qty}</td>
-                        <td style="text-align: right; color: white;">${price.toFixed(2)} €</td>
-                        <td style="text-align: right; font-weight: bold; color: white;">${lineTotal.toFixed(2)} €</td>
-                    </tr>
-                `;
+                if (desc.trim() !== "") {
+                    netAmount += lineTotal;
+                    pdfTableBody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #334155;">
+                            <td style="padding: 10px; color: white;">${desc}</td>
+                            <td style="text-align: center; color: white;">${qty}</td>
+                            <td style="text-align: right; color: white;">${price.toFixed(2)} €</td>
+                            <td style="text-align: right; font-weight: bold; color: white;">${lineTotal.toFixed(2)} €</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // 3. Ενημέρωση συνόλων στο PDF
+            const vat = netAmount * 0.24;
+            if (document.getElementById('pdf_netAmount')) {
+                document.getElementById('pdf_netAmount').innerText = netAmount.toFixed(2) + " €";
             }
-        });
+            if (document.getElementById('pdf_totalAmount')) {
+                document.getElementById('pdf_totalAmount').innerText = (netAmount + vat).toFixed(2) + " €";
+            }
+        }
 
-        document.getElementById('pdf_netAmount').innerText = netAmount.toFixed(2) + " €";
-        document.getElementById('pdf_totalAmount').innerText = (netAmount * 1.24).toFixed(2) + " €"; // Παράδειγμα με ΦΠΑ 24%
-
+        // 4. Ρυθμίσεις και Παραγωγή PDF
         const opt = {
-            margin: 10,
-            filename: 'Triton_Invoice.pdf',
-            html2canvas: { scale: 2, backgroundColor: '#020617' },
+            margin: 0,
+            filename: 'Triton_Invoice_' + new Date().getTime() + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#020617' // Τα χρώματα του Triton
+            },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
+        // Εδώ το await είναι πλέον έγκυρο γιατί η function είναι async
         await html2pdf().set(opt).from(element).save();
-    } catch (err) {
-        console.error(err);
+
+    } catch (error) {
+        console.error("Σφάλμα κατά την παραγωγή του PDF:", error);
+        alert("❌ Αποτυχία δημιουργίας PDF. Δείτε το console για λεπτομέρειες.");
     } finally {
+        // Κρύβουμε πάλι το template για να μη χαλάει το UI
         element.style.display = 'none';
     }
 };

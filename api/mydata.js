@@ -1,4 +1,24 @@
-  export default async function handler(req, res) {
+ import fetch from 'node-fetch';
+
+export default async function handler(req, res) {
+    // 🔱 ΕΠΙΤΡΕΠΟΥΜΕ ΤΗΝ ΠΡΟΣΒΑΣΗ ΑΠΟ ΠΑΝΤΟΥ (CORS)
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
+    const { afm } = req.query;
+    const USER_ID = 'wrapp1693208337'; 
+    const SUBSCRIPTION_KEY = '4c245d648733e2decccc879d631c633c';
+
+    // ... ο υπόλοιπος κώδικας (fetch στην ΑΑΔΕ κλπ)
+}
+export default async function handler(req, res) {
     const { afm } = req.query;
     
     // ⚠️ ΒΕΒΑΙΩΣΟΥ ΟΤΙ ΑΥΤΑ ΕΙΝΑΙ ΤΑ ΣΩΣΤΑ Subscription Keys από το myDATA portal

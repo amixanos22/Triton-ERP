@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
@@ -1775,7 +1775,7 @@ var updateUI = (id, value, isHtml = false) => {
 // TRITON ERP - TOTAL UNIFIED ENGINE (v3.0)
 // ==========================================
 
-// 1. GLOBAL UI & SEARCH FIXES (Αποφυγή ReferenceError)
+// 1. GLOBAL UI & SEARCH FIXES (Σύνδεση με Vercel & ΑΑΔΕ)
 var updateUI = function(id, value, isHtml) {
     var el = document.getElementById(id);
     if (el) {
@@ -1784,11 +1784,45 @@ var updateUI = function(id, value, isHtml) {
     }
 };
 
-var searchMyData = function() {
-    console.log("🔱 Triton: Search functionality active.");
+// 🔱 Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΕΡΝΕΙ ΤΑ ΣΤΟΙΧΕΙΑ ΑΠΟ ΤΗΝ ΑΑΔΕ ΜΕΣΩ VERCEL
+var searchMyData = async function() {
+    // Παίρνουμε το ΑΦΜ από το input του Modal
+    const afmInput = document.getElementById('newCustAfm');
+    const afm = afmInput ? afmInput.value.trim() : "";
+
+    if (!afm || afm.length !== 9) {
+        alert("⚠️ Παρακαλώ εισάγετε ένα έγκυρο ΑΦΜ (9 ψηφία).");
+        return;
+    }
+
+    console.log("🔱 Triton: Searching AADE for AFM:", afm);
+    
+    // ⚠️ ΑΝΤΙΚΑΤΑΣΤΗΣΕ ΤΟ URL ΜΕ ΤΟ ΠΡΑΓΜΑΤΙΚΟ ΣΟΥ VERCEL URL
+    const vercelUrl = `https://ΤΟ-PROJECT-ΣΟΥ.vercel.app/api/mydata?afm=${afm}`;
+
+    try {
+        const response = await fetch(vercelUrl);
+        const data = await response.json();
+
+        if (data.success && data.result) {
+            // Αυτόματη συμπλήρωση των πεδίων στο "New Customer Modal"
+            if (document.getElementById('newCustName')) document.getElementById('newCustName').value = data.result.onomasia;
+            if (document.getElementById('newCustDoy')) document.getElementById('newCustDoy').value = data.result.doy_descr;
+            if (document.getElementById('newCustAddress')) document.getElementById('newCustAddress').value = data.result.dieythinsi;
+            if (document.getElementById('newCustCity')) document.getElementById('newCustCity').value = data.result.poli;
+            if (document.getElementById('newCustZip')) document.getElementById('newCustZip').value = data.result.tk;
+            
+            console.log("✅ Triton Cloud: Στοιχεία ΑΑΔΕ ανακτήθηκαν επιτυχώς.");
+        } else {
+            alert("❌ Η ΑΑΔΕ απάντησε: " + (data.error || "Δεν βρέθηκαν στοιχεία."));
+        }
+    } catch (error) {
+        console.error("🔱 MyData Fetch Error:", error);
+        alert("❌ Αποτυχία σύνδεσης με το Vercel API. Ελέγξτε αν το Project είναι Online.");
+    }
 };
 
-// 2. CONFIG & INITIALIZATION
+// 2. CONFIG & INITIALIZATION (Firebase & Systems)
 var allProducts = allProducts || []; 
 var firebaseConfig = {
     apiKey: "AIzaSyAoxXk582MqZkrYHGY-k1nhy59VW0w0JWY",
@@ -1810,21 +1844,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Ημερομηνία & Προϊόντα
-    updateDateTime();
+    if (typeof updateDateTime === "function") updateDateTime();
     loadProductsFromFirebase();
     
-    // Αυτόματη προσθήκη πρώτης γραμμής στον πίνακα
+    // Αυτόματη προσθήκη πρώτης γραμμής στον πίνακα τιμολόγησης
     setTimeout(function() {
         var container = document.getElementById('invoiceItemsBody') || document.getElementById('itemsContainer');
         if(container && container.children.length === 0) {
-            addNewInvoiceRow();
+            if (typeof addNewInvoiceRow === "function") addNewInvoiceRow();
         }
     }, 500);
 });
 
+// 3. FIREBASE HELPER FUNCTIONS
+function loadProductsFromFirebase() {
+    if (!window.db) return;
+    
+    console.log("📦 Triton: Loading products...");
+    window.db.ref('products').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            allProducts = Object.values(data);
+            console.log("✅ Products loaded:", allProducts.length);
+        }
+    }).catch(err => console.error("❌ Firebase Load Error:", err));
+}
+
+// 4. UTILS
+function updateDateTime() {
+    const now = new Date();
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    updateUI('currentDateTime', now.toLocaleDateString('el-GR', options), false);
+}
 // 3. DATE & TIME LOGIC
 function updateDateTime() {
     var now = new Date();
+    // ISO format για τα input type="date" (YYYY-MM-DD)
     var dateStr = now.toISOString().split('T')[0];
     var timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
                   now.getMinutes().toString().padStart(2, '0');
@@ -1833,28 +1888,65 @@ function updateDateTime() {
     dFields.forEach(function(id) {
         var el = document.getElementById(id);
         if (el) {
-            if (el.tagName === 'INPUT') el.value = dateStr;
-            else el.innerText = now.toLocaleDateString('el-GR');
+            if (el.tagName === 'INPUT') {
+                el.value = dateStr;
+            } else {
+                // Για το PDF και τα Labels χρησιμοποιούμε την ελληνική μορφή
+                el.innerText = now.toLocaleDateString('el-GR');
+            }
         }
     });
 
     var tField = document.getElementById('docTime');
     if (tField) tField.value = timeStr;
     
-    updateUI('transDate', "📅 " + now.toLocaleDateString('el-GR'));
-    updateUI('transTime', "🕒 " + timeStr);
+    // Ενημέρωση των Live στοιχείων στο Header
+    updateUI('transDate', "📅 " + now.toLocaleDateString('el-GR'), false);
+    updateUI('transTime', "🕒 " + timeStr, false);
 }
 
-// 4. FIREBASE: LOAD PRODUCTS
+
+
+// 4. FIREBASE: LOAD PRODUCTS & AUTO-COMPLETE
 function loadProductsFromFirebase() {
-    if(!window.db) return;
+    if(!window.db) {
+        console.warn("⚠️ Firebase DB not initialized yet.");
+        return;
+    }
+
+    console.log("🔱 Triton: Συγχρονισμός προϊόντων από Firebase...");
+
     window.db.ref('products').once('value').then(function(snapshot) {
         var data = snapshot.val();
         if (data) {
-            allProducts = Object.values(data);
-            console.log("📦 Προϊόντα φορτώθηκαν:", allProducts.length);
+            // Μετατροπή των δεδομένων σε Array και καθαρισμός από null τιμές
+            allProducts = Object.values(data).filter(p => p !== null);
+            console.log("📦 " + allProducts.length + " Προϊόντα φορτώθηκαν επιτυχώς.");
+            
+            // Αν θέλεις να ενημερώνονται αυτόματα τα DataLists του HTML
+            updateProductDataLists(); 
+        } else {
+            allProducts = [];
+            console.log("ℹ️ Η βάση προϊόντων είναι κενή.");
         }
-    }).catch(function(e) { console.error("Firebase Error:", e); });
+    }).catch(function(e) { 
+        console.error("❌ Firebase Load Error:", e); 
+    });
+}
+
+
+
+// 🔱 HELPER ΓΙΑ ΤΑ ΠΡΟΪΟΝΤΑ
+function updateProductDataLists() {
+    var list = document.getElementById('productList'); // Το <datalist> στο HTML σου
+    if (!list) return;
+    
+    list.innerHTML = ""; // Καθαρισμός παλιών
+    allProducts.forEach(function(p) {
+        var option = document.createElement('option');
+        option.value = p.name || p.description;
+        list.appendChild(option);
+    });
 }
 
 // 5. UI: ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ENTER

@@ -1,5 +1,5 @@
  export default async function handler(req, res) {
-    // 🔱 1. ΡΥΘΜΙΣΕΙΣ CORS (Για να επιτρέπεται η κλήση από το Triton ERP)
+    // 🔱 1. ΡΥΘΜΙΣΕΙΣ CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -10,17 +10,17 @@
         return;
     }
 
-    // 🔱 2. ΠΑΡΑΜΕΤΡΟΙ & ΚΛΕΙΔΙΑ
+    // 🔱 2. ΠΑΡΑΜΕΤΡΟΙ & ΚΛΕΙΔΙΑ (Βεβαιώσου ότι το wrapp είναι το σωστό από την ΑΑΔΕ)
     const { afm } = req.query;
     const USER_ID = 'wrapp1693208337'; 
     const SUBSCRIPTION_KEY = 'Triton2026!';
 
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 
-    const aadeUrl = `https://www.aade.gr/taxisnet/mytaxisnet/v1/opendata/rgwsBasikaStoixeiaN?afm=${afm}`;
+    // ✅ ΔΙΟΡΘΩΜΕΝΟ URL ΓΙΑ ΕΙΔΙΚΟΥΣ ΚΩΔΙΚΟΥΣ (GSIS)
+    const aadeUrl = `https://www1.gsis.gr/webtax2/wsrgwsv1/rgws/RgWsBasikaStoixeiaN?afm=${afm}`;
 
     try {
-        // Χρησιμοποιούμε το ενσωματωμένο fetch του Node.js (Vercel)
         const response = await fetch(aadeUrl, {
             method: 'GET',
             headers: {
@@ -39,16 +39,22 @@
         };
 
         // 🔱 3. ΕΛΕΓΧΟΣ ΣΦΑΛΜΑΤΩΝ ΑΑΔΕ
-        if (xmlText.includes('error_descr') || xmlText.includes('faultstring')) {
-            const errorMsg = getValue('error_descr') || "Λάθος κωδικοί ΑΑΔΕ ή μη εξουσιοδοτημένη πρόσβαση";
+        if (xmlText.includes('error_descr') || xmlText.includes('faultstring') || xmlText.includes('Error')) {
+            let errorMsg = getValue('error_descr') || getValue('faultstring') || "Λάθος κωδικοί ή μη εξουσιοδοτημένο ΑΦΜ";
             return res.status(200).json({ success: false, error: errorMsg });
         }
 
-        // 🔱 4. ΕΠΙΣΤΡΟΦΗ ΔΕΔΟΜΕΝΩΝ ΣΕ JSON
+        // 🔱 4. ΕΠΙΣΤΡΟΦΗ ΔΕΔΟΜΕΝΩΝ
+        const onomasia = getValue('onomasia');
+
+        if (!onomasia) {
+            return res.status(200).json({ success: false, error: "Δεν βρέθηκαν στοιχεία για αυτό το ΑΦΜ" });
+        }
+
         res.status(200).json({
-            success: xmlText.includes('onomasia'),
+            success: true,
             result: {
-                onomasia: getValue('onomasia'),
+                onomasia: onomasia,
                 doy_descr: getValue('doy_descr'),
                 drastiriotita: getValue('j031_descr'),
                 dieythinsi: getValue('ad_od_descr') + " " + getValue('ad_arith'),

@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
@@ -1797,8 +1797,8 @@ var searchMyData = async function() {
 
     console.log("🔱 Triton: Searching AADE for AFM:", afm);
     
-    // ⚠️ ΑΝΤΙΚΑΤΑΣΤΗΣΕ ΤΟ URL ΜΕ ΤΟ ΠΡΑΓΜΑΤΙΚΟ ΣΟΥ VERCEL URL
-    const vercelUrl = `https://ΤΟ-PROJECT-ΣΟΥ.vercel.app/api/mydata?afm=${afm}`;
+    // ✅ ΤΩΡΑ ΒΑΖΟΥΜΕ ΤΟ ΔΙΚΟ ΣΟΥ ΠΡΑΓΜΑΤΙΚΟ URL
+    const vercelUrl = `https://triton-erp.vercel.app/api/mydata?afm=${afm}`;
 
     try {
         const response = await fetch(vercelUrl);
@@ -1821,7 +1821,6 @@ var searchMyData = async function() {
         alert("❌ Αποτυχία σύνδεσης με το Vercel API. Ελέγξτε αν το Project είναι Online.");
     }
 };
-
 // 2. CONFIG & INITIALIZATION (Firebase & Systems)
 var allProducts = allProducts || []; 
 var firebaseConfig = {

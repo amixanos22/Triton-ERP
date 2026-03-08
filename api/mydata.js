@@ -1,4 +1,5 @@
  export default async function handler(req, res) {
+    // 🔱 Ρυθμίσεις πρόσβασης (CORS)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -11,9 +12,9 @@
 
     const { afm } = req.query;
     
-    // 🔱 ΒΑΖΟΥΜΕ ΤΟΥΣ ΚΩΔΙΚΟΥΣ ΠΟΥ ΦΤΙΑΞΑΜΕ ΓΙΑ ΤΟ TRITON
-    const USER_ID = 'ΕΔΩ_ΒΑΛΕ_ΤΟ_WRAPP_ΠΟΥ_ΓΡΑΦΕΙ_ΔΙΠΛΑ_ΣΤΟ_TRITON_ERP'; 
-    const SUBSCRIPTION_KEY = 'Triton2026!'; 
+    // 🔱 ΟΙ ΔΙΚΟΙ ΣΟΥ ΚΑΘΑΡΟΙ ΚΩΔΙΚΟΙ TRITON
+    const USER_ID = 'wrapp1693208337'; 
+    const SUBSCRIPTION_KEY = 'dee254ebbe145e68a4b7077f5afa5bb8'; 
 
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 
@@ -36,6 +37,7 @@
             return match ? match[1].trim() : "";
         };
 
+        // Έλεγχος σφαλμάτων ΑΑΔΕ
         if (xmlText.includes('error_descr') || xmlText.includes('faultstring')) {
             const errorMsg = getValue('error_descr') || getValue('faultstring');
             return res.status(200).json({ success: false, error: errorMsg });
@@ -44,18 +46,19 @@
         const onomasia = getValue('onomasia');
         if (!onomasia) return res.status(200).json({ success: false, error: "ΑΦΜ μη έγκυρο" });
 
+        // 🔱 ΕΠΙΤΥΧΙΑ! Επιστροφή στοιχείων
         res.status(200).json({
             success: true,
             result: {
                 onomasia: onomasia,
                 doy_descr: getValue('doy_descr'),
                 drastiriotita: getValue('j031_descr'),
-                dieythinsi: getValue('ad_od_descr') + " " + getValue('ad_arith'),
+                dieythinsi: (getValue('ad_od_descr') + " " + getValue('ad_arith')).trim(),
                 poli: getValue('ad_poli_descr'),
                 tk: getValue('ad_tk')
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: "Σφάλμα" });
+        res.status(500).json({ success: false, error: "Αποτυχία σύνδεσης" });
     }
 }

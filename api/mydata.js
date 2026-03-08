@@ -13,7 +13,7 @@
     // 🔱 2. ΠΑΡΑΜΕΤΡΟΙ & ΚΛΕΙΔΙΑ
     const { afm } = req.query;
     const USER_ID = 'wrapp1693208337'; 
-    const SUBSCRIPTION_KEY = '4c245d648733e2decccc879d631c633c';
+    const SUBSCRIPTION_KEY = 'Triton2026!';
 
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 

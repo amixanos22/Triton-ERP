@@ -253,6 +253,31 @@ input:focus, select:focus {
     background: #475569;
     border-radius: 10px;
 }
+    /* Custom Scrollbar για το Triton Autocomplete */
+.autocomplete-items::-webkit-scrollbar {
+    width: 6px;
+}
+.autocomplete-items::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+.autocomplete-items::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
+
+/* highlight για πλοήγηση με πληκτρολόγιο */
+.autocomplete-active {
+    background-color: #0ea5e9 !important; 
+    color: #ffffff !important;
+}
+    @keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#newCustomerModal > div {
+    animation: modalFadeIn 0.3s ease-out;
+}
 </style>
 </head>
  <body>
@@ -759,12 +784,17 @@ function updateFullInvoiceTotals() {
 // --- 6. ΕΚΔΟΣΗ PDF & QR CODE ---
 window.finalizeAndPrint = async function() {
     const element = document.getElementById('printableArea');
-    if (!element) return alert("❌ Σφάλμα: Δεν βρέθηκε το Template εκτύπωσης!");
+    if (!element) return alert("❌ Σφάλμα: Δεν βρέθηκε το Template εκτύπωσης (printableArea)!");
+
     const name = document.getElementById('newCustName')?.value || "Customer";
+    
+    // Εμφάνιση για το "φωτογράφισμα" του PDF
     element.style.display = 'block';
+
     try {
         const pdfTableBody = document.getElementById('pdf_itemsList');
-        const rows = document.querySelectorAll('.item-row');
+        const rows = document.querySelectorAll('.item-row'); // Σιγουρέψου ότι οι γραμμές σου έχουν class "item-row"
+        
         if (pdfTableBody) {
             pdfTableBody.innerHTML = ""; 
             rows.forEach(row => {
@@ -772,75 +802,71 @@ window.finalizeAndPrint = async function() {
                 const desc = row.querySelector('.row-desc')?.value || "---";
                 const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
                 const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
+                
                 if (qty > 0) {
-                    pdfTableBody.innerHTML += `<tr><td style="padding: 8px;">${sku}</td><td style="padding: 8px;">${desc}</td><td style="padding: 8px; text-align: center;">${qty}</td><td style="padding: 8px; text-align: right;">${price.toFixed(2)} €</td></tr>`;
+                    pdfTableBody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px; font-size:11px;">${sku}</td>
+                            <td style="padding: 8px; font-size:11px;">${desc}</td>
+                            <td style="padding: 8px; font-size:11px; text-align: center;">${qty}</td>
+                            <td style="padding: 8px; font-size:11px; text-align: right;">${price.toFixed(2)} €</td>
+                        </tr>`;
                 }
             });
         }
-        const finalTotal = updateFullInvoiceTotals();
+
+        // Ενημέρωση συνόλων πριν το PDF
+        if (typeof updateFullInvoiceTotals === 'function') {
+            updateFullInvoiceTotals();
+        }
+
+        // 🔱 QR CODE GENERATION
         const qrContainer = document.getElementById('pdf_qrcode');
         if (qrContainer) {
-            const qrText = `TritonERP|Inv:${Date.now()}|Total:${finalTotal.toFixed(2)}`;
+            const totalDisplay = document.getElementById('pdf_totalGrand')?.innerText || "0";
+            const qrText = `TritonERP|Cust:${name}|Total:${totalDisplay}|Date:${new Date().toISOString()}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrText)}`;
             qrContainer.innerHTML = `<img src="${qrUrl}" style="width:100px; height:100px;" />`;
         }
-        const opt = { margin: 10, filename: `Triton_Invoice_${name.replace(/\s+/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        await new Promise(resolve => setTimeout(resolve, 800));
-        if (typeof html2pdf !== 'undefined') { await html2pdf().set(opt).from(element).save(); alert("✅ Το PDF εκδόθηκε!"); }
-    } catch (error) { console.error(error); } finally { if (element) element.style.display = 'none'; }
-}; 
 
-// --- 7. FIREBASE & AUTOCOMPLETE ---
-window.loadProductsFromFirebase = async function() {
-    if (typeof db === 'undefined' || !db) return;
+        // Ρυθμίσεις PDF
+        const opt = { 
+            margin: 10, 
+            filename: `Triton_Inv_${name.replace(/\s+/g, '_')}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { scale: 2, useCORS: true }, 
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+        };
+
+        await new Promise(resolve => setTimeout(resolve, 800)); // Αναμονή για το QR Image
+
+        if (typeof html2pdf !== 'undefined') {
+            await html2pdf().set(opt).from(element).save();
+            alert("✅ Το παραστατικό εκδόθηκε επιτυχώς!");
+        } else {
+            alert("❌ Λείπει η βιβλιοθήκη html2pdf!");
+        }
+
+    } catch (error) {
+        console.error("🔱 PDF Error:", error);
+    } finally {
+        element.style.display = 'none'; // Κρύψιμο ξανά
+    }
+};
+
+// --- 7. AUTOCOMPLETE ΓΙΑ ΠΡΟΪΟΝΤΑ ---
+// (Χρησιμοποίησε τη Supabase αντί για db.ref αν είσαι σε Supabase)
+window.loadProductsForAutocomplete = async function() {
+    if (typeof _supabase === 'undefined') return;
     try {
-        const snapshot = await db.ref('products').once('value');
-        const data = snapshot.val();
+        const { data, error } = await _supabase.from('products').select('*');
         if (data) {
-            window.allProducts = Object.keys(data).map(key => ({
-                name: data[key].name, price: data[key].price, vat: data[key].vat || "24", sku: data[key].sku || ""
+            window.allProducts = data.map(p => ({
+                name: p.name, price: p.price, vat: p.vat || "24", sku: p.sku || ""
             }));
         }
     } catch (e) { console.error(e); }
 };
-
-document.addEventListener('input', function(e) {
-    if (!e.target || !e.target.classList.contains('row-desc')) return;
-    const query = (e.target.value || "").toLowerCase();
-    if (query.length < 2) { closeAllLists(); return; }
-    if (Array.isArray(window.allProducts)) {
-        const matches = window.allProducts.filter(p => p.name.toLowerCase().includes(query));
-        showProductSuggestions(e.target, matches);
-    }
-});
-
-function showProductSuggestions(inputEl, matches) {
-    closeAllLists();
-    if (matches.length === 0) return;
-    const list = document.createElement("DIV");
-    list.setAttribute("class", "autocomplete-items");
-    inputEl.parentNode.appendChild(list);
-    matches.forEach(p => {
-        const item = document.createElement("DIV");
-        item.innerHTML = `<strong>${p.name}</strong> - ${p.price}€`;
-        item.onclick = () => {
-            const row = inputEl.closest('tr');
-            inputEl.value = p.name;
-            row.querySelector('.row-price').value = p.price;
-            row.querySelector('.row-vat').value = p.vat;
-            row.querySelector('.row-sku').value = p.sku;
-            updateFullInvoiceTotals();
-            closeAllLists();
-            row.querySelector('.row-qty').focus();
-        };
-        list.appendChild(item);
-    });
-}
-
-function closeAllLists() {
-    const x = document.getElementsByClassName("autocomplete-items");
-    while (x.length > 0) x[0].remove();
-}
 </script>
  <div id="newCustomerModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow-y:auto; align-items:center; justify-content:center; padding: 20px;">
     <div style="background:white; width:95%; max-width:850px; margin:auto; padding:25px; border-radius:15px; font-family: sans-serif; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 8px solid #020617;">
@@ -911,10 +937,24 @@ function closeAllLists() {
                 </div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #eee; padding-top:20px;">
-            <button onclick="closeNewCustomerModal()" style="background:#64748b; color:white; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:bold;">ΑΚΥΡΩΣΗ</button>
-            <button onclick="saveFullCustomer()" style="background:#020617; color:#7dd3fc; border:2px solid #0ea5e9; padding:12px 35px; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);">ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ 💾</button>
-        </div>
+       <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #eee; padding-top:20px; margin-top:20px;">
+    <button type="button" 
+            onclick="closeNewCustomerModal()" 
+            style="background:#64748b; color:white; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:bold; transition: opacity 0.2s;"
+            onmouseover="this.style.opacity='0.8'" 
+            onmouseout="this.style.opacity='1'">
+        ΑΚΥΡΩΣΗ
+    </button>
+    
+    <button type="button" 
+            id="btnSaveCustomer"
+            onclick="saveFullCustomer(event)" 
+            style="background:#020617; color:#7dd3fc; border:2px solid #0ea5e9; padding:12px 35px; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2); transition: all 0.2s;"
+            onmouseover="this.style.background='#0ea5e9'; this.style.color='#ffffff';" 
+            onmouseout="this.style.background='#020617'; this.style.color='#7dd3fc';">
+        ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ 💾
+    </button>
+</div>
     </div>
 </div>
 <div style="border:1px solid #e2e8f0; padding:15px; border-radius:10px; background:#f8fafc;">

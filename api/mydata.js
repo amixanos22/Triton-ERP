@@ -11,10 +11,9 @@
     }
 
     // 🔱 2. ΠΑΡΑΜΕΤΡΟΙ & ΚΛΕΙΔΙΑ (Βεβαιώσου ότι το wrapp είναι το σωστό από την ΑΑΔΕ)
-    const { afm } = req.query;
-    const USER_ID = 'wrapp1693208337'; 
-    const SUBSCRIPTION_KEY = 'Triton2026!';
-
+   const { afm } = req.query;
+const USER_ID = 'wrapp1693208337'; 
+const SUBSCRIPTION_KEY = '4c245d648733e2decccc879d631c633c';
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 
     // ✅ ΔΙΟΡΘΩΜΕΝΟ URL ΓΙΑ ΕΙΔΙΚΟΥΣ ΚΩΔΙΚΟΥΣ (GSIS)

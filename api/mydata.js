@@ -1,5 +1,4 @@
  export default async function handler(req, res) {
-    // 🔱 Ρυθμίσεις πρόσβασης (CORS)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -12,9 +11,9 @@
 
     const { afm } = req.query;
     
-    // 🔱 ΟΙ ΔΙΚΟΙ ΣΟΥ ΚΑΘΑΡΟΙ ΚΩΔΙΚΟΙ TRITON
-    const USER_ID = 'wrapp1693208337'; 
-    const SUBSCRIPTION_KEY = 'dee254ebbe145e68a4b7077f5afa5bb8'; 
+    // 🔱 ΟΙ ΝΕΟΙ ΚΩΔΙΚΟΙ ΣΟΥ
+    const USER_ID = 'TritonPRO'; 
+    const SUBSCRIPTION_KEY = '0d7bb8bb96e270fae42f699881ccce38'; 
 
     if (!afm) return res.status(400).json({ error: "Λείπει το ΑΦΜ" });
 
@@ -37,7 +36,6 @@
             return match ? match[1].trim() : "";
         };
 
-        // Έλεγχος σφαλμάτων ΑΑΔΕ
         if (xmlText.includes('error_descr') || xmlText.includes('faultstring')) {
             const errorMsg = getValue('error_descr') || getValue('faultstring');
             return res.status(200).json({ success: false, error: errorMsg });
@@ -46,7 +44,6 @@
         const onomasia = getValue('onomasia');
         if (!onomasia) return res.status(200).json({ success: false, error: "ΑΦΜ μη έγκυρο" });
 
-        // 🔱 ΕΠΙΤΥΧΙΑ! Επιστροφή στοιχείων
         res.status(200).json({
             success: true,
             result: {

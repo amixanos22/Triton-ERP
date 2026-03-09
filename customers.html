@@ -4,55 +4,28 @@
     <meta charset="UTF-8">
     <title>Triton ERP - Πελατολόγιο & myDATA</title>
     <style>
-        /* ΕΞΑΦΑΝΙΣΗ ΜΠΑΡΑΣ BLOGGER */
         #navbar-iframe { display: none !important; }
         body { top: 0 !important; }
-
-        :root { 
-            --triton-blue: #0ea5e9; 
-            --triton-dark: #0f172a; 
-            --triton-bg: #f8fafc; 
-            --triton-border: #cbd5e1; 
-        }
-        
+        :root { --triton-blue: #0ea5e9; --triton-dark: #0f172a; --triton-bg: #f8fafc; --triton-border: #cbd5e1; }
         body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: #1e293b; }
-
-        .container { 
-            max-width: 1100px; 
-            margin: 50px auto; 
-            background: white; 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
-        }
-
+        .container { max-width: 1100px; margin: 50px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; }
         .search-box { padding: 12px 18px; width: 320px; border: 1px solid var(--triton-border); border-radius: 10px; outline: none; background: #f1f5f9; }
         .btn-add { background: var(--triton-dark); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: 800; text-transform: uppercase; }
-
-        /* TABLE */
+        .btn-settings { background: #64748b; color: white; border: none; padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 18px; }
+        
         .customers-table { width: 100%; border-collapse: collapse; }
         .customers-table th { background: #f1f5f9; color: #64748b; padding: 15px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--triton-border); }
         .customers-table td { padding: 18px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .cust-name-cell { font-weight: 700; color: var(--triton-dark); }
-
-        /* MODAL */
+        
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         .modal-content { background: white; width: 850px; margin: 50px auto; padding: 35px; border-radius: 15px; max-height: 85vh; overflow-y: auto; }
-        
         .section-title { font-size: 11px; color: var(--triton-blue); border-bottom: 1px solid #e0f2fe; padding-bottom: 6px; margin: 25px 0 15px 0; font-weight: 900; text-transform: uppercase; }
-        
         label { display: block; font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
         input { width: 100%; padding: 12px; border: 1px solid var(--triton-border); border-radius: 8px; font-weight: 600; box-sizing: border-box; font-size: 14px; }
         
-        /* MYDATA SEARCH BOX */
-        .afm-search-group { display: flex; gap: 8px; }
-        .btn-lookup { background: var(--triton-blue); color: white; border: none; border-radius: 8px; padding: 0 20px; cursor: pointer; font-size: 18px; transition: 0.2s; }
-        .btn-lookup:hover { background: var(--triton-dark); }
-
-        .branch-row { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 40px; gap: 10px; align-items: center; }
-        .action-icon { border: none; background: none; cursor: pointer; font-size: 18px; padding: 5px; border-radius: 6px; }
-        .action-icon:hover { background: #f1f5f9; }
+        .status-pill { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #f1f5f9; color: #64748b; }
+        .status-sent { background: #dcfce7; color: #166534; }
     </style>
 </head>
 <body>
@@ -60,10 +33,11 @@
 <div class="container">
     <div class="header-actions">
         <div>
-            <h1 style="margin:0; font-size: 32px; color: var(--triton-dark); letter-spacing: -1px;">Πελατολόγιο</h1>
-            <p style="margin:5px 0 0; color: #64748b; font-weight: 500;">Διαχείριση στοιχείων myDATA & Υποκαταστημάτων</p>
+            <h1 style="margin:0; font-size: 32px; color: var(--triton-dark); letter-spacing: -1px;">Triton ERP</h1>
+            <p style="margin:5px 0 0; color: #64748b; font-weight: 500;">myDATA Ready | Διαχείριση ELATI PRODUCTS</p>
         </div>
-        <div style="display:flex; gap:15px;">
+        <div style="display:flex; gap:10px;">
+            <button class="btn-settings" onclick="openSettings()" title="Ρυθμίσεις myDATA">⚙️</button>
             <input type="text" id="custSearch" class="search-box" placeholder="Αναζήτηση..." onkeyup="filter()">
             <button class="btn-add" onclick="openModal()">+ Νέος Πελάτης</button>
         </div>
@@ -72,10 +46,9 @@
     <table class="customers-table">
         <thead>
             <tr>
-                <th style="width:40%">Επωνυμία</th>
+                <th style="width:35%">Επωνυμία</th>
                 <th>ΑΦΜ</th>
-                <th>Πόλη</th>
-                <th>Τηλέφωνο</th>
+                <th>myDATA MARK</th>
                 <th style="text-align:right">Ενέργειες</th>
             </tr>
         </thead>
@@ -83,112 +56,121 @@
     </table>
 </div>
 
+<div id="settingsModal" class="modal">
+    <div class="modal-content" style="width:500px;">
+        <h2 style="color: var(--triton-dark);">Ρυθμίσεις myDATA 🔱</h2>
+        <div class="section-title">Κωδικοί API ΑΑΔΕ</div>
+        <label>AADE Username (wrapp...)</label>
+        <input type="text" id="sUser" placeholder="π.χ. wrapp1234567">
+        <br><br>
+        <label>AADE Subscription Key</label>
+        <input type="text" id="sKey" placeholder="Το μακρύ κλειδί σας">
+        <br><br>
+        <label>Περιβάλλον</label>
+        <select id="sEnv" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--triton-border);">
+            <option value="dev">Εκπαιδευτικό (Sandbox)</option>
+            <option value="prod">Πραγματικό (Production)</option>
+        </select>
+        <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closeSettings()" style="padding:10px 20px; border:none; background:#f1f5f9; cursor:pointer;">ΚΛΕΙΣΙΜΟ</button>
+            <button onclick="saveSettings()" style="padding:10px 30px; background:var(--triton-blue); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">ΑΠΟΘΗΚΕΥΣΗ</button>
+        </div>
+    </div>
+</div>
+
 <div id="custModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0; color: var(--triton-dark);">Στοιχεία Συνεργάτη</h2>
-        
+        <h2 id="modalTitle">Στοιχεία Συνεργάτη</h2>
         <div class="section-title">Αυτόματη Αναζήτηση myDATA</div>
         <div style="display: grid; grid-template-columns: 1.5fr 3fr 1fr; gap: 15px;">
             <div>
                 <label>ΑΦΜ</label>
-                <div class="afm-search-group">
-                    <input type="text" id="mAfm" maxlength="9" placeholder="9 ψηφία">
-                    <button class="btn-lookup" onclick="fetchAadeData()" title="Αναζήτηση στην ΑΑΔΕ">🔍</button>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="mAfm" maxlength="9">
+                    <button onclick="fetchAadeData()" style="background:var(--triton-blue); color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer;">🔍</button>
                 </div>
             </div>
-            <div><label>Επωνυμία / Ονοματεπώνυμο</label><input type="text" id="mName"></div>
+            <div><label>Επωνυμία</label><input type="text" id="mName"></div>
             <div><label>ΔΟΥ</label><input type="text" id="mDoy"></div>
         </div>
-
-        <div class="section-title">Διεύθυνση Έδρας</div>
-        <div style="display: grid; grid-template-columns: 2fr 1.2fr 0.8fr; gap: 15px;">
-            <div><label>Οδός & Αριθμός</label><input type="text" id="mAddr"></div>
+        <div class="section-title">Διεύθυνση & Επικοινωνία</div>
+        <div style="display: grid; grid-template-columns: 2fr 1.2fr 1fr; gap: 15px;">
+            <div><label>Οδός</label><input type="text" id="mAddr"></div>
             <div><label>Πόλη</label><input type="text" id="mCity"></div>
-            <div><label>Τ.Κ.</label><input type="text" id="mZip"></div>
-        </div>
-
-        <div class="section-title">Επικοινωνία & CRM</div>
-        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px;">
             <div><label>Τηλέφωνο</label><input type="text" id="mPhone"></div>
-            <div><label>Ονόματα για Γιορτές</label><input type="text" id="mContacts" placeholder="π.χ. Νίκος, Μαρία"></div>
         </div>
-
-        <div class="section-title">Υποκαταστήματα / Σημεία Παράδοσης</div>
-        <div id="branchContainer"></div>
-        <button onclick="addBranch()" style="width:100%; padding:10px; border:1px dashed var(--triton-blue); background:#f0f9ff; color:var(--triton-blue); font-weight:800; cursor:pointer; margin-top:10px; border-radius:8px;">+ ΠΡΟΣΘΗΚΗ ΔΙΕΥΘΥΝΣΗΣ ΠΑΡΑΔΟΣΗΣ</button>
-
-        <div style="margin-top:40px; display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #f1f5f9; padding-top:20px;">
-            <button onclick="closeModal()" style="padding:14px 30px; border:none; border-radius:10px; cursor:pointer; font-weight:bold; color:#64748b; background:#f1f5f9;">ΑΚΥΡΩΣΗ</button>
-            <button onclick="saveCustomer()" style="padding:14px 50px; background:var(--triton-blue); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:800; text-transform:uppercase;">ΑΠΟΘΗΚΕΥΣΗ</button>
+        <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:12px;">
+            <button onclick="closeModal()" style="padding:12px 20px; border:none; background:#f1f5f9; cursor:pointer;">ΑΚΥΡΩΣΗ</button>
+            <button onclick="saveCustomer()" style="padding:12px 40px; background:var(--triton-blue); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">ΑΠΟΘΗΚΕΥΣΗ</button>
         </div>
     </div>
 </div>
 
 <script>
+  
+    // --- ΚΕΝΤΡΙΚΕΣ ΜΕΤΑΒΛΗΤΕΣ ---
     let currentEditName = null;
 
-    // --- ΑΥΤΟΜΑΤΗ ΑΝΑΖΗΤΗΣΗ ΜΕ ΚΩΔΙΚΟΥΣ ΕΝΟΙΚΙΑΣΤΗ ---
-    async function fetchAadeData() {
-        const afm = document.getElementById('mAfm').value.trim();
-        const settings = JSON.parse(localStorage.getItem('triton_settings') || '{}');
-        const user = settings.aadeUser; // Username από την αρχική φόρμα
-        const token = settings.aadeToken; // Token από την αρχική φόρμα
-
-        if (afm.length !== 9) return alert("⚠️ Πληκτρολογήστε 9 ψηφία ΑΦΜ.");
-        if (!user || !token) return alert("⚠️ Λείπουν οι κωδικοί myDATA από τις Ρυθμίσεις!");
-
-        const btn = event.currentTarget;
-        btn.innerText = "⏳";
-
-        try {
-            // Κλήση API (Χρήση proxy για αποφυγή CORS σε browser περιβάλλον)
-            const proxy = "https://api.allorigins.win/get?url=";
-            const target = `https://api.aade.gr/public/registry/v1/info?afm=${afm}`;
-            
-            // Σημείωση: Στην πράξη οι browsers απαιτούν server-side κλήση για την ΑΑΔΕ. 
-            // Αν το API δεν απαντά απευθείας, ανοίγουμε το helper window.
-            window.open(`https://www.vrisko.gr/search-aade-afm/?afm=${afm}`, 'TritonHelper', 'width=800,height=600');
-            
-            /* Μόλις το API επιτρέψει την απευθείας σύνδεση, ξεμπλοκάρουμε αυτό:
-            const resp = await fetch(proxy + encodeURIComponent(target), {
-                headers: { 'x-api-key': token, 'x-user-id': user }
-            });
-            ... αυτόματη συμπλήρωση ...
-            */
-            
-        } catch (e) {
-            console.error(e);
-        } finally {
-            btn.innerText = "🔍";
+    // --- ΣΥΝΑΡΤΗΣΕΙΣ ΠΑΡΑΘΥΡΩΝ (MODALS) ---
+    function openModal() {
+        // Καθαρίζουμε τα πεδία πριν ανοίξει για νέο πελάτη
+        if (!currentEditName) {
+            document.querySelectorAll('#custModal input').forEach(i => i.value = '');
+            document.getElementById('modalTitle').innerText = "Νέος Συνεργάτης";
         }
+        document.getElementById('custModal').style.display = 'block';
     }
 
+    function closeModal() {
+        document.getElementById('custModal').style.display = 'none';
+        currentEditName = null;
+    }
+
+    function openSettings() {
+        const s = JSON.parse(localStorage.getItem('triton_aade_config') || '{}');
+        document.getElementById('sUser').value = s.user || '';
+        document.getElementById('sKey').value = s.key || '';
+        document.getElementById('sEnv').value = s.env || 'dev';
+        document.getElementById('settingsModal').style.display = 'block';
+    }
+
+    function closeSettings() {
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    // --- ΡΥΘΜΙΣΕΙΣ myDATA ---
+    function saveSettings() {
+        const config = {
+            user: document.getElementById('sUser').value.trim(),
+            key: document.getElementById('sKey').value.trim(),
+            env: document.getElementById('sEnv').value
+        };
+        localStorage.setItem('triton_aade_config', JSON.stringify(config));
+        alert("Οι ρυθμίσεις myDATA αποθηκεύτηκαν! 🔱");
+        closeSettings();
+    }
+
+    // --- ΔΙΑΧΕΙΡΙΣΗ ΠΕΛΑΤΩΝ ---
     function render() {
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
         const body = document.getElementById('custBody');
+        if(!body) return;
         body.innerHTML = '';
+        
         Object.keys(db).sort().forEach(name => {
             const c = db[name];
             body.innerHTML += `
                 <tr>
-                    <td class="cust-name-cell">${name}</td>
-                    <td><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">${c.afm || '-'}</code></td>
-                    <td>${c.city || '-'}</td>
-                    <td>${c.phone || '-'}</td>
+                    <td style="font-weight:bold">${name}</td>
+                    <td><code>${c.afm || '-'}</code></td>
+                    <td>${c.mark ? `<span class="status-pill status-sent">MARK: ${c.mark}</span>` : '<span class="status-pill">Εκκρεμεί</span>'}</td>
                     <td style="text-align:right">
-                        <button class="action-icon" onclick="edit('${name.replace(/'/g, "\\'")}')">✏️</button>
-                        <button class="action-icon" onclick="remove('${name.replace(/'/g, "\\'")}')">🗑️</button>
+                        <button class="btn-settings" style="background:#059669; padding:8px 12px;" onclick="sendToMyData('${name.replace(/'/g, "\\'")}')" title="Αποστολή myDATA">📤</button>
+                        <button class="btn-settings" style="background:#0ea5e9; padding:8px 12px;" onclick="edit('${name.replace(/'/g, "\\'")}')">✏️</button>
+                        <button class="btn-settings" style="background:#ef4444; padding:8px 12px;" onclick="remove('${name.replace(/'/g, "\\'")}')">🗑️</button>
                     </td>
                 </tr>`;
         });
-    }
-
-    function addBranch(val = '') {
-        const div = document.createElement('div');
-        div.className = 'branch-row';
-        div.innerHTML = `<input type="text" class="b-val" value="${val}" placeholder="Διεύθυνση Υποκαταστήματος">
-                         <button onclick="this.parentElement.remove()" style="border:none; background:none; color:#ef4444; cursor:pointer; font-size:24px;">&times;</button>`;
-        document.getElementById('branchContainer').appendChild(div);
     }
 
     function saveCustomer() {
@@ -196,21 +178,18 @@
         if(!name) return alert("Το όνομα είναι υποχρεωτικό!");
 
         const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        if (currentEditName && currentEditName !== name) delete db[currentEditName];
-
-        const branches = [];
-        document.querySelectorAll('.b-val').forEach(i => { if(i.value.trim()) branches.push(i.value.trim()); });
+        
+        // Αν αλλάξαμε όνομα σε υπάρχοντα πελάτη, σβήνουμε το παλιό κλειδί
+        if(currentEditName && currentEditName !== name) delete db[currentEditName];
 
         db[name] = {
             name: name,
             afm: document.getElementById('mAfm').value,
             doy: document.getElementById('mDoy').value,
-            address: document.getElementById('mAddr').value,
+            addr: document.getElementById('mAddr').value,
             city: document.getElementById('mCity').value,
-            zip: document.getElementById('mZip').value,
             phone: document.getElementById('mPhone').value,
-            contacts: document.getElementById('mContacts').value,
-            branches: branches
+            mark: currentEditName ? db[name]?.mark : null
         };
 
         localStorage.setItem('customersDB', JSON.stringify(db));
@@ -219,36 +198,28 @@
     }
 
     function edit(name) {
-        const c = JSON.parse(localStorage.getItem('customersDB'))[name];
+        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+        const c = db[name];
         currentEditName = name;
-        openModal();
+        
         document.getElementById('mName').value = c.name;
         document.getElementById('mAfm').value = c.afm || '';
         document.getElementById('mDoy').value = c.doy || '';
-        document.getElementById('mAddr').value = c.address || '';
+        document.getElementById('mAddr').value = c.addr || '';
         document.getElementById('mCity').value = c.city || '';
-        document.getElementById('mZip').value = c.zip || '';
         document.getElementById('mPhone').value = c.phone || '';
-        document.getElementById('mContacts').value = c.contacts || '';
-        document.getElementById('branchContainer').innerHTML = '';
-        if(c.branches) c.branches.forEach(b => addBranch(b));
+        
+        document.getElementById('modalTitle').innerText = "Επεξεργασία: " + name;
+        document.getElementById('custModal').style.display = 'block';
     }
 
     function remove(name) {
-        if(confirm(`⚠️ Διαγραφή πελάτη "${name}";`)) {
+        if(confirm(`Διαγραφή πελάτη "${name}";`)) {
             const db = JSON.parse(localStorage.getItem('customersDB'));
             delete db[name];
             localStorage.setItem('customersDB', JSON.stringify(db));
             render();
         }
-    }
-
-    function openModal() { document.getElementById('custModal').style.display = 'block'; }
-    function closeModal() { 
-        document.getElementById('custModal').style.display = 'none'; 
-        document.querySelectorAll('.modal-content input').forEach(i => i.value = '');
-        document.getElementById('branchContainer').innerHTML = '';
-        currentEditName = null;
     }
 
     function filter() {
@@ -258,7 +229,28 @@
         });
     }
 
+    // --- ΠΡΟΣΟΜΟΙΩΣΗ myDATA ---
+    async function sendToMyData(custName) {
+        const config = JSON.parse(localStorage.getItem('triton_aade_config') || '{}');
+        if(!config.key) return alert("⚠️ Πρέπει πρώτα να βάλετε το Subscription Key στις Ρυθμίσεις!");
+
+        const btn = event.currentTarget;
+        const originalText = btn.innerText;
+        btn.innerText = "⏳";
+
+        setTimeout(() => {
+            const mark = Math.floor(Math.random() * 1000000000000);
+            const db = JSON.parse(localStorage.getItem('customersDB'));
+            db[custName].mark = mark;
+            localStorage.setItem('customersDB', JSON.stringify(db));
+            render();
+            alert(`Επιτυχής Διαβίβαση στην ΑΑΔΕ!\nΠελάτης: ${custName}\nMARK: ${mark}`);
+            btn.innerText = originalText;
+        }, 1500);
+    }
+
     document.addEventListener('DOMContentLoaded', render);
+ 
 </script>
 </body>
 </html>

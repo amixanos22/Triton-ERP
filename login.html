@@ -1,0 +1,50 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Σύνδεση | TRITONAS</title>
+    <link href='https://fonts.googleapis.com/css?family=Montserrat:400,600,700' rel='stylesheet'>
+    <link href='https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'/>
+    <style>
+      /* Εξαφάνιση της μπάρας του Blogger */
+#navbar-iframe {
+    display: none !important;
+}
+
+body {
+    top: 0 !important;
+}
+        body { margin: 0; font-family: 'Montserrat', sans-serif; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { background: white; width: 100%; max-width: 400px; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
+        .login-card h2 { margin-bottom: 25px; color: #1e293b; }
+        .input-group { position: relative; margin-bottom: 20px; text-align: left; }
+        .input-group i { position: absolute; left: 15px; top: 18px; color: #94a3b8; }
+        .input-group input { width: 100%; padding: 15px 15px 15px 45px; border: 1px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; font-size: 16px; }
+        .btn-submit { width: 100%; padding: 15px; background: #2d50d1; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 16px; }
+        .divider { margin: 25px 0; color: #cbd5e1; position: relative; }
+        .btn-google { width: 100%; padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>Σύνδεση</h2>
+        <form onsubmit="window.location.href='index.html'; return false;">
+            <div class="input-group">
+                <i class="fa fa-envelope-o"></i>
+                <input type="email" placeholder="Email" required>
+            </div>
+            <div class="input-group">
+                <i class="fa fa-lock"></i>
+                <input type="password" placeholder="Κωδικός" required>
+            </div>
+            <button type="submit" class="btn-submit">Σύνδεση</button>
+        </form>
+        <div class="divider"> ή </div>
+        <button class="btn-google">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18">
+            Σύνδεση με Google
+        </button>
+    </div>
+</body>
+</html>

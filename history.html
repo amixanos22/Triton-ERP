@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -47,7 +47,19 @@ body {
         .filter-group label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; }
         .filters-area select, .filters-area input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; outline: none; }
         .filters-area select:focus, .filters-area input:focus { border-color: var(--triton-blue); }
+/* ΠΡΟΣΘΗΚΗ ΓΙΑ ΤΟ ΗΜΕΡΟΛΟΓΙΟ */
+#customDateRange {
+    display: none; /* Ξεκινάει κρυφό */
+    gap: 15px;     /* Απόσταση μεταξύ "Από" και "Έως" */
+    align-items: flex-end;
+}
 
+/* Για να μην "σπάει" σε μικρές οθόνες */
+@media (max-width: 768px) {
+    #customDateRange {
+        width: 100%;
+    }
+}
         /* ΠΙΝΑΚΑΣ */
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
@@ -62,10 +74,13 @@ body {
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>📜 Αρχείο Παραστατικών Triton</h1>
-        <button class="btn-refresh" onclick="loadHistory()">🔄 Ανανέωση Δεδομένων</button>
+   <div class="header">
+    <h1>📜 Αρχείο Παραστατικών Triton</h1>
+    <div>
+        <button class="btn-refresh" onclick="loadHistory()">🔄 Ανανέωση</button>
+        <button class="btn-refresh" style="background:#64748b;" onclick="printReport()">🖨️ Εκτύπωση Αναφοράς</button>
     </div>
+</div>
 
     <div class="stats-grid">
         <div class="stat-card">ΣΥΝΟΛΟ ΠΑΡΑΣΤΑΤΙΚΩΝ<span id="count-inv">0</span></div>
@@ -73,15 +88,26 @@ body {
     </div>
 
     <div class="filters-area">
-        <div class="filter-group">
-            <label>Περίοδος</label>
-            <select id="filterTime" onchange="applyFilters()">
-                <option value="all">Όλο το ιστορικό</option>
-                <option value="today">Σήμερα</option>
-                <option value="month">Αυτός ο Μήνας</option>
-                <option value="year">Τρέχον Έτος (2026)</option>
-            </select>
-        </div>
+       <div class="filter-group">
+    <label>Περίοδος</label>
+    <select id="filterTime" onchange="toggleCustomDates()">
+    <option value="today">Σήμερα</option>
+    <option value="month">Αυτόν τον μήνα</option>
+    <option value="year">Αυτό το έτος</option>
+    <option value="custom">Επιλογή Ημερομηνιών</option>
+</select>
+</div>
+
+<div id="customDateRange" style="display:none; gap:15px;">
+    <div class="filter-group">
+        <label>Από</label>
+        <input type="date" id="dateFrom" onchange="applyFilters()">
+    </div>
+    <div class="filter-group">
+        <label>Έως</label>
+        <input type="date" id="dateTo" onchange="applyFilters()">
+    </div>
+</div>
         <div class="filter-group" style="flex:1;">
             <label>Αναζήτηση Πελάτη</label>
             <input type="text" id="filterCustomer" placeholder="Όνομα ή ΑΦΜ..." onkeyup="applyFilters()">
@@ -111,85 +137,63 @@ body {
 </div>
 
 <script>
-    // ΣΗΜΑΝΤΙΚΟ: Βάλε τα δικά σου στοιχεία εδώ
-    const _supabase = supabase.createClient('https://pizzmcznytsfqlxnttbv.supabase.co', 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G');
-    
-    let allInvoices = [];
-
-    async function loadHistory() {
-        console.log("Φόρτωση ιστορικού...");
-        const { data, error } = await _supabase
-            .from('invoices')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            alert("Σφάλμα σύνδεσης: " + error.message);
-            return;
+   <script>
+    // 1. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΕΜΦΑΝΙΖΕΙ ΤΟ ΗΜΕΡΟΛΟΓΙΟ
+    function toggleCustomDates() {
+        const timeVal = document.getElementById('filterTime').value;
+        const rangeDiv = document.getElementById('customDateRange');
+        
+        if (rangeDiv) {
+            if (timeVal === 'custom') {
+                // Το κάνουμε flex για να κάτσει στη σειρά με τα άλλα φίλτρα
+                rangeDiv.style.setProperty('display', 'flex', 'important');
+            } else {
+                rangeDiv.style.display = 'none';
+            }
         }
-
-        allInvoices = data;
+        // Κάθε φορά που αλλάζουμε περίοδο, ανανεώνουμε τα δεδομένα
         applyFilters();
     }
 
+    // 2. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΙΛΤΡΑΡΕΙ ΤΟΝ ΠΙΝΑΚΑ
     function applyFilters() {
         const timeVal = document.getElementById('filterTime').value;
         const custVal = document.getElementById('filterCustomer').value.toLowerCase();
         const branchVal = document.getElementById('filterBranch').value.toLowerCase();
-        
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
         const now = new Date();
-        
+
         const filtered = allInvoices.filter(inv => {
             const invDate = new Date(inv.created_at);
+            const invDateStr = inv.created_at.split('T')[0];
             
-            // 1. Φίλτρο Χρόνου
             let timeMatch = true;
-            if (timeVal === 'today') timeMatch = invDate.toDateString() === now.toDateString();
-            if (timeVal === 'month') timeMatch = invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
-            if (timeVal === 'year') timeMatch = invDate.getFullYear() === now.getFullYear();
+            if (timeVal === 'today') {
+                timeMatch = invDate.toDateString() === now.toDateString();
+            } else if (timeVal === 'month') {
+                timeMatch = invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
+            } else if (timeVal === 'year') {
+                timeMatch = invDate.getFullYear() === now.getFullYear();
+            } else if (timeVal === 'custom') {
+                if (dateFrom && invDateStr < dateFrom) timeMatch = false;
+                if (dateTo && invDateStr > dateTo) timeMatch = false;
+            }
 
-            // 2. Φίλτρο Πελάτη (Όνομα ή ΑΦΜ)
-            const custMatch = inv.customer_name.toLowerCase().includes(custVal) || 
-                              (inv.customer_afm && inv.customer_afm.includes(custVal));
-
-            // 3. Φίλτρο Υποκαταστήματος
+            const custMatch = inv.customer_name.toLowerCase().includes(custVal) || (inv.customer_afm && inv.customer_afm.includes(custVal));
             const branchMatch = (inv.branch_name || "ΕΔΡΑ").toLowerCase().includes(branchVal);
-
+            
             return timeMatch && custMatch && branchMatch;
         });
-
+        
         renderTable(filtered);
     }
 
-    function renderTable(data) {
-        const list = document.getElementById('invoice-list');
-        let grandTotal = 0;
-        list.innerHTML = '';
-
-        data.forEach(inv => {
-            grandTotal += parseFloat(inv.total_final || 0);
-            
-            list.innerHTML += `
-                <tr>
-                    <td>${new Date(inv.created_at).toLocaleDateString('el-GR')}</td>
-                    <td>
-                        <div style="font-weight:bold;">${inv.customer_name}</div>
-                        <span class="badge-branch">${inv.branch_name || 'ΕΔΡΑ'}</span>
-                    </td>
-                    <td>${inv.customer_afm || '---'}</td>
-                    <td style="text-align:right;">${inv.total_net}€</td>
-                    <td style="text-align:right;">${inv.total_vat}€</td>
-                    <td style="text-align:right; color:var(--triton-blue); font-weight:900;">${inv.total_final}€</td>
-                </tr>
-            `;
-        });
-
-        document.getElementById('grand-total').innerText = grandTotal.toFixed(2) + "€";
-        document.getElementById('count-inv').innerText = data.length;
-    }
-
-    // Αρχική φόρτωση
+    // Μην ξεχάσεις να καλείς το loadHistory στο onload
     window.onload = loadHistory;
+</script>
 </script>
 </body>
 </html>
+ 
+ 

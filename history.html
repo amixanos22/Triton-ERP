@@ -20,8 +20,9 @@
 /* ΕΠΑΝΑΦΟΡΑ ΤΟΥ ΠΕΡΙΘΩΡΙΟΥ ΣΤΗΝ ΚΟΡΥΦΗ */
 body { 
     top: 0 !important; 
-    margin: 100 !important; 
-    padding-top: 0 !important; 
+    margin: 0 !important; /* Το κάνουμε 0 για να μην έχουμε κενά γύρω-γύρω */
+    padding: 0 !important; 
+    background-color: #f1f5f9; /* Ένα απαλό γκρι για φόντο, όπως το Triton */
 }
       :root { --triton-blue: #0ea5e9; --triton-dark: #1e293b; }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #334155; }
@@ -90,15 +91,14 @@ body {
     <div class="filters-area">
        <div class="filter-group">
     <label>Περίοδος</label>
-    <select id="filterTime" onchange="toggleCustomDates()">
-    <option value="today">Σήμερα</option>
+   <select id="filterTime" onchange="toggleCustomDates()">
+    <option value="custom" selected>Επιλογή Ημερομηνιών</option> <option value="today">Σήμερα</option>
     <option value="month">Αυτόν τον μήνα</option>
     <option value="year">Αυτό το έτος</option>
-    <option value="custom">Επιλογή Ημερομηνιών</option>
 </select>
 </div>
 
-<div id="customDateRange" style="display:none; gap:15px;">
+<div id="customDateRange" style="display:flex; gap:15px;">
     <div class="filter-group">
         <label>Από</label>
         <input type="date" id="dateFrom" onchange="applyFilters()">
@@ -138,22 +138,26 @@ body {
 
 <script>
    <script>
-    // 1. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΕΜΦΑΝΙΖΕΙ ΤΟ ΗΜΕΡΟΛΟΓΙΟ
+  // 7. Εμφάνιση/Απόκρυψη Ημερολογίων
     function toggleCustomDates() {
+        // Παίρνουμε την τιμή από το μενού (today, month, year ή custom)
         const timeVal = document.getElementById('filterTime').value;
+        // Παίρνουμε το div που περιέχει τα δύο ημερολόγια
         const rangeDiv = document.getElementById('customDateRange');
         
         if (rangeDiv) {
             if (timeVal === 'custom') {
-                // Το κάνουμε flex για να κάτσει στη σειρά με τα άλλα φίλτρα
-                rangeDiv.style.setProperty('display', 'flex', 'important');
+                // Αν διάλεξες "Επιλογή Ημερομηνιών", το κάνουμε ορατό
+                rangeDiv.style.display = 'flex';
             } else {
+                // Σε κάθε άλλη περίπτωση (Σήμερα, Μήνας κλπ), το κρύβουμε
                 rangeDiv.style.display = 'none';
             }
         }
-        // Κάθε φορά που αλλάζουμε περίοδο, ανανεώνουμε τα δεδομένα
+        // Τρέχουμε τα φίλτρα για να ενημερωθεί ο πίνακας
         applyFilters();
     }
+  
 
     // 2. Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΙΛΤΡΑΡΕΙ ΤΟΝ ΠΙΝΑΚΑ
     function applyFilters() {

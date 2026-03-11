@@ -1748,25 +1748,34 @@ window.addEventListener('load', updateDashboardStats);
     </div>
 </div>
           
-       <script>
-  // 1. Δήλωση Supabase
-  const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
-  
-  // ΑΥΤΗ Η ΓΡΑΜΜΗ ΛΕΙΠΕΙ ΚΑΙ ΕΙΝΑΙ Η ΠΙΟ ΣΗΜΑΝΤΙΚΗ:
-  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // 2. Ο έλεγχος (Ο "Πορτιέρης"):
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN') {
-        console.log('Ο χρήστης συνδέθηκε:', session.user);
+    // Έλεγχος αν ο χρήστης είναι όντως μέσα
+    async function checkUser() {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error || !session) {
+            console.log("Δεν βρέθηκε σύνδεση, επιστροφή στην αρχική...");
+            window.location.href = 'index.html'; // Ή login.html αναλόγως πώς τη λες
+        } else {
+            console.log("Καλώς όρισες, " + session.user.email);
+            // Εδώ μπορείς να καλέσεις τις συναρτήσεις σου για να φορτώσουν οι πελάτες
+        }
     }
-    
-    if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
-        // Αν δεν είναι συνδεδεμένος, τον στέλνουμε στην αρχική
-        window.location.href = 'index.html'; 
-    }
-  });
+
+    // Τρέξε τον έλεγχο μόλις φορτώσει η σελίδα
+    checkUser();
+
+    // Επίσης, αν αποσυνδεθεί ενώ είναι μέσα, πέτα τον έξω
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = 'index.html';
+        }
+    });
 </script>
           <script>
             

@@ -1956,8 +1956,71 @@ window.closeNewCustomerModal = function() {
     if (floatingWin) floatingWin.remove();
 };
 
+ 
 // ==========================================
-// 🔐 5. AUTH & INITIALIZATION
+// 🔱 TRITON CONFIGURATION
+// ==========================================
+const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+// ==========================================
+// 📂 1. DATA LOADING (CUSTOMERS & PRODUCTS)
+// ==========================================
+
+// Φόρτωση Πελατών
+async function loadCustomers() {
+    const select = document.getElementById('customer-select');
+    if (!select) return; // Αν δεν υπάρχει το dropdown στη σελίδα, σταμάτα
+
+    console.log("🔱 Triton: Φορτώνω πελάτες...");
+    const { data: customers, error } = await supabaseClient
+        .from('customers')
+        .select('id, name')
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error('Σφάλμα Πελατών:', error.message);
+        return;
+    }
+
+    select.innerHTML = '<option value="">Επιλέξτε Πελάτη...</option>'; 
+    customers.forEach(customer => {
+        let opt = document.createElement('option');
+        opt.value = customer.id;
+        opt.innerHTML = customer.name;
+        select.appendChild(opt);
+    });
+}
+
+// Φόρτωση Προϊόντων
+async function loadProducts() {
+    const select = document.getElementById('product-select');
+    if (!select) return;
+
+    console.log("🔱 Triton: Φορτώνω προϊόντα...");
+    const { data: products, error } = await supabaseClient
+        .from('products')
+        .select('id, title, price')
+        .order('title', { ascending: true });
+
+    if (error) {
+        console.error('Σφάλμα Προϊόντων:', error.message);
+        return;
+    }
+
+    select.innerHTML = '<option value="">Επιλέξτε Προϊόν...</option>';
+    products.forEach(prod => {
+        let opt = document.createElement('option');
+        opt.value = prod.id;
+        opt.setAttribute('data-price', prod.price);
+        opt.innerHTML = `${prod.title} (${prod.price}€)`;
+        select.appendChild(opt);
+    });
+}
+
+// ==========================================
+// 🔐 2. AUTH & GATE FUNCTIONS
 // ==========================================
 window.unlockTriton = function() {
     const keyInput = document.getElementById('masterKey');
@@ -1979,27 +2042,43 @@ window.completeLogin = async function() {
         overlay.style.zIndex = "-1";
     }
     localStorage.setItem('triton_is_logged_in', 'true');
+    // Μόλις συνδεθεί, φόρτωσε τα δεδομένα
+    loadCustomers();
+    loadProducts();
 };
 
+// ==========================================
+// 🚀 3. INITIALIZATION
+// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Έλεγχος Overlay
     const overlay = document.getElementById('loginOverlay');
     if (localStorage.getItem('triton_is_logged_in') === 'true' && overlay) {
         overlay.style.display = 'none';
     }
+
+    // 2. Έλεγχος Session & Φόρτωση
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        loadCustomers();
+        loadProducts();
+    }
 });
-            function openHistoryPopup() {
+
+// Αν ο χρήστης συνδεθεί τώρα (π.χ. μέσω GitHub)
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || session) {
+        loadCustomers();
+        loadProducts();
+    }
+});
+
+function openHistoryPopup() {
     const width = 1200;
     const height = 800;
-    
-    // Υπολογισμός κεντραρίσματος
     const left = (window.screen.width / 2) - (width / 2);
     const top = (window.screen.height / 2) - (height / 2);
-    
-    window.open(
-        'history.html', 
-        'TritonHistory', 
-        `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
-    );
+    window.open('history.html', 'TritonHistory', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`);
 }
 </script>
 </body>

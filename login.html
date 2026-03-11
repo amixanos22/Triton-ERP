@@ -112,21 +112,59 @@
         </div>
     </main>
 
-    <script>
-        // Πρόσθεσε εδώ το δικό σου Supabase URL και Key
-        const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI'; 
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+   <script>
+    const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI'; 
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        async function signInWithGitHub() {
-            const { data, error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'github',
-                options: {
-                    redirectTo: window.location.origin + '/index.html'
+    // Λειτουργία για το Email Login
+    async function handleLogin(e) {
+        const email = document.querySelector('input[type="email"]').value;
+        const password = document.querySelector('input[type="password"]').value;
+
+        // Προσπάθεια σύνδεσης
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            // Αν ο χρήστης δεν υπάρχει, κάνουμε αυτόματη εγγραφή
+            if (error.message.includes("Invalid login credentials")) {
+                const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                });
+                if (signUpError) {
+                    alert('Σφάλμα εγγραφής: ' + signUpError.message);
+                } else {
+                    alert('Ο χρήστης δημιουργήθηκε! Ελέγξτε το email σας για επιβεβαίωση (αν απαιτείται) ή δοκιμάστε πάλι.');
                 }
-            });
-            if (error) alert('Σφάλμα: ' + error.message);
+            } else {
+                alert('Σφάλμα: ' + error.message);
+            }
+        } else {
+            // Επιτυχία! Πάμε στο Hub
+            window.location.href = 'hub.html';
         }
-    </script>
+    }
+
+    // Σύνδεση της φόρμας με τη συνάρτηση
+    document.querySelector('form').onsubmit = (e) => {
+        e.preventDefault();
+        handleLogin();
+    };
+
+    // Λειτουργία για το GitHub (Triton Secure ID)
+    async function signInWithGitHub() {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'github',
+            options: {
+                redirectTo: window.location.origin + '/hub.html'
+            }
+        });
+        if (error) alert('Σφάλμα GitHub: ' + error.message);
+    }
+</script>
 </body>
 </html>

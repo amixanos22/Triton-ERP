@@ -1748,21 +1748,24 @@ window.addEventListener('load', updateDashboardStats);
     </div>
 </div>
           
-          <script>
-  // 1. Πρώτα δηλώνεις τη Supabase (όπως το έχεις ήδη)
+        <script>
+  // 1. Δήλωση Supabase
   const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  
+  // Το ονομάζουμε supabaseClient για να ξεχωρίζει
+  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // 2. ΑΜΕΣΩΣ ΜΕΤΑ βάζεις τον έλεγχο:
-  supabase.auth.onAuthStateChange((event, session) => {
+  // 2. Ο έλεγχος (Ο "Πορτιέρης"):
+  supabaseClient.auth.onAuthStateChange((event, session) => {
     if (!session) {
-        // Αν δεν υπάρχει "συνεδρία" (session), φύγε για τη βιτρίνα
-        window.location.href = 'landing.html';
+        // Αν δεν είναι συνδεδεμένος, τον στέλνουμε πίσω
+        window.location.href = 'index.html'; 
     }
   });
 
-  // ... ο υπόλοιπος κώδικας για τους πελάτες και τα προϊόντα ...
+  // ΕΔΩ ΣΥΝΕΧΙΖΕΙ Ο ΥΠΟΛΟΙΠΟΣ ΚΩΔΙΚΑΣ ΣΟΥ (Πελάτες κλπ)
+  // Απλά όπου είχες "supabase." θα γράφεις "supabaseClient."
 </script>
           <script>
             

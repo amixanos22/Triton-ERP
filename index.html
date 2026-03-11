@@ -1748,6 +1748,12 @@ window.addEventListener('load', updateDashboardStats);
     </div>
 </div>
           <script>
+            // Έλεγχος: Αν ο χρήστης ΔΕΝ είναι συνδεδεμένος, στείλε τον στην landing
+supabase.auth.onAuthStateChange((event, session) => {
+  if (!session) {
+      window.location.href = 'landing.html';
+  }
+});
 // ==========================================
 // 🛡️ 0. TRITON SAFETY FIRST (ANTI-CRASH)
 // ==========================================

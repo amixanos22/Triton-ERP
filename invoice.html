@@ -286,7 +286,19 @@ input:focus, select:focus {
     <div><span style="font-size: 1.5rem; margin-right: 10px;">🏢</span> ΣΥΣΤΗΜΑ ΔΙΑΧΕΙΡΙΣΗΣ v1.0</div>
   
 </div>
-
+<div class="no-print" style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border: 2px solid #020617; border-radius: 10px;">
+    <label style="font-weight: bold; color: #020617; display: block; margin-bottom: 5px;">ΕΠΙΛΟΓΗ ΠΕΛΑΤΗ (ΑΠΟ ΤΟ ΠΕΛΑΤΟΛΟΓΙΟ):</label>
+    <select id="customerSelect" onchange="updateInvoiceFields()" style="width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1;">
+        <option value="">-- ΦΟΡΤΩΣΗ ΠΕΛΑΤΩΝ... --</option>
+    </select>
+    
+    <div id="branchArea" style="display:none; margin-top: 15px;">
+        <label style="font-weight: bold; color: #0ea5e9; display: block; margin-bottom: 5px;">ΤΟΠΟΣ ΠΑΡΑΔΟΣΗΣ (ΥΠΟΚΑΤΑΣΤΗΜΑ):</label>
+        <select id="branchSelect" onchange="updateBranchFields()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #0ea5e9;">
+            <option value="head">ΕΔΡΑ (Κεντρικό)</option>
+        </select>
+    </div>
+</div>
  <div id="content">
    <div id="header">
     <div style="display: flex; align-items: center; gap: 15px;">
@@ -678,7 +690,8 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-</script><script>
+</script>
+   <script>
 // --- 1. ΜΕΤΑΒΛΗΤΕΣ & ΕΚΚΙΝΗΣΗ ---
 var allProducts = allProducts || []; 
 
@@ -1640,20 +1653,13 @@ function addNewInvoiceRow() {
     const row = document.createElement('tr');
     row.className = 'item-row';
     row.innerHTML = `
-        <td><input type="text" class="row-desc" placeholder="Περιγραφή..." onkeydown="manageEnter(event, this)" style="width:100%; border:none; background:transparent; color:white;"></td>
-        <td><input type="number" class="row-qty" value="1" oninput="calculateTotals()" onkeydown="manageEnter(event, this)" style="width:60px; text-align:center; background:transparent; color:white; border:1px solid #334155;"></td>
-        <td><input type="number" class="row-price" value="0.00" step="0.01" oninput="calculateTotals()" onkeydown="manageEnter(event, this)" style="width:80px; text-align:right; background:transparent; color:white; border:1px solid #334155;"></td>
-        <td>
-            <select class="row-vat" onchange="calculateTotals()" style="background:#1e293b; color:white; border:none;">
-                <option value="24">24%</option>
-                <option value="13">13%</option>
-                <option value="0">0%</option>
-            </select>
-        </td>
-        <td style="text-align:right; color:#7dd3fc; font-weight:bold;" class="row-total">0.00€</td>
-        <td><button type="button" onclick="this.closest('tr').remove(); calculateTotals();" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button></td>
-    `;
-    
+      <td>
+    <input type="text" class="row-desc" placeholder="Περιγραφή..." 
+           list="productsList" 
+           onchange="fillProductData(this)" 
+           onkeydown="manageEnter(event, this)" 
+           style="width:100%; border:none; background:transparent; color:white;">
+</td>
     tbody.appendChild(row);
     const input = row.querySelector('.row-desc');
     if(input) input.focus();
@@ -2117,8 +2123,257 @@ window.generatePDF = function() {
     });
 };
 </script>
+<script>
+   const suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+    const suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
 
-<div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
+    const _supabase = supabase.createClient(suUrl, suKey);
+
+    let fetchedCustomers = [];
+
+    // 1. Φόρτωση λίστας με το που ανοίγει η σελίδα
+    async function init() {
+        const { data, error } = await _supabase.from('customers').select('*').order('name');
+        if (error) return console.error("Σφάλμα Supabase:", error.message);
+
+        fetchedCustomers = data;
+        const sel = document.getElementById('customerSelect'); // Ταιριάζει με το HTML σου
+        sel.innerHTML = '<option value="">--- ΕΠΙΛΕΞΤΕ ΠΕΛΑΤΗ ---</option>';
+        data.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+    }
+
+    // 2. Όταν επιλέγεις πελάτη από το Dropdown
+    function updateInvoiceFields() {
+        const id = document.getElementById('customerSelect').value;
+        const c = fetchedCustomers.find(x => x.id === id);
+        if (!c) return;
+
+        // Συμπλήρωση Έδρας στα IDs του τιμολογίου σου
+        if(document.getElementById('display-name')) document.getElementById('display-name').innerText = c.name;
+        if(document.getElementById('display-afm')) document.getElementById('display-afm').innerText = c.afm || '---';
+        if(document.getElementById('display-doy')) document.getElementById('display-doy').innerText = c.doy || '---';
+        if(document.getElementById('display-address')) document.getElementById('display-address').innerText = (c.addr || '') + " " + (c.city || '');
+
+        // Διαχείριση Υποκαταστημάτων
+        const bCont = document.getElementById('branchArea'); // Ταιριάζει με το HTML σου
+        const bSel = document.getElementById('branchSelect'); // Ταιριάζει με το HTML σου
+        bSel.innerHTML = '<option value="head">ΕΔΡΑ (Κεντρικό)</option>';
+
+        if (c.branches && c.branches.length > 0) {
+            bCont.style.display = 'block';
+            c.branches.forEach((b, index) => {
+                bSel.innerHTML += `<option value="${index}">${b.place} - ${b.area}</option>`;
+            });
+        } else {
+            bCont.style.display = 'none';
+        }
+    }
+
+    // 3. Όταν επιλέγεις υποκατάστημα (Τα 6 πεδία)
+    function updateBranchFields() {
+        const cId = document.getElementById('customerSelect').value;
+        const bIdx = document.getElementById('branchSelect').value;
+        const c = fetchedCustomers.find(x => x.id === cId);
+        if (!c) return;
+
+        if (bIdx === "head") {
+            // Επαναφορά στην έδρα αν χρειάζεται
+            if(document.getElementById('deliv-place')) document.getElementById('deliv-place').innerText = "ΕΔΡΑ";
+        } else {
+            const b = c.branches[bIdx];
+            // Συμπλήρωση των 6 πεδίων
+            if(document.getElementById('deliv-place')) document.getElementById('deliv-place').innerText = b.place;
+            if(document.getElementById('deliv-area')) document.getElementById('deliv-area').innerText = b.area;
+            if(document.getElementById('deliv-zip')) document.getElementById('deliv-zip').innerText = b.zip;
+            if(document.getElementById('deliv-phone')) document.getElementById('deliv-phone').innerText = b.phone;
+            if(document.getElementById('deliv-email')) document.getElementById('deliv-email').innerText = b.email;
+            if(document.getElementById('deliv-manager')) document.getElementById('deliv-manager').innerText = b.manager;
+        }
+    }
+let allProducts = [];
+
+// 1. Φόρτωση Προϊόντων από το Supabase
+async function loadProducts() {
+    const { data, error } = await _supabase.from('products').select('*').order('name');
+    if (error) return console.error("Σφάλμα Αποθήκης:", error.message);
+    allProducts = data;
+    updateProductsDatalist(); // Γεμίζει τις προτάσεις στο datalist
+    console.log("Η Αποθήκη φορτώθηκε!");
+}
+
+// 2. Συμπλήρωση δεδομένων στη γραμμή (Τιμή, ΦΠΑ κλπ)
+function fillProductData(rowInput) {
+    const val = rowInput.value.trim().toUpperCase();
+    const p = allProducts.find(item => item.name.toUpperCase() === val);
+    
+    if (p) {
+        const row = rowInput.closest('tr'); 
+        
+        // Χρησιμοποιούμε τα classes που έχεις στο HTML σου
+        const priceInput = row.querySelector('.row-price');
+        const vatSelect = row.querySelector('.row-vat');
+        
+        if (priceInput) priceInput.value = parseFloat(p.unit_price).toFixed(2);
+        if (vatSelect) vatSelect.value = p.vat;
+        
+        // Καλούμε τη συνάρτηση υπολογισμού που ήδη έχεις
+        if(typeof calculateTotals === 'function') calculateTotals();
+    }
+}
+
+// 3. ΕΝΙΑΙΑ ΕΚΚΙΝΗΣΗ (Εδώ ενώσαμε Πελάτες + Προϊόντα)
+const showCustomers = init; 
+
+window.onload = async () => {
+    await init();         // Φορτώνει πελάτες
+    await loadProducts(); // Φορτώνει προϊόντα
+};
+  // 1. Αυτόματη συμπλήρωση τιμής όταν διαλέγεις προϊόν
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'product-select') {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const price = selectedOption.getAttribute('data-price'); // Παίρνει την τιμή από το data-price
+        
+        const priceInput = document.getElementById('unit-price'); // Το πεδίο που γράφεις την τιμή
+        if (priceInput && price) {
+            priceInput.value = price;
+            updateTotal(); // Ενημέρωσε το σύνολο αμέσως
+        }
+    }
+});
+
+// 2. Υπολογισμός Συνόλου (Τιμή x Ποσότητα)
+function updateTotal() {
+    const qty = document.getElementById('quantity')?.value || 0;
+    const price = document.getElementById('unit-price')?.value || 0;
+    const totalInput = document.getElementById('total-amount');
+    
+    if (totalInput) {
+        totalInput.value = (qty * price).toFixed(2) + " €";
+    }
+}
+
+// Άκου για αλλαγές στην ποσότητα ή την τιμή
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'quantity' || e.target.id === 'unit-price') {
+        updateTotal();
+    }
+});
+  // ==========================================
+// 💾 ΑΠΟΘΗΚΕΥΣΗ ΤΙΜΟΛΟΓΙΟΥ & ΕΝΗΜΕΡΩΣΗ LEDGER
+// ==========================================
+async function saveInvoice() {
+    const customerId = document.getElementById('customer-select').value;
+    const productId = document.getElementById('product-select').value;
+    const quantity = parseFloat(document.getElementById('quantity').value);
+    const unitPrice = parseFloat(document.getElementById('unit-price').value);
+    const totalAmount = quantity * unitPrice;
+
+    if (!customerId || !totalAmount) {
+        alert("Παρακαλώ επιλέξτε πελάτη και συμπληρώστε τα ποσά.");
+        return;
+    }
+
+    console.log("🔱 Triton: Έναρξη αποθήκευσης...");
+
+    // 1. Αποθήκευση στον πίνακα invoices
+    const { data: invData, error: invError } = await supabaseClient
+        .from('invoices')
+        .insert([{ 
+            customer_id: customerId, 
+            product_id: productId, 
+            quantity: quantity, 
+            amount: totalAmount,
+            date: new Date().toISOString() 
+        }])
+        .select();
+
+    if (invError) {
+        alert("Σφάλμα στην αποθήκευση τιμολογίου: " + invError.message);
+        return;
+    }
+
+    // 2. Ενημέρωση του Customer Ledger (Καθολικό)
+    const { error: ledgerError } = await supabaseClient
+        .from('customer_ledger')
+        .insert([{
+            customer_id: customerId,
+            description: `Τιμολόγιο #${invData[0].id}`,
+            debit: totalAmount, // Χρέωση
+            credit: 0,          // Πίστωση (0 αφού είναι πώληση)
+            date: new Date().toISOString()
+        }]);
+
+    if (ledgerError) {
+        alert("Το τιμολόγιο σώθηκε, αλλά απέτυχε η ενημέρωση του Καθολικού: " + ledgerError.message);
+    } else {
+        alert("✅ Επιτυχία! Το τιμολόγιο εκδόθηκε και το Καθολικό ενημερώθηκε.");
+        // Προαιρετικά: Καθάρισε τη φόρμα ή ανανέωσε τη σελίδα
+        location.reload();
+    }
+}
+  async function handleSaveAndClose() {
+    // 1. Τρέχουμε την αποθήκευση που φτιάξαμε πριν
+    const success = await saveInvoice(); 
+    
+    // 2. Αν όλα πήγαν καλά, κλείνουμε το μενού/παράθυρο
+    if (success !== false) {
+        toggleTritonSettings(); // Η συνάρτηση που ήδη έχεις για να κλείνει το UI
+    }
+}
+  // Συνάρτηση για να κλείνει το Banner
+function closeBalanceSidebar() {
+    document.getElementById('balance-sidebar').style.right = '-350px';
+}
+
+// Συνάρτηση για να ανοίγει και να ενημερώνει το Banner
+async function updateCustomerBalance(customerId) {
+    if (!customerId) return;
+
+    // 1. Φέρνουμε τα δεδομένα από το Ledger
+    const { data: transactions, error } = await supabaseClient
+        .from('customer_ledger')
+        .select('debit, credit')
+        .eq('customer_id', customerId);
+
+    if (error) {
+        console.error("Σφάλμα Ledger:", error.message);
+        return;
+    }
+
+    // 2. Υπολογισμός υπολοίπου
+    let balance = 0;
+    transactions.forEach(t => {
+        balance += (t.debit || 0) - (t.credit || 0);
+    });
+
+    // 3. Ενημέρωση και Εμφάνιση (Άνοιγμα από δεξιά)
+    const sidebar = document.getElementById('balance-sidebar');
+    const balanceValue = document.getElementById('sidebar-balance-value');
+
+    if (sidebar && balanceValue) {
+        balanceValue.innerHTML = balance.toFixed(2) + " €";
+        
+        // Χρωματική ένδειξη: Αν χρωστάει > 0, μπλε σκούρο, αλλιώς πράσινο
+        balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
+        
+        // "Πέταγμα" του banner από δεξιά
+        sidebar.style.right = '0';
+    }
+}
+
+// 4. Σύνδεση με το υπάρχον dropdown του πελάτη
+document.getElementById('customer-select')?.addEventListener('change', function() {
+    if (this.value) {
+        updateCustomerBalance(this.value);
+    } else {
+        closeBalanceSidebar();
+    }
+});
+</script>
+     <div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
     <h3 style="margin-top:0; color:#0ea5e9; font-size:18px;">⚙️ Ρυθμίσεις myDATA</h3>
     <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
     
@@ -2132,5 +2387,65 @@ window.generatePDF = function() {
         <input type="password" id="myDataKey" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
     </div>
     
-    <button onclick="toggleTritonSettings()" style="width:100%; background:#0ea5e9; color:white; padding:12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Αποθήκευση & Κλείσιμο</button>
+    <button onclick="handleSaveAndClose()" style="width:100%; background:#0ea5e9; color:white; padding:12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">
+        Αποθήκευση & Κλείσιμο
+    </button>
 </div>
+
+<div id="balance-sidebar" style="position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; border-left: 4px solid #0ea5e9; font-family: sans-serif;">
+    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+        <span style="font-weight: bold; color: #0c4a6e;">Οικονομική Εικόνα</span>
+        <button onclick="closeBalanceSidebar()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div style="padding: 20px;">
+        <p style="color: #64748b; font-size: 13px; margin-bottom: 5px;">Τρέχον Υπόλοιπο Πελάτη:</p>
+        <div id="sidebar-balance-value" style="font-size: 28px; font-weight: bold; color: #0c4a6e;">0.00 €</div>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #94a3b8;">* Το υπόλοιπο προκύπτει από τις κινήσεις του Ledger.</p>
+    </div>
+</div>
+
+<script>
+function closeBalanceSidebar() {
+    document.getElementById('balance-sidebar').style.right = '-350px';
+}
+
+async function updateCustomerBalance(customerId) {
+    if (!customerId) return;
+    try {
+        const { data: trans, error } = await supabaseClient
+            .from('customer_ledger')
+            .select('debit, credit')
+            .eq('customer_id', customerId);
+
+        if (error) throw error;
+
+        let balance = 0;
+        trans.forEach(t => balance += (t.debit || 0) - (t.credit || 0));
+
+        const balanceValue = document.getElementById('sidebar-balance-value');
+        if (balanceValue) {
+            balanceValue.innerHTML = balance.toFixed(2) + " €";
+            balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
+            document.getElementById('balance-sidebar').style.right = '0';
+        }
+    } catch (err) {
+        console.error("Ledger Error:", err.message);
+    }
+}
+
+// Σύνδεση με το Dropdown των Πελατών
+document.getElementById('customer-select')?.addEventListener('change', function() {
+    updateCustomerBalance(this.value);
+});
+
+// Η λειτουργία για το κουμπί Αποθήκευση & Κλείσιμο
+async function handleSaveAndClose() {
+    // 1. Αποθηκεύουμε το τιμολόγιο
+    await saveInvoice(); 
+    
+    // 2. Κλείνουμε το panel
+    const panel = document.getElementById('tritonSettingsPanel');
+    if (panel) panel.style.display = 'none';
+}
+</script>

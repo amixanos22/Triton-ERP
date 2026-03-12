@@ -881,6 +881,8 @@ window.loadProductsForAutocomplete = async function() {
     } catch (e) { console.error(e); }
 };
 </script>
+   
+   
  <div id="newCustomerModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow-y:auto; align-items:center; justify-content:center; padding: 20px;">
     <div style="background:white; width:95%; max-width:850px; margin:auto; padding:25px; border-radius:15px; font-family: sans-serif; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 8px solid #020617;">
         
@@ -926,11 +928,11 @@ window.loadProductsForAutocomplete = async function() {
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-bottom:20px;">
             <div>
                 <label style="font-size:11px; font-weight:bold;">Email</label>
-                <input type="email" id="newCustEmail" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                <input type="email" id="newCustEmail" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
             </div>
             <div>
                 <label style="font-size:11px; font-weight:bold;">Τηλέφωνο</label>
-                <input type="text" id="newCustPhone" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                <input type="text" id="newCustPhone" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
             </div>
             <div>
                 <label style="font-size:11px; font-weight:bold;">Πόλη & ΤΚ</label>
@@ -941,35 +943,46 @@ window.loadProductsForAutocomplete = async function() {
             </div>
         </div>
 
-        <div style="border:2px solid #e2e8f0; padding:15px; border-radius:12px; background:#f8fafc; margin-bottom:20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <label style="font-weight:bold; color:#020617; font-size:13px;">🏢 ΔΙΑΧΕΙΡΙΣΗ ΥΠΟΚΑΤΑΣΤΗΜΑΤΩΝ</label>
-                <button type="button" onclick="addBranchRow()" style="background:#0ea5e9; color:white; border:none; padding:5px 15px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:11px;">+ ΠΡΟΣΘΗΚΗ</button>
+        <div style="border:1px solid #e2e8f0; padding:15px; border-radius:10px; background:#f8fafc; margin-bottom: 20px;">
+            <label style="font-weight:bold; color:#2563eb; display:block; margin-bottom:10px; font-size:14px;">🏢 Διαχείριση Υποκαταστημάτων</label>
+            
+            <div id="newCustBranchesList" style="max-height:80px; overflow-y:auto; margin-bottom:10px; background:white; border:1px dashed #cbd5e1; border-radius:5px; padding: 5px;"></div>
+            
+            <div style="display:grid; grid-template-columns: 0.4fr 1.2fr 0.8fr 0.6fr; gap:5px; margin-bottom:5px;">
+                <input type="text" id="tempBranchCode" placeholder="Κωδ." title="Κωδικός myDATA" style="padding:5px; border:1px solid #ddd; font-size:12px; border-radius: 4px;">
+                <input type="text" id="tempBranchAddress" placeholder="Διεύθυνση" style="padding:5px; border:1px solid #ddd; font-size:12px; border-radius: 4px;">
+                <input type="text" id="tempBranchCity" placeholder="Πόλη" style="padding:5px; border:1px solid #ddd; font-size:12px; border-radius: 4px;">
+                <input type="text" id="tempBranchZip" placeholder="Τ.Κ." style="padding:5px; border:1px solid #ddd; font-size:12px; border-radius: 4px;">
             </div>
-            <div id="branchesContainer" style="display:flex; flex-direction:column; gap:8px; max-height:150px; overflow-y:auto;">
-                </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <input type="text" id="tempBranchPhone" placeholder="Τηλέφωνο" style="padding:5px; border:1px solid #ddd; font-size:12px; border-radius: 4px;">
+                <input type="email" id="tempBranchEmail" placeholder="Email (Υποκ.)" style="padding:5px; border:1px solid #ddd; font-size:12px; border-radius: 4px;">
+            </div>
+            
+            <button type="button" onclick="addBranchToTempList()" style="width:100%; margin-top:8px; background:#3b82f6; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
+                ➕ Προσθήκη Υποκαταστήματος στη Λίστα
+            </button>
         </div>
 
-       <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #eee; padding-top:20px; margin-top:20px;">
-    <button type="button" 
-            onclick="closeNewCustomerModal()" 
-            style="background:#64748b; color:white; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:bold; transition: opacity 0.2s;"
-            onmouseover="this.style.opacity='0.8'" 
-            onmouseout="this.style.opacity='1'">
-        ΑΚΥΡΩΣΗ
-    </button>
-    
-    <button type="button" 
-            id="btnSaveCustomer"
-            onclick="saveFullCustomer(event)" 
-            style="background:#020617; color:#7dd3fc; border:2px solid #0ea5e9; padding:12px 35px; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2); transition: all 0.2s;"
-            onmouseover="this.style.background='#0ea5e9'; this.style.color='#ffffff';" 
-            onmouseout="this.style.background='#020617'; this.style.color='#7dd3fc';">
-        ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ 💾
-    </button>
-</div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #eee; padding-top:20px;">
+            <button type="button" 
+                    onclick="closeNewCustomerModal()" 
+                    style="background:#64748b; color:white; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:bold;">
+                ΑΚΥΡΩΣΗ
+            </button>
+            
+            <button type="button" 
+                    id="btnSaveCustomer"
+                    onclick="saveFullCustomer(event)" 
+                    style="background:#020617; color:#7dd3fc; border:2px solid #0ea5e9; padding:12px 35px; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2); transition: all 0.2s;"
+                    onmouseover="this.style.background='#0ea5e9'; this.style.color='#ffffff';" 
+                    onmouseout="this.style.background='#020617'; this.style.color='#7dd3fc';">
+                ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ 💾
+            </button>
+        </div>
     </div>
 </div>
+   
 <div style="border:1px solid #e2e8f0; padding:15px; border-radius:10px; background:#f8fafc;">
     <label style="font-weight:bold; color:#2563eb; display:block; margin-bottom:10px; font-size:14px;">🏢 Διαχείριση Υποκαταστημάτων</label>
     
@@ -4300,7 +4313,18 @@ window.generatePDF = function() {
     </button>
 </div>
 
- 
+<div id="balance-sidebar" style="position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; border-left: 4px solid #0ea5e9; font-family: sans-serif; pointer-events: none; visibility: hidden;">
+    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+        <span style="font-weight: bold; color: #0c4a6e;">Οικονομική Εικόνα</span>
+        <button onclick="closeBalanceSidebar()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div style="padding: 20px;">
+        <p style="color: #64748b; font-size: 13px; margin-bottom: 5px;">Τρέχον Υπόλοιπο Πελάτη:</p>
+        <div id="sidebar-balance-value" style="font-size: 28px; font-weight: bold; color: #0c4a6e;">0.00 €</div>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #94a3b8;">* Το υπόλοιπο προκύπτει από τις κινήσεις του Ledger.</p>
+    </div>
+</div> 
 
 <script>
 // 1. Κλείσιμο Sidebar (Με προστασία για το ποντίκι)

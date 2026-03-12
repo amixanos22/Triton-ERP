@@ -4281,97 +4281,38 @@ window.generatePDF = function() {
         await loadProducts();
     };
 </script>
-     <div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
+  <datalist id="productsList"></datalist>
+
+
+<div id="tritonSettingsPanel" style="display:none; ...">
+
+<div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
+
     <h3 style="margin-top:0; color:#0ea5e9; font-size:18px;">⚙️ Ρυθμίσεις myDATA</h3>
+
     <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+
     
+
     <div style="margin-bottom:15px;">
+
         <label style="display:block; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:5px;">USER ID (myDATA)</label>
+
         <input type="text" id="myDataUser" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+
     </div>
+
     
+
     <div style="margin-bottom:20px;">
+
         <label style="display:block; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:5px;">SUBSCRIPTION KEY</label>
+
         <input type="password" id="myDataKey" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+
     </div>
+
     
-    <button onclick="handleSaveAndClose()" style="width:100%; background:#0ea5e9; color:white; padding:12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">
-        Αποθήκευση & Κλείσιμο
-    </button>
-</div>
 
-<div id="balance-sidebar" style="position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; border-left: 4px solid #0ea5e9; font-family: sans-serif; pointer-events: none; visibility: hidden;">
-    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
-        <span style="font-weight: bold; color: #0c4a6e;">Οικονομική Εικόνα</span>
-        <button onclick="closeBalanceSidebar()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
-    </div>
-    <div style="padding: 20px;">
-        <p style="color: #64748b; font-size: 13px; margin-bottom: 5px;">Τρέχον Υπόλοιπο Πελάτη:</p>
-        <div id="sidebar-balance-value" style="font-size: 28px; font-weight: bold; color: #0c4a6e;">0.00 €</div>
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        <p style="font-size: 12px; color: #94a3b8;">* Το υπόλοιπο προκύπτει από τις κινήσεις του Ledger.</p>
-    </div>
-</div>
-
-<script>
-// 1. Κλείσιμο Sidebar (Με προστασία για το ποντίκι)
-function closeBalanceSidebar() {
-    const sb = document.getElementById('balance-sidebar');
-    if (!sb) return;
-    sb.style.right = '-350px';
-    sb.style.pointerEvents = 'none'; // Ελευθερώνει τα κουμπιά από κάτω
-    sb.style.visibility = 'hidden';
-}
-
-// 2. Ενημέρωση Υπολοίπου (Με προστασία για άλλες σελίδες)
-async function updateCustomerBalance(customerId) {
-    const sb = document.getElementById('balance-sidebar');
-    if (!sb || !customerId) return; // Αν λείπει η μπάρα (π.χ. στη hub), σταματάει εδώ
-
-    try {
-        // ΠΡΟΣΟΧΗ: Βεβαιώσου ότι το όνομα (π.χ. _supabase ή supabaseClient) είναι σωστό
-        const { data: trans, error } = await _supabase
-            .from('customer_ledger')
-            .select('debit, credit')
-            .eq('customer_id', customerId);
-
-        if (error) throw error;
-
-        let balance = 0;
-        trans.forEach(t => balance += (t.debit || 0) - (t.credit || 0));
-
-        const balanceValue = document.getElementById('sidebar-balance-value');
-        if (balanceValue) {
-            balanceValue.innerHTML = balance.toFixed(2) + " €";
-            balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
-            
-            // ΕΜΦΑΝΙΣΗ ΚΑΙ ΕΝΕΡΓΟΠΟΙΗΣΗ ΚΛΙΚ
-            sb.style.visibility = 'visible'; 
-            sb.style.pointerEvents = 'auto'; 
-            sb.style.right = '0';
-        }
-    } catch (err) {
-        console.error("Ledger Error:", err.message);
-    }
-}
-
-// 3. Σύνδεση με το Dropdown (Ασφαλής τρόπος)
-document.addEventListener('change', function(e) {
-    if (e.target && e.target.id === 'customer-select') {
-        updateCustomerBalance(e.target.value);
-    }
-});
-
-// Η λειτουργία για το κουμπί Αποθήκευση & Κλείσιμο
-async function handleSaveAndClose() {
-    // 1. Αποθηκεύουμε το τιμολόγιο
-    await saveInvoice(); 
-    
-    // 2. Κλείνουμε το panel των ρυθμίσεων
-    const panel = document.getElementById('tritonSettingsPanel');
-    if (panel) panel.style.display = 'none';
-
-    // 3. Κλείνουμε και το Banner δεξιά (ΑΥΤΟ ΠΡΟΣΘΕΣΕ)
-    closeBalanceSidebar();
-}
-</script>
+    <button onclick="handleSaveAndClose()" style="width:100%; background:#0ea5e9; color:white; 
+                                                  

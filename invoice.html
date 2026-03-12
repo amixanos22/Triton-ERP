@@ -2448,36 +2448,14 @@ document.addEventListener('click', function(e) {
         document.getElementById('branchPopup').style.display = 'none';
     }
 });
-  function addBranchRow() {
+ // --- 1. ΠΡΟΣΘΗΚΗ ΓΡΑΜΜΗΣ (Προστατευμένο) ---
+function addBranchRow() {
     const container = document.getElementById('branchesContainer');
-    const rowId = Date.now(); // Μοναδικό ID για κάθε γραμμή
+    
+    // ΑΝ ΔΕΝ ΥΠΑΡΧΕΙ ΤΟ CONTAINER (π.χ. στη hub.html), ΜΗΝ ΚΑΝΕΙΣ ΤΙΠΟΤΑ
+    if (!container) return; 
 
-    const row = document.createElement('div');
-    row.id = `branch-${rowId}`;
-    row.style.display = 'grid';
-    row.style.gridTemplateColumns = '1.5fr 1.5fr 1fr 40px';
-    row.style.gap = '10px';
-    row.style.alignItems = 'center';
-    row.style.background = 'white';
-    row.style.padding = '8px';
-    row.style.borderRadius = '6px';
-    row.style.border = '1px solid #e2e8f0';
-
-    row.innerHTML = `
-        <input type="text" placeholder="Όνομα Υποκαταστήματος" class="branch-name" style="padding:5px; border:1px solid #cbd5e1; border-radius:4px;">
-        <input type="text" placeholder="Περιοχή / Διεύθυνση" class="branch-area" style="padding:5px; border:1px solid #cbd5e1; border-radius:4px;">
-        <input type="text" placeholder="Τηλέφωνο" class="branch-phone" style="padding:5px; border:1px solid #cbd5e1; border-radius:4px;">
-        <button type="button" onclick="document.getElementById('branch-${rowId}').remove()" style="background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer; height:30px;">✕</button>
-    `;
-
-    container.appendChild(row);
-    // Αυτόματο scroll προς τα κάτω για να φαίνεται η νέα γραμμή
-    container.scrollTop = container.scrollHeight;
-}
-  function addBranchRow() {
-    const container = document.getElementById('branchesContainer');
     const rowId = 'row-' + Date.now();
-
     const div = document.createElement('div');
     div.id = rowId;
     div.style = "display: grid; grid-template-columns: 1fr 1fr 1fr 40px; gap: 10px; margin-bottom: 8px;";
@@ -2490,15 +2468,20 @@ document.addEventListener('click', function(e) {
     `;
     
     container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
 }
+
+// --- 2. ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ (Προστατευμένο) ---
 async function saveFullCustomer(event) {
-    // 1. Σταματάμε το τυχόν αυτόματο submit της φόρμας
     if (event) event.preventDefault();
 
-    // 2. Παίρνουμε τα βασικά στοιχεία του πελάτη
-    const name = document.getElementById('custName').value;
-    const phone = document.getElementById('custPhone').value;
-    const email = document.getElementById('custEmail').value;
+    // ΑΝ ΔΕΝ ΥΠΑΡΧΟΥΝ ΤΑ ΠΕΔΙΑ (π.χ. στη hub.html), ΣΤΑΜΑΤΑ ΕΔΩ
+    const nameInput = document.getElementById('custName');
+    if (!nameInput) return; 
+
+    const name = nameInput.value;
+    const phone = document.getElementById('custPhone')?.value || '';
+    const email = document.getElementById('custEmail')?.value || '';
 
     if (!name) { 
         alert("⚠️ Το όνομα πελάτη είναι υποχρεωτικό!"); 
@@ -2506,7 +2489,6 @@ async function saveFullCustomer(event) {
     }
 
     try {
-        // 3. Αποθήκευση Κύριου Πελάτη στη Supabase
         const { data: customer, error: custError } = await supabaseClient
             .from('customers')
             .insert([{ name, phone, email }])
@@ -2515,33 +2497,28 @@ async function saveFullCustomer(event) {
 
         if (custError) throw custError;
 
-        // 4. Μαζεύουμε τα υποκαταστήματα από το container
         const branchRows = document.querySelectorAll('#branchesContainer > div');
         const branches = Array.from(branchRows).map(row => ({
-            customer_id: customer.id, // Σύνδεση με τον πελάτη που μόλις φτιάξαμε
+            customer_id: customer.id,
             sub_name: row.querySelector('.branch-name').value,
             sub_area: row.querySelector('.branch-area').value,
             sub_phone: row.querySelector('.branch-phone').value
-        })).filter(b => b.sub_name.trim() !== ""); // Αγνοούμε τα κενά
+        })).filter(b => b.sub_name.trim() !== "");
 
-        // 5. Αν υπάρχουν υποκαταστήματα, τα σώζουμε στον πίνακα customer_branches
         if (branches.length > 0) {
             const { error: branchError } = await supabaseClient
                 .from('customer_branches')
                 .insert(branches);
-            
             if (branchError) throw branchError;
         }
 
-        alert("✅ Ο πελάτης και τα υποκαταστήματα αποθηκεύθηκαν επιτυχώς!");
-        
-        // Κλείσιμο modal και ανανέωση
+        alert("✅ Επιτυχής αποθήκευση!");
         if (typeof closeNewCustomerModal === "function") closeNewCustomerModal();
         location.reload();
 
     } catch (err) {
         console.error("Σφάλμα:", err.message);
-        alert("❌ Αποτυχία αποθήκευσης: " + err.message);
+        alert("❌ Σφάλμα: " + err.message);
     }
 }
 </script>
@@ -2564,7 +2541,7 @@ async function saveFullCustomer(event) {
     </button>
 </div>
 
-<div id="balance-sidebar" style="position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; border-left: 4px solid #0ea5e9; font-family: sans-serif;">
+<div id="balance-sidebar" style="position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; border-left: 4px solid #0ea5e9; font-family: sans-serif; pointer-events: none; visibility: hidden;">
     <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
         <span style="font-weight: bold; color: #0c4a6e;">Οικονομική Εικόνα</span>
         <button onclick="closeBalanceSidebar()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>

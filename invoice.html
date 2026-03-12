@@ -2372,6 +2372,178 @@ document.getElementById('customer-select')?.addEventListener('change', function(
         closeBalanceSidebar();
     }
 });
+  // ΑΥΤΟ ΛΕΙΠΕΙ: Η συνάρτηση που στέλνει τα δεδομένα στη Supabase
+async function saveInvoice() {
+    const customerId = document.getElementById('customer-select').value;
+    const amountStr = document.getElementById('total-amount').value;
+    const amount = parseFloat(amountStr);
+
+    if (!customerId || isNaN(amount)) {
+        alert("Παρακαλώ επιλέξτε πελάτη και βεβαιωθείτε ότι υπάρχει ποσό.");
+        return false;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('customer_ledger')
+            .insert([{
+                customer_id: customerId,
+                amount: amount,
+                type: 'ΠΩΛΗΣΗ', // Χρέωση
+                description: 'Έκδοση νέου τιμολογίου'
+            }]);
+
+        if (error) throw error;
+        
+        console.log("🔱 Triton: Το Ledger ενημερώθηκε επιτυχώς!");
+        return true;
+    } catch (err) {
+        console.error("Σφάλμα αποθήκευσης:", err.message);
+        alert("Η αποθήκευση απέτυχε. Ελέγξτε την κονσόλα.");
+        return false;
+    }
+}
+  // 1. Αναζήτηση Υποκαταστημάτων καθώς πληκτρολογείς
+async function searchBranch(val) {
+    const popup = document.getElementById('branchPopup');
+    if (val.length < 2) {
+        popup.style.display = 'none';
+        return;
+    }
+
+    // Ψάχνουμε στη βάση στα πεδία sub_name ή sub_area
+    const { data, error } = await supabaseClient
+        .from('customers')
+        .select('sub_name, sub_area, sub_phone, email')
+        .or(`sub_name.ilike.%${val}%,sub_area.ilike.%${val}%`)
+        .not('sub_name', 'is', null);
+
+    if (data && data.length > 0) {
+        popup.innerHTML = '';
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.style.padding = '10px';
+            div.style.cursor = 'pointer';
+            div.style.borderBottom = '1px solid #eee';
+            div.innerHTML = `<strong>${item.sub_name}</strong> - ${item.sub_area}`;
+            
+            // Όταν κάνεις κλικ, γεμίζουν αυτόματα τα διπλανά πεδία
+            div.onclick = () => {
+                document.getElementById('custAddress').value = item.sub_name + " (" + item.sub_area + ")";
+                document.getElementById('custPhone').value = item.sub_phone || '';
+                document.getElementById('custEmail').value = item.email || '';
+                popup.style.display = 'none';
+            };
+            popup.appendChild(div);
+        });
+        popup.style.display = 'block';
+    } else {
+        popup.style.display = 'none';
+    }
+}
+
+// Κλείσιμο του popup αν κάνεις κλικ έξω
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('branchPopup').contains(e.target)) {
+        document.getElementById('branchPopup').style.display = 'none';
+    }
+});
+  function addBranchRow() {
+    const container = document.getElementById('branchesContainer');
+    const rowId = Date.now(); // Μοναδικό ID για κάθε γραμμή
+
+    const row = document.createElement('div');
+    row.id = `branch-${rowId}`;
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1.5fr 1.5fr 1fr 40px';
+    row.style.gap = '10px';
+    row.style.alignItems = 'center';
+    row.style.background = 'white';
+    row.style.padding = '8px';
+    row.style.borderRadius = '6px';
+    row.style.border = '1px solid #e2e8f0';
+
+    row.innerHTML = `
+        <input type="text" placeholder="Όνομα Υποκαταστήματος" class="branch-name" style="padding:5px; border:1px solid #cbd5e1; border-radius:4px;">
+        <input type="text" placeholder="Περιοχή / Διεύθυνση" class="branch-area" style="padding:5px; border:1px solid #cbd5e1; border-radius:4px;">
+        <input type="text" placeholder="Τηλέφωνο" class="branch-phone" style="padding:5px; border:1px solid #cbd5e1; border-radius:4px;">
+        <button type="button" onclick="document.getElementById('branch-${rowId}').remove()" style="background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer; height:30px;">✕</button>
+    `;
+
+    container.appendChild(row);
+    // Αυτόματο scroll προς τα κάτω για να φαίνεται η νέα γραμμή
+    container.scrollTop = container.scrollHeight;
+}
+  function addBranchRow() {
+    const container = document.getElementById('branchesContainer');
+    const rowId = 'row-' + Date.now();
+
+    const div = document.createElement('div');
+    div.id = rowId;
+    div.style = "display: grid; grid-template-columns: 1fr 1fr 1fr 40px; gap: 10px; margin-bottom: 8px;";
+    
+    div.innerHTML = `
+        <input type="text" placeholder="Όνομα Υποκ." class="branch-name" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="text" placeholder="Περιοχή" class="branch-area" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="text" placeholder="Τηλέφωνο" class="branch-phone" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;">✕</button>
+    `;
+    
+    container.appendChild(div);
+}
+async function saveFullCustomer(event) {
+    // 1. Σταματάμε το τυχόν αυτόματο submit της φόρμας
+    if (event) event.preventDefault();
+
+    // 2. Παίρνουμε τα βασικά στοιχεία του πελάτη
+    const name = document.getElementById('custName').value;
+    const phone = document.getElementById('custPhone').value;
+    const email = document.getElementById('custEmail').value;
+
+    if (!name) { 
+        alert("⚠️ Το όνομα πελάτη είναι υποχρεωτικό!"); 
+        return; 
+    }
+
+    try {
+        // 3. Αποθήκευση Κύριου Πελάτη στη Supabase
+        const { data: customer, error: custError } = await supabaseClient
+            .from('customers')
+            .insert([{ name, phone, email }])
+            .select()
+            .single();
+
+        if (custError) throw custError;
+
+        // 4. Μαζεύουμε τα υποκαταστήματα από το container
+        const branchRows = document.querySelectorAll('#branchesContainer > div');
+        const branches = Array.from(branchRows).map(row => ({
+            customer_id: customer.id, // Σύνδεση με τον πελάτη που μόλις φτιάξαμε
+            sub_name: row.querySelector('.branch-name').value,
+            sub_area: row.querySelector('.branch-area').value,
+            sub_phone: row.querySelector('.branch-phone').value
+        })).filter(b => b.sub_name.trim() !== ""); // Αγνοούμε τα κενά
+
+        // 5. Αν υπάρχουν υποκαταστήματα, τα σώζουμε στον πίνακα customer_branches
+        if (branches.length > 0) {
+            const { error: branchError } = await supabaseClient
+                .from('customer_branches')
+                .insert(branches);
+            
+            if (branchError) throw branchError;
+        }
+
+        alert("✅ Ο πελάτης και τα υποκαταστήματα αποθηκεύθηκαν επιτυχώς!");
+        
+        // Κλείσιμο modal και ανανέωση
+        if (typeof closeNewCustomerModal === "function") closeNewCustomerModal();
+        location.reload();
+
+    } catch (err) {
+        console.error("Σφάλμα:", err.message);
+        alert("❌ Αποτυχία αποθήκευσης: " + err.message);
+    }
+}
 </script>
      <div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
     <h3 style="margin-top:0; color:#0ea5e9; font-size:18px;">⚙️ Ρυθμίσεις myDATA</h3>
@@ -2444,8 +2616,11 @@ async function handleSaveAndClose() {
     // 1. Αποθηκεύουμε το τιμολόγιο
     await saveInvoice(); 
     
-    // 2. Κλείνουμε το panel
+    // 2. Κλείνουμε το panel των ρυθμίσεων
     const panel = document.getElementById('tritonSettingsPanel');
     if (panel) panel.style.display = 'none';
+
+    // 3. Κλείνουμε και το Banner δεξιά (ΑΥΤΟ ΠΡΟΣΘΕΣΕ)
+    closeBalanceSidebar();
 }
 </script>

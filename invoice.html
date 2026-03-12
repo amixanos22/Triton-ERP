@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
@@ -413,10 +413,6 @@ input:focus, select:focus {
                onfocus="this.style.borderColor='#6366f1'">
      
         <button type="button" onclick="window.print()" style="background: #64748b; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">🖨️ Εκτύπωση</button>
-      <button type="button" onclick="toggleTritonSettings()" 
-        style="background: #1e293b; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; margin-left: 5px;">
-    ⚙️ Ρυθμίσεις myDATA
-</button>
     </div>
 
     <div style="text-align: right;">
@@ -543,59 +539,51 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// --- ΑΝΤΙΚΑΤΑΣΤΑΣΗ ΓΙΑ ΤΑ SETTINGS & myDATA ---
-
+// 2. SETTINGS & myDATA LOGIC
 window.saveSettings = function() {
-    var settings = {
-        logo: document.getElementById('setLogo') ? document.getElementById('setLogo').value : '',
-        name: document.getElementById('setName') ? document.getElementById('setName').value : '',
-        afm: document.getElementById('setAFM') ? document.getElementById('setAFM').value : '',
-        myDataUser: document.getElementById('setMyDataUser') ? document.getElementById('setMyDataUser').value : '',
-        myDataKey: document.getElementById('setMyDataKey') ? document.getElementById('setMyDataKey').value : ''
+    const settings = {
+        logo: document.getElementById('setLogo')?.value || '',
+        name: document.getElementById('setName')?.value || '',
+        afm: document.getElementById('setAFM')?.value || '',
+        myDataUser: document.getElementById('setMyDataUser')?.value || '',
+        myDataKey: document.getElementById('setMyDataKey')?.value || ''
     };
 
-    if (!window.db) { 
-        alert("❌ Cloud disconnected"); 
-        return; 
-    }
+    if (!db) return alert("❌ Cloud disconnected");
 
-    window.db.ref('settings').set(settings).then(function() {
+    db.ref('settings').set(settings).then(() => {
         alert("✅ Ρυθμίσεις myDATA Αποθηκεύτηκαν!");
         if(typeof closeSettings === 'function') closeSettings();
-    }).catch(function(err) { alert("Σφάλμα: " + err.message); });
+    });
 };
 
-window.loadSettings = async function() {
-    if (!window.db) return;
-    try {
-        var snap = await window.db.ref('settings').once('value');
-        var d = snap.val();
-        if (d) {
-            if(document.getElementById('setLogo')) document.getElementById('setLogo').value = d.logo || '';
-            if(document.getElementById('setName')) document.getElementById('setName').value = d.name || '';
-            if(document.getElementById('setAFM')) document.getElementById('setAFM').value = d.afm || '';
-            if(document.getElementById('setMyDataUser')) document.getElementById('setMyDataUser').value = d.myDataUser || '';
-            if(document.getElementById('setMyDataKey')) document.getElementById('setMyDataKey').value = d.myDataKey || '';
-        }
-    } catch(e) { console.error("Load Settings Error:", e); }
-};
+async function loadSettings() {
+    if (!db) return;
+    const snap = await db.ref('settings').once('value');
+    const d = snap.val();
+    if (d) {
+        if(document.getElementById('setLogo')) document.getElementById('setLogo').value = d.logo || '';
+        if(document.getElementById('setName')) document.getElementById('setName').value = d.name || '';
+        if(document.getElementById('setAFM')) document.getElementById('setAFM').value = d.afm || '';
+        if(document.getElementById('setMyDataUser')) document.getElementById('setMyDataUser').value = d.myDataUser || '';
+        if(document.getElementById('setMyDataKey')) document.getElementById('setMyDataKey').value = d.myDataKey || '';
+    }
+}
 
-window.loadProductsFromFirebase = async function() {
-    if (!window.db) return;
-    try {
-        var snapshot = await window.db.ref('products').once('value');
-        var data = snapshot.val();
-        if (data) {
-            allProducts = Object.keys(data).map(function(key) {
-                return {
-                    name: data[key].name, 
-                    price: data[key].price, 
-                    vat: data[key].vat || "24"
-                };
-            });
-        }
-    } catch(e) { console.error("Load Products Error:", e); }
-};
+// 3. ΠΡΟΪΟΝΤΑ & AUTOCOMPLETE
+async function loadProductsFromFirebase() {
+    if (!db) return;
+    const snapshot = await db.ref('products').once('value');
+    const data = snapshot.val();
+    if (data) {
+        allProducts = Object.keys(data).map(key => ({
+            name: data[key].name, 
+            price: data[key].price, 
+            vat: data[key].vat || "24"
+        }));
+    }
+}
+
 // 4. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ ΠΙΝΑΚΑ
 function addNewLine(productData = null) {
     const tbody = document.getElementById('invoiceItemsBody');
@@ -655,23 +643,33 @@ document.addEventListener('keydown', function(e) {
 });
 </script><script>
 // --- 1. ΜΕΤΑΒΛΗΤΕΣ & ΕΚΚΙΝΗΣΗ ---
+
+// Χρησιμοποιούμε var αντί για let για να αποφύγουμε το "Redeclaration Error"
 var allProducts = allProducts || []; 
 
+// Κάνουμε την onload async για να διαχειρίζεται σωστά την εκκίνηση
 window.onload = async function() {
     await initTritonApp();
 };
 
 async function initTritonApp() {
     console.log("🔱 Triton: Εκκίνηση εφαρμογής...");
+    
+    // Έλεγχος αν υπάρχει η συνάρτηση πριν την καλέσουμε
     if (typeof fillDateTime === 'function') fillDateTime(); 
+    
     try {
+        // Φόρτωση Προϊόντων από Firebase
         if (typeof db !== 'undefined' && typeof loadProductsFromFirebase === 'function') {
             await loadProductsFromFirebase(); 
         }
+
+        // Δημιουργία πρώτης γραμμής αν ο πίνακας είναι άδειος
         const tbody = document.getElementById('invoiceItemsBody');
         if (tbody && tbody.children.length === 0) {
             if (typeof addNewLine === 'function') addNewLine();
         }
+        
         console.log("🔱 Triton: Έτοιμο για χρήση!");
     } catch (error) {
         console.error("❌ Σφάλμα κατά την εκκίνηση:", error);
@@ -684,8 +682,10 @@ function fillDateTime() {
     const d = document.getElementById('invoiceDate') || document.getElementById('docDate');
     const t = document.getElementById('invoiceTime') || document.getElementById('docTime');
     const pdfD = document.getElementById('pdf_date');
+
     if (d) d.value = now.toISOString().split('T')[0];
-    if (t) t.value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    if (t) t.value = now.getHours().toString().padStart(2, '0') + ":" + 
+                   now.getMinutes().toString().padStart(2, '0');
     if (pdfD) pdfD.innerText = now.toLocaleDateString('el-GR');
 }
 
@@ -693,19 +693,34 @@ function fillDateTime() {
 function addNewLine(productData = null) {
     const tbody = document.getElementById('invoiceItemsBody');
     if (!tbody) return;
+
     const row = document.createElement('tr');
     row.className = 'item-row';
+    
     const desc = productData ? productData.name : "";
     const price = productData ? productData.price : "0.00";
     const vat = productData ? productData.vat : "24";
+
     row.innerHTML = `
-        <td style="padding:5px;"><input type="text" class="row-desc" value="${desc}" placeholder="Περιγραφή..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; background:white; color:black;"></td>
-        <td style="padding:5px;"><input type="number" class="row-qty" value="1" oninput="calculateRow(this)" style="width:70px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; text-align:center;"></td>
-        <td style="padding:5px;"><input type="number" class="row-price" value="${price}" step="0.01" oninput="calculateRow(this)" style="width:100px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; text-align:right;"></td>
+        <td style="padding:5px;">
+            <input type="text" class="row-desc" value="${desc}" placeholder="Περιγραφή..." 
+                   style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; background:white; color:black;">
+        </td>
+        <td style="padding:5px;">
+            <input type="number" class="row-qty" value="1" oninput="calculateRow(this)" 
+                   style="width:70px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; text-align:center;">
+        </td>
+        <td style="padding:5px;">
+            <input type="number" class="row-price" value="${price}" step="0.01" oninput="calculateRow(this)" 
+                   style="width:100px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; text-align:right;">
+        </td>
         <td class="row-total-display" style="text-align:right; font-weight:bold; color:#0ea5e9; padding-right:10px; min-width:80px;">0.00€</td>
         <input type="hidden" class="row-vat" value="${vat}">
-        <input type="hidden" class="row-sku" value="${productData ? productData.sku : ''}">`;
+        <input type="hidden" class="row-sku" value="${productData ? productData.sku : ''}">
+    `;
+    
     tbody.appendChild(row);
+
     if (productData) {
         row.querySelector('.row-qty').focus();
         calculateRow(row.querySelector('.row-qty'));
@@ -719,18 +734,23 @@ function calculateRow(element) {
     const row = element.closest('tr');
     const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
     const price = parseFloat(row.querySelector('.row-price').value) || 0;
+    
     const netAmount = qty * price;
     row.querySelector('.row-total-display').innerText = netAmount.toFixed(2) + "€";
+    
     updateFullInvoiceTotals(); 
 }
 
 function updateFullInvoiceTotals() {
     let totalNet = 0;
     let vatTotals = { "24": 0, "13": 0, "6": 0, "0": 0 };
+    
+    // 1. Υπολογισμός από τις γραμμές
     document.querySelectorAll('.item-row').forEach(row => {
         const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
         const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
         const vatRate = row.querySelector('.row-vat')?.value || "24";
+        
         const net = qty * price;
         totalNet += net;
         if (vatTotals.hasOwnProperty(vatRate)) {
@@ -738,6 +758,41 @@ function updateFullInvoiceTotals() {
         }
     });
 
+    // 2. Βοηθητική λειτουργία για ασφαλή ενημέρωση (Safety First)
+    const safeSet = (id, value, isHtml = false) => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (isHtml) el.innerHTML = value;
+            else el.innerText = value;
+        }
+    };
+
+    // 3. Ενημέρωση Καθαρού Ποσού (Στη φόρμα και στο PDF)
+    safeSet('displayNet', totalNet.toFixed(2) + " €");
+    safeSet('pdf_netAmount', totalNet.toFixed(2) + " €");
+
+    // 4. Υπολογισμός ΦΠΑ και δημιουργία HTML πίνακα
+    let totalVat = 0;
+    let vatHtml = "";
+    for (let rate in vatTotals) {
+        if (vatTotals[rate] > 0) {
+            totalVat += vatTotals[rate];
+            vatHtml += `<tr><td style="font-size:12px;">ΦΠΑ ${rate}%:</td><td style="text-align:right;">${vatTotals[rate].toFixed(2)} €</td></tr>`;
+        }
+    }
+    
+    // 5. Ενημέρωση ΦΠΑ και Τελικού Συνόλου
+    safeSet('pdf_vat_analysis', vatHtml, true);
+    
+    const grandTotal = totalNet + totalVat;
+    
+    safeSet('displayTotal', grandTotal.toFixed(2) + " €");
+    safeSet('pdf_totalAmount', grandTotal.toFixed(2) + " €");
+
+    return grandTotal; // Επιστρέφει το νούμερο για χρήση στο QR Code
+}
+
+    // Ενημέρωση Φόρμας & PDF
     if(document.getElementById('displayNet')) document.getElementById('displayNet').innerText = totalNet.toFixed(2) + " €";
     if(document.getElementById('pdf_netAmount')) document.getElementById('pdf_netAmount').innerText = totalNet.toFixed(2) + " €";
     
@@ -749,98 +804,229 @@ function updateFullInvoiceTotals() {
             vatHtml += `<tr><td style="font-size:12px;">ΦΠΑ ${rate}%:</td><td style="text-align:right;">${vatTotals[rate].toFixed(2)} €</td></tr>`;
         }
     }
+    
     if(document.getElementById('pdf_vat_analysis')) document.getElementById('pdf_vat_analysis').innerHTML = vatHtml;
     const grandTotal = totalNet + totalVat;
     if(document.getElementById('displayTotal')) document.getElementById('displayTotal').innerText = grandTotal.toFixed(2) + " €";
     if(document.getElementById('pdf_totalAmount')) document.getElementById('pdf_totalAmount').innerText = grandTotal.toFixed(2) + " €";
-    return grandTotal; 
+
+    return grandTotal;
 }
 
-// --- 6. ΕΚΔΟΣΗ PDF & QR CODE ---
-window.finalizeAndPrint = async function() {
+async function finalizeAndPrint() {
     const element = document.getElementById('printableArea');
     if (!element) return alert("❌ Σφάλμα: Δεν βρέθηκε το Template εκτύπωσης!");
-    const name = document.getElementById('newCustName')?.value || "Customer";
+
+    const name = document.getElementById('newCustName')?.value || "Πελάτης";
+    
+    // Εμφανίζουμε προσωρινά το στοιχείο για να μπορέσει η html2pdf να το "δει"
     element.style.display = 'block';
+
     try {
+        // 1. Συλλογή δεδομένων για τον πίνακα του PDF
         const pdfTableBody = document.getElementById('pdf_itemsList');
         const rows = document.querySelectorAll('.item-row');
+
         if (pdfTableBody) {
             pdfTableBody.innerHTML = ""; 
             rows.forEach(row => {
+                // Χρήση ερωτηματικού ?. για να μην κρασάρει αν λείπει κάποιο input
                 const sku = row.querySelector('.row-sku')?.value || "";
                 const desc = row.querySelector('.row-desc')?.value || "---";
                 const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
                 const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
+                const net = qty * price;
+
                 if (qty > 0) {
-                    pdfTableBody.innerHTML += `<tr><td style="padding: 8px;">${sku}</td><td style="padding: 8px;">${desc}</td><td style="padding: 8px; text-align: center;">${qty}</td><td style="padding: 8px; text-align: right;">${price.toFixed(2)} €</td></tr>`;
+                    pdfTableBody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #eee; font-size: 11px;">
+                            <td style="padding: 8px;">${sku}</td>
+                            <td style="padding: 8px;">${desc}</td>
+                            <td style="padding: 8px; text-align: center;">${qty}</td>
+                            <td style="padding: 8px; text-align: right;">${price.toFixed(2)} €</td>
+                            <td style="padding: 8px; text-align: right; font-weight: bold;">${net.toFixed(2)} €</td>
+                        </tr>
+                    `;
                 }
             });
         }
+
+        // 2. Ενημέρωση Συνόλων & QR (Καλούμε τη συνάρτηση που φτιάξαμε πριν)
         const finalTotal = updateFullInvoiceTotals();
+
+        // 3. Δημιουργία QR CODE
         const qrContainer = document.getElementById('pdf_qrcode');
         if (qrContainer) {
+            const qrText = `TritonERP|Inv:${Date.now()}|Total:${finalTotal.toFixed(2)}`;
+            qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrText)}" />`;
+        }
+
+        // 4. Ρυθμίσεις και Παραγωγή PDF
+        const opt = {
+            margin: 10,
+            filename: `Triton_Invoice_${name.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Περιμένουμε λίγο να φορτώσει το QR image
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await html2pdf().set(opt).from(element).save();
+        
+        alert("✅ Το PDF εκδόθηκε επιτυχώς!");
+
+    } catch (error) {
+        console.error("Σφάλμα PDF:", error);
+        alert("❌ Αποτυχία έκδοσης PDF.");
+    } finally {
+        // Κρύβουμε πάλι το template
+        element.style.display = 'none';
+    }
+}
+     // 1. Ενημέρωση συνόλων και λήψη τελικού ποσού
+        const finalTotal = updateFullInvoiceTotals() || 0; 
+
+        // 2. Δημιουργία QR CODE (με έλεγχο ασφαλείας)
+        const qrContainer = document.getElementById('pdf_qrcode');
+        if (qrContainer) {
+            // Χρήση encodeURIComponent για ασφάλεια στα δεδομένα του QR
             const qrText = `TritonERP|Inv:${Date.now()}|Total:${finalTotal.toFixed(2)}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrText)}`;
             qrContainer.innerHTML = `<img src="${qrUrl}" style="width:100px; height:100px;" />`;
         }
-        const opt = { margin: 10, filename: `Triton_Invoice_${name.replace(/\s+/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        await new Promise(resolve => setTimeout(resolve, 800));
-        if (typeof html2pdf !== 'undefined') { await html2pdf().set(opt).from(element).save(); alert("✅ Το PDF εκδόθηκε!"); }
-    } catch (error) { console.error(error); } finally { if (element) element.style.display = 'none'; }
-}; 
 
-// --- 7. FIREBASE & AUTOCOMPLETE ---
-window.loadProductsFromFirebase = async function() {
-    if (typeof db === 'undefined' || !db) return;
+        // 3. Ρυθμίσεις PDF
+        const opt = {
+            margin: 10,
+            filename: `Triton_Invoice_${name.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 3, 
+                useCORS: true, 
+                logging: false,
+                letterRendering: true 
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Αναμονή μικρού χρόνου (delay) για να προλάβει να φορτώσει η εικόνα του QR
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // 4. Παραγωγή και Αποθήκευση
+        await html2pdf().set(opt).from(element).save();
+        
+        alert("✅ Το PDF εκδόθηκε επιτυχώς!");
+
+    } catch (error) {
+        console.error("Σφάλμα PDF:", error);
+        alert("❌ Αποτυχία έκδοσης PDF: " + error.message);
+    } finally {
+        // Επιστροφή στην αρχική κατάσταση
+        if (element) element.style.display = 'none';
+    }
+}
+
+// --- 6. AUTOCOMPLETE & FIREBASE ---
+async function loadProductsFromFirebase() {
+    // Έλεγχος αν η βάση είναι έτοιμη
+    if (typeof db === 'undefined' || !db) {
+        console.warn("🔱 Triton: Η βάση δεδομένων δεν είναι έτοιμη ακόμα.");
+        return;
+    }
+
     try {
         const snapshot = await db.ref('products').once('value');
         const data = snapshot.val();
+        
         if (data) {
+            // Ενημερώνουμε την παγκόσμια μεταβλητή χωρίς redeclaration
             window.allProducts = Object.keys(data).map(key => ({
-                name: data[key].name, price: data[key].price, vat: data[key].vat || "24", sku: data[key].sku || ""
+                name: data[key].name,
+                price: data[key].price,
+                vat: data[key].vat || "24",
+                sku: data[key].sku || ""
             }));
+            console.log("✅ Φορτώθηκαν " + window.allProducts.length + " προϊόντα.");
         }
-    } catch (e) { console.error(e); }
-};
+    } catch (error) {
+        console.error("❌ Σφάλμα Firebase κατά τη φόρτωση:", error);
+    }
+}
 
+// Listener για το Autocomplete
 document.addEventListener('input', function(e) {
+    // 1. Σιγουρευόμαστε ότι το target υπάρχει και έχει τη σωστή κλάση
     if (!e.target || !e.target.classList.contains('row-desc')) return;
+
     const query = (e.target.value || "").toLowerCase();
-    if (query.length < 2) { closeAllLists(); return; }
-    if (Array.isArray(window.allProducts)) {
-        const matches = window.allProducts.filter(p => p.name.toLowerCase().includes(query));
-        showProductSuggestions(e.target, matches);
+    
+    // 2. Καθαρισμός αν το κείμενο είναι πολύ μικρό
+    if (query.length < 2) {
+        if (typeof closeAllLists === 'function') closeAllLists();
+        return;
+    }
+
+    // 3. Αναζήτηση στα προϊόντα με έλεγχο αν η λίστα window.allProducts υπάρχει
+    if (Array.isArray(window.allProducts) && window.allProducts.length > 0) {
+        const matches = window.allProducts.filter(p => 
+            p.name && p.name.toLowerCase().includes(query)
+        );
+
+        // 4. Εμφάνιση προτάσεων μόνο αν υπάρχει η συνάρτηση διαθέσιμη
+        if (typeof showProductSuggestions === 'function') {
+            showProductSuggestions(e.target, matches);
+        }
     }
 });
-
 function showProductSuggestions(inputEl, matches) {
     closeAllLists();
     if (matches.length === 0) return;
-    const list = document.createElement("DIV");
-    list.setAttribute("class", "autocomplete-items");
-    inputEl.parentNode.appendChild(list);
-    matches.forEach(p => {
+
+    const listContainer = document.createElement("DIV");
+    listContainer.setAttribute("class", "autocomplete-items");
+    inputEl.parentNode.style.position = "relative";
+    inputEl.parentNode.appendChild(listContainer);
+
+    matches.forEach(product => {
         const item = document.createElement("DIV");
-        item.innerHTML = `<strong>${p.name}</strong> - ${p.price}€`;
-        item.onclick = () => {
+        item.innerHTML = `<strong>${product.name}</strong> - ${product.price}€`;
+        item.addEventListener("click", function() {
             const row = inputEl.closest('tr');
-            inputEl.value = p.name;
-            row.querySelector('.row-price').value = p.price;
-            row.querySelector('.row-vat').value = p.vat;
-            row.querySelector('.row-sku').value = p.sku;
-            updateFullInvoiceTotals();
+            inputEl.value = product.name;
+            row.querySelector('.row-price').value = product.price;
+            row.querySelector('.row-vat').value = product.vat;
+            row.querySelector('.row-sku').value = product.sku;
+            calculateRow(row.querySelector('.row-price'));
             closeAllLists();
             row.querySelector('.row-qty').focus();
-        };
-        list.appendChild(item);
+        });
+        listContainer.appendChild(item);
     });
 }
 
 function closeAllLists() {
-    const x = document.getElementsByClassName("autocomplete-items");
-    while (x.length > 0) x[0].remove();
+    const items = document.getElementsByClassName("autocomplete-items");
+    while (items.length > 0) items[0].remove();
 }
+
+// --- 7. NAVIGATION (ENTER KEY) ---
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const active = document.activeElement;
+        if (active.classList.contains('row-desc')) {
+            e.preventDefault();
+            active.closest('tr').querySelector('.row-qty').focus();
+        } else if (active.classList.contains('row-qty')) {
+            e.preventDefault();
+            active.closest('tr').querySelector('.row-price').focus();
+        } else if (active.classList.contains('row-price')) {
+            e.preventDefault();
+            addNewLine(); 
+        }
+    }
+});
+   
 </script>
  <div id="newCustomerModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow-y:auto; align-items:center; justify-content:center; padding: 20px;">
     <div style="background:white; width:95%; max-width:850px; margin:auto; padding:25px; border-radius:15px; font-family: sans-serif; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 8px solid #020617;">
@@ -1259,9 +1445,11 @@ window.debugFirebase = function() {
             return alert("❌ Το Firebase SDK δεν έχει φορτωθεί!");
         }
         
-    if (typeof db === 'undefined' || !db) {
-    console.warn("⚠️ Η μεταβλητή 'db' δεν έχει αρχικοποιηθεί ακόμα. Αναμονή...");
-}
+        if (typeof db === 'undefined' || !db) {
+            alert("❌ Η μεταβλητή 'db' είναι null ή undefined! Ελέγξτε την initializeApp.");
+            return;
+        }
+
         console.log("🔱 Triton Sync - Έναρξη ελέγχου βάσης...");
 
         db.ref('customers').once('value').then(snapshot => {
@@ -1294,10 +1482,9 @@ window.addBranchToTempList = function() {
     const city = cityEl ? cityEl.value.trim() : "";
     const zip = zipEl ? zipEl.value.trim() : "";
 
-   if (!addr) {
-    alert("⚠️ Συμπληρώστε τουλάχιστον τη διεύθυνση του υποκαταστήματος!");
-    // Αφαιρέσαμε το 'return' για να μην κολλάει το ERP
-}
+    if (!addr) {
+        return alert("⚠️ Συμπληρώστε τουλάχιστον τη διεύθυνση του υποκαταστήματος!");
+    }
 
     // Δημιουργία πλήρους διεύθυνσης
     const fullAddr = `${addr}${city ? ', ' + city : ''}${zip ? ' ' + zip : ''}`.trim();
@@ -1504,7 +1691,7 @@ function initializeDateTime() {
     if (timeField) timeField.value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 }
 // --- HELPER FUNCTION ΓΙΑ ΑΠΟΦΥΓΗ ΣΦΑΛΜΑΤΩΝ NULL ---
-var updateUI = (id, value, isHtml = false) => {
+const updateUI = (id, value, isHtml = false) => {
     const el = document.getElementById(id);
     if (el) {
         if (isHtml) el.innerHTML = value;
@@ -1723,7 +1910,7 @@ function generateTritonPDF() {
 }
   </script>
         <script>  // --- ΒΑΛΕ ΑΥΤΟ ΣΤΗΝ ΑΡΧΗ ΤΟΥ SCRIPT ΣΟΥ ---
-var updateUI = (id, value, isHtml = false) => {
+const updateUI = (id, value, isHtml = false) => {
     const el = document.getElementById(id);
     if (el) {
         if (isHtml) el.innerHTML = value;
@@ -1895,74 +2082,14 @@ window.closeNewCustomerModal = function() {
     if (modal) modal.style.display = 'none';
 };
 
-// --- 🔱 TRITON ERP: ΛΕΙΤΟΥΡΓΙΕΣ MODALS, myDATA & PDF ---
-
-// 1. Διαχείριση Ρυθμίσεων (⚙️)
-window.toggleTritonSettings = function() {
-    const panel = document.getElementById('tritonSettingsPanel');
-    if (!panel) return;
-    
-    if (panel.style.display === 'none' || panel.style.display === '') {
-        // Φόρτωση από localStorage
-        document.getElementById('myDataUser').value = localStorage.getItem('triton_user') || '';
-        document.getElementById('myDataKey').value = localStorage.getItem('triton_key') || '';
-        panel.style.display = 'block';
-    } else {
-        // Αποθήκευση στο κλείσιμο
-        localStorage.setItem('triton_user', document.getElementById('myDataUser').value);
-        localStorage.setItem('triton_key', document.getElementById('myDataKey').value);
-        panel.style.display = 'none';
-        console.log("🔱 Triton: Ρυθμίσεις αποθηκεύτηκαν.");
-    }
-};
-
-// 2. Αποστολή στο myDATA (🚀)
-window.sendToMyData = async function() {
-    const afmInput = document.getElementById('custAfm');
-    const afm = afmInput ? afmInput.value.trim() : "";
-    const user = localStorage.getItem('triton_user');
-    const key = localStorage.getItem('triton_key');
-
-    // Έλεγχος ΑΦΜ
-    if (afm.length !== 9 || isNaN(afm)) {
-        if(afmInput) afmInput.style.borderColor = "#ef4444";
-        return alert("❌ Το ΑΦΜ πρέπει να είναι ακριβώς 9 ψηφία.");
-    }
-    if(afmInput) afmInput.style.borderColor = "#cbd5e1";
-
-    // Έλεγχος Κλειδιών
-    if (!user || !key) {
-        alert("⚠️ Πρέπει πρώτα να αποθηκεύσετε τα κλειδιά σας στις Ρυθμίσεις (⚙️).");
-        window.toggleTritonSettings();
-        return;
-    }
-
-    // Εφέ Κουμπιού
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "⏳ Επικοινωνία...";
-    btn.disabled = true;
-
-    try {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Προσομοίωση ΑΑΔΕ
-        alert("✅ Το παραστατικό διαβιβάστηκε επιτυχώς!\nΜΑΡΚ: 492038475293\nUID: TRITON-" + Date.now());
-    } catch (error) {
-        alert("❌ Σφάλμα σύνδεσης με το myDATA.");
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-};
-
-// 3. Δημιουργία PDF (📄)
 window.generatePDF = function() {
     var element = document.getElementById('printableArea');
     if (!element) return alert("❌ Δεν βρέθηκε η περιοχή εκτύπωσης (printableArea)");
     
     element.style.display = 'block';
     var custName = document.getElementById('newCustName')?.value || "ΠΕΛΑΤΗΣ";
-    
-    // Ενημέρωση QR Code
+    updateUI('pdf_custName', custName);
+
     var qrContainer = document.getElementById('pdf_qrcode');
     if (qrContainer) {
         var totalText = document.getElementById('pdf_totalAmount')?.innerText || "0.00";
@@ -1986,20 +2113,3 @@ window.generatePDF = function() {
     });
 };
 </script>
-
-<div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
-    <h3 style="margin-top:0; color:#0ea5e9; font-size:18px;">⚙️ Ρυθμίσεις myDATA</h3>
-    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-    
-    <div style="margin-bottom:15px;">
-        <label style="display:block; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:5px;">USER ID (myDATA)</label>
-        <input type="text" id="myDataUser" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
-    </div>
-    
-    <div style="margin-bottom:20px;">
-        <label style="display:block; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:5px;">SUBSCRIPTION KEY</label>
-        <input type="password" id="myDataKey" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
-    </div>
-    
-    <button onclick="toggleTritonSettings()" style="width:100%; background:#0ea5e9; color:white; padding:12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Αποθήκευση & Κλείσιμο</button>
-</div>

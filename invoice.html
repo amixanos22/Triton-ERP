@@ -276,26 +276,25 @@ input:focus, select:focus {
 }
 /* ΤΟ ΚΛΕΙΔΙ ΓΙΑ ΝΑ ΔΟΥΛΕΨΟΥΝ ΤΑ ΚΟΥΜΠΙΑ */
 #newCustomerModal {
-    display: none;             /* Αρχικά κρυφό για να μην εμποδίζει */
+    display: none;             /* Αρχικά κρυφό - Η JS το κάνει 'flex' */
     position: fixed;           /* Κλειδωμένο στην οθόνη */
-    z-index: 999999;           /* Πάνω από ΟΛΑ (μπάρες, sidebar, κλπ) */
+    z-index: 999999;           /* Πάνω από ΟΛΑ */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Μαύρο ημιδιάφανο φόντο */
-    align-items: center;       /* Κεντράρισμα */
+    background: rgba(0, 0, 0, 0.7); 
+    align-items: center;       
     justify-content: center;
-    pointer-events: auto;      /* Να δέχεται κλικ */
+    pointer-events: auto;      /* Επιτρέπει κλικ στο background */
 }
 
-/* Το δικό σου animation */
+/* Το εσωτερικό πλαίσιο (Η φόρμα σου) */
 #newCustomerModal > div {
     animation: modalFadeIn 0.3s ease-out;
-    pointer-events: auto;      /* Εξασφαλίζει ότι τα κουμπιά σου πατιούνται */
-}
-#newCustomerModal > div {
-    animation: modalFadeIn 0.3s ease-out;
+    pointer-events: auto !important; /* ΚΛΕΙΔΩΝΕΙ ότι τα κουμπιά θα ακούνε */
+    position: relative;
+    z-index: 1000000;
 }
 </style>
 </head>

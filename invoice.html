@@ -4384,14 +4384,23 @@ window.generatePDF = function() {
 </div>
 
 <script>
+// 1. Κλείσιμο Sidebar (Με προστασία για το ποντίκι)
 function closeBalanceSidebar() {
-    document.getElementById('balance-sidebar').style.right = '-350px';
+    const sb = document.getElementById('balance-sidebar');
+    if (!sb) return;
+    sb.style.right = '-350px';
+    sb.style.pointerEvents = 'none'; // Ελευθερώνει τα κουμπιά από κάτω
+    sb.style.visibility = 'hidden';
 }
 
+// 2. Ενημέρωση Υπολοίπου (Με προστασία για άλλες σελίδες)
 async function updateCustomerBalance(customerId) {
-    if (!customerId) return;
+    const sb = document.getElementById('balance-sidebar');
+    if (!sb || !customerId) return; // Αν λείπει η μπάρα (π.χ. στη hub), σταματάει εδώ
+
     try {
-        const { data: trans, error } = await supabaseClient
+        // ΠΡΟΣΟΧΗ: Βεβαιώσου ότι το όνομα (π.χ. _supabase ή supabaseClient) είναι σωστό
+        const { data: trans, error } = await _supabase
             .from('customer_ledger')
             .select('debit, credit')
             .eq('customer_id', customerId);
@@ -4405,16 +4414,22 @@ async function updateCustomerBalance(customerId) {
         if (balanceValue) {
             balanceValue.innerHTML = balance.toFixed(2) + " €";
             balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
-            document.getElementById('balance-sidebar').style.right = '0';
+            
+            // ΕΜΦΑΝΙΣΗ ΚΑΙ ΕΝΕΡΓΟΠΟΙΗΣΗ ΚΛΙΚ
+            sb.style.visibility = 'visible'; 
+            sb.style.pointerEvents = 'auto'; 
+            sb.style.right = '0';
         }
     } catch (err) {
         console.error("Ledger Error:", err.message);
     }
 }
 
-// Σύνδεση με το Dropdown των Πελατών
-document.getElementById('customer-select')?.addEventListener('change', function() {
-    updateCustomerBalance(this.value);
+// 3. Σύνδεση με το Dropdown (Ασφαλής τρόπος)
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'customer-select') {
+        updateCustomerBalance(e.target.value);
+    }
 });
 
 // Η λειτουργία για το κουμπί Αποθήκευση & Κλείσιμο

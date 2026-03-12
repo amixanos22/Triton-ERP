@@ -4261,6 +4261,43 @@ window.generatePDF = function() {
         await init();
         await loadProducts();
     };
+  function updateInvoiceFields() {
+    const select = document.getElementById('customerSelect');
+    if (!select) return;
+    
+    const customerId = select.value;
+    if (!customerId) return;
+
+    // Ψάχνουμε τον πελάτη στη λίστα που φέραμε από τη βάση
+    // Προσοχή: Το 'fetchedCustomers' πρέπει να είναι η μεταβλητή που αποθηκεύεις τους πελάτες
+    const customer = allCustomers.find(c => c.id == customerId || c.afm == customerId);
+    
+    if (customer) {
+        document.getElementById('custName').value = customer.name || '';
+        document.getElementById('custAfm').value = customer.afm || '';
+        document.getElementById('custDoy').value = customer.doy || '';
+        document.getElementById('custAddress').value = customer.address || '';
+        document.getElementById('custCity').value = customer.city || '';
+        document.getElementById('custZip').value = customer.zip || '';
+        
+        // Ενημερώνουμε και το UI αν χρειάζεται
+        const branchArea = document.getElementById('branchArea');
+        if (branchArea) branchArea.style.display = 'block';
+    }
+}
+  window.onload = function() {
+    console.log("🔱 Triton Sync: Εκκίνηση συστήματος...");
+    try {
+        if (typeof initSystem === 'function') {
+            initSystem();
+        } else {
+            console.error("❌ Η συνάρτηση initSystem δεν βρέθηκε!");
+        }
+    } catch (err) {
+        console.error("❌ Κρίσιμο σφάλμα στην εκκίνηση του τιμολογίου: ", err);
+        alert("Παρουσιάστηκε πρόβλημα κατά τη φόρτωση. Δες το Console (F12).");
+    }
+};
 </script>
   <div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
     <h3 style="margin-top:0; color:#0ea5e9; font-size:18px;">⚙️ Ρυθμίσεις myDATA</h3>

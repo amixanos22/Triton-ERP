@@ -4158,175 +4158,18 @@ window.generatePDF = function() {
         element.style.display = 'none';
     });
 };
-</script>
-<script>
-    const suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
-    const suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
-    const _supabase = supabase.createClient(suUrl, suKey);
-
-    let fetchedCustomers = [];
-
-    // 1. Αρχικοποίηση
-    async function init() {
-        const sel = document.getElementById('customerSelect');
-        if (!sel) return; // Προστασία για τη hub.html
-
-        const { data, error } = await _supabase.from('customers').select('*').order('name');
-        if (error) return console.error("Σφάλμα Supabase:", error.message);
-
-        fetchedCustomers = data;
-        sel.innerHTML = '<option value="">--- ΕΠΙΛΕΞΤΕ ΠΕΛΑΤΗ ---</option>';
-        data.forEach(c => {
-            sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-    }
-
-    // 2. Φόρτωση Προϊόντων
-    let allProducts = [];
-    async function loadProducts() {
-        const { data, error } = await _supabase.from('products').select('*').order('name');
-        if (error) return;
-        allProducts = data;
-    }
-
-    // 3. Υπολογισμός Συνόλου (Μόνο αν υπάρχουν τα πεδία)
-    function updateTotal() {
-        const qty = document.getElementById('quantity')?.value || 0;
-        const price = document.getElementById('unit-price')?.value || 0;
-        const totalInput = document.getElementById('total-amount');
-        if (totalInput) {
-            totalInput.value = (qty * price).toFixed(2) + " €";
-        }
-    }
-
-    // 4. Αποθήκευση Τιμολογίου & Ledger
-    async function saveInvoice() {
-        const cId = document.getElementById('customerSelect')?.value || document.getElementById('customer-select')?.value;
-        const totalAmount = parseFloat(document.getElementById('total-amount')?.value) || 0;
-
-        if (!cId || totalAmount === 0) {
-            alert("Συμπληρώστε Πελάτη και Ποσό.");
-            return false;
-        }
-
-        try {
-            // Χρησιμοποιούμε το σωστό όνομα: _supabase
-            const { error } = await _supabase.from('customer_ledger').insert([{
-                customer_id: cId,
-                debit: totalAmount,
-                credit: 0,
-                description: 'Έκδοση τιμολογίου',
-                date: new Date().toISOString()
-            }]);
-
-            if (error) throw error;
-            alert("✅ Το Ledger ενημερώθηκε!");
-            location.reload();
-            return true;
-        } catch (err) {
-            alert("Σφάλμα: " + err.message);
-            return false;
-        }
-    }
-
-    // 5. Προστατευμένο Event Listener για το Sidebar
-    document.addEventListener('change', function(e) {
-        if (e.target && (e.target.id === 'customer-select' || e.target.id === 'customerSelect')) {
-            if (typeof updateCustomerBalance === 'function') {
-                updateCustomerBalance(e.target.value);
-            }
-        }
-    });
-
-    // 6. Προσθήκη Υποκαταστήματος (Προστατευμένο)
-    function addBranchRow() {
-        const container = document.getElementById('branchesContainer');
-        if (!container) return; 
-
-        const rowId = 'row-' + Date.now();
-        const div = document.createElement('div');
-        div.id = rowId;
-        div.style = "display: grid; grid-template-columns: 1fr 1fr 1fr 40px; gap: 10px; margin-bottom: 8px;";
-        div.innerHTML = `
-            <input type="text" placeholder="Όνομα Υποκ." class="branch-name" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-            <input type="text" placeholder="Περιοχή" class="branch-area" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-            <input type="text" placeholder="Τηλέφωνο" class="branch-phone" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-            <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;">✕</button>
-        `;
-        container.appendChild(div);
-    }
-
-    // Εκκίνηση
-    window.onload = async () => {
-        await init();
-        await loadProducts();
-    };
-  function updateInvoiceFields() {
-    const select = document.getElementById('customerSelect');
-    if (!select) return;
-    
-    const customerId = select.value;
-    if (!customerId) return;
-
-    // Ψάχνουμε τον πελάτη στη λίστα που φέραμε από τη βάση
-    // Προσοχή: Το 'fetchedCustomers' πρέπει να είναι η μεταβλητή που αποθηκεύεις τους πελάτες
-    const customer = allCustomers.find(c => c.id == customerId || c.afm == customerId);
-    
-    if (customer) {
-        document.getElementById('custName').value = customer.name || '';
-        document.getElementById('custAfm').value = customer.afm || '';
-        document.getElementById('custDoy').value = customer.doy || '';
-        document.getElementById('custAddress').value = customer.address || '';
-        document.getElementById('custCity').value = customer.city || '';
-        document.getElementById('custZip').value = customer.zip || '';
-        
-        // Ενημερώνουμε και το UI αν χρειάζεται
-        const branchArea = document.getElementById('branchArea');
-        if (branchArea) branchArea.style.display = 'block';
-    }
-}
-  window.onload = function() {
-    console.log("🔱 Triton Sync: Εκκίνηση συστήματος...");
-    try {
-        if (typeof initSystem === 'function') {
-            initSystem();
-        } else {
-            console.error("❌ Η συνάρτηση initSystem δεν βρέθηκε!");
-        }
-    } catch (err) {
-        console.error("❌ Κρίσιμο σφάλμα στην εκκίνηση του τιμολογίου: ", err);
-        alert("Παρουσιάστηκε πρόβλημα κατά τη φόρτωση. Δες το Console (F12).");
-    }
-};
-  window.addEventListener('DOMContentLoaded', (event) => {
-    // Κλείνουμε όλα τα modals για να ξεμπλοκάρει η οθόνη
-    if(document.getElementById('settingsModal')) document.getElementById('settingsModal').style.display = 'none';
-    if(document.getElementById('previewModal')) document.getElementById('previewModal').style.display = 'none';
-    if(document.getElementById('branchPopup')) document.getElementById('branchPopup').style.display = 'none';
-    
-    console.log("🔱 Triton Sync: Τα Modals έκλεισαν, η οθόνη πρέπει να είναι ενεργή.");
-    
-    // Εκκίνηση του συστήματος
-    if (typeof initSystem === 'function') initSystem();
-});
-</script>
-  <div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
+</script><div id="tritonSettingsPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3); z-index:10000; border:2px solid #0ea5e9; width:320px; font-family: sans-serif;">
     <h3 style="margin-top:0; color:#0ea5e9; font-size:18px;">⚙️ Ρυθμίσεις myDATA</h3>
     <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-    
     <div style="margin-bottom:15px;">
         <label style="display:block; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:5px;">USER ID (myDATA)</label>
         <input type="text" id="myDataUser" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
     </div>
-    
     <div style="margin-bottom:20px;">
         <label style="display:block; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:5px;">SUBSCRIPTION KEY</label>
         <input type="password" id="myDataKey" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
     </div>
-    
-    <button onclick="handleSaveAndClose()" style="width:100%; background:#0ea5e9; color:white; padding:12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">
-        Αποθήκευση & Κλείσιμο
-    </button>
+    <button onclick="handleSaveAndClose()" style="width:100%; background:#0ea5e9; color:white; padding:12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Αποθήκευση & Κλείσιμο</button>
 </div>
 
 <div id="balance-sidebar" style="position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; border-left: 4px solid #0ea5e9; font-family: sans-serif; pointer-events: none; visibility: hidden;">
@@ -4340,80 +4183,133 @@ window.generatePDF = function() {
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
         <p style="font-size: 12px; color: #94a3b8;">* Το υπόλοιπο προκύπτει από τις κινήσεις του Ledger.</p>
     </div>
-</div> 
+</div>
+
 <script>
-// 1. Κλείσιμο Sidebar με πλήρη έλεγχο
-function closeBalanceSidebar() {
-    const sb = document.getElementById('balance-sidebar');
-    if (!sb) return; 
-    sb.style.right = '-350px';
-    sb.style.pointerEvents = 'none';
-    sb.style.visibility = 'hidden';
-}
+    // --- ΡΥΘΜΙΣΕΙΣ SUPABASE ---
+    const suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+    const suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
+    const _supabase = supabase.createClient(suUrl, suKey);
 
-// 2. Ενημέρωση Υπολοίπου - ΠΡΟΣΕΚΤΙΚΑ ΜΕ ΤΟ supabase variable
-async function updateCustomerBalance(customerId) {
-    const sb = document.getElementById('balance-sidebar');
-    const balanceValue = document.getElementById('sidebar-balance-value');
-    
-    // Αν δεν είμαστε στη σελίδα που έχει το sidebar, σταμάτα αθόρυβα
-    if (!sb || !balanceValue || !customerId) return; 
+    let fetchedCustomers = [];
+    let allProducts = [];
 
-    try {
-        // ΕΔΩ: Χρησιμοποίησε το σωστό όνομα της supabase (π.χ. supabase αντί για _supabase)
-        // Αν το αρχείο σου χρησιμοποιεί άλλο όνομα, άλλαξέ το εδώ:
-        const client = (typeof _supabase !== 'undefined') ? _supabase : (typeof supabase !== 'undefined' ? supabase : null);
-        
-        if (!client) {
-            console.warn("Triton: Supabase client not found.");
-            return;
+    // --- ΣΥΝΑΡΤΗΣΕΙΣ ΠΛΟΗΓΗΣΗΣ (Για να δουλεύει η hub.html) ---
+    window.createNewWindow = function(url) {
+        console.log("🔱 Triton Navigate:", url);
+        window.location.href = url;
+    };
+
+    // --- ΔΙΑΧΕΙΡΙΣΗ SIDEBAR & MODALS ---
+    function closeBalanceSidebar() {
+        const sb = document.getElementById('balance-sidebar');
+        if (sb) {
+            sb.style.right = '-350px';
+            sb.style.pointerEvents = 'none';
+            sb.style.visibility = 'hidden';
         }
-
-        const { data: trans, error } = await client
-            .from('customer_ledger')
-            .select('debit, credit')
-            .eq('customer_id', customerId);
-
-        if (error) throw error;
-
-        let balance = 0;
-        if (trans) {
-            trans.forEach(t => balance += (Number(t.debit) || 0) - (Number(t.credit) || 0));
-        }
-
-        balanceValue.innerHTML = balance.toFixed(2) + " €";
-        balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
-        
-        sb.style.visibility = 'visible'; 
-        sb.style.pointerEvents = 'auto'; 
-        sb.style.right = '0';
-
-    } catch (err) {
-        console.error("Ledger Error:", err.message);
     }
-}
 
-// 3. Σύνδεση με το Dropdown - ΜΟΝΟ ΑΝ ΥΠΑΡΧΕΙ ΤΟ ΣΤΟΙΧΕΙΟ
-document.addEventListener('change', function(e) {
-    // Ελέγχουμε αν το στοιχείο που άλλαξε είναι όντως ο πελάτης
-    if (e.target && (e.target.id === 'customer-select' || e.target.id === 'customerSelect')) {
-        updateCustomerBalance(e.target.value);
+    async function updateCustomerBalance(customerId) {
+        if (!customerId) return;
+        const sb = document.getElementById('balance-sidebar');
+        const balanceValue = document.getElementById('sidebar-balance-value');
+        if (!sb || !balanceValue) return;
+
+        try {
+            const { data: trans, error } = await _supabase
+                .from('customer_ledger')
+                .select('debit, credit')
+                .eq('customer_id', customerId);
+
+            if (error) throw error;
+
+            let balance = 0;
+            if (trans) trans.forEach(t => balance += (Number(t.debit) || 0) - (Number(t.credit) || 0));
+
+            balanceValue.innerHTML = balance.toFixed(2) + " €";
+            balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
+            
+            sb.style.visibility = 'visible'; 
+            sb.style.pointerEvents = 'auto'; 
+            sb.style.right = '0';
+        } catch (err) { console.error("Ledger Error:", err.message); }
     }
-});
 
-// Λειτουργία Αποθήκευσης
-async function handleSaveAndClose() {
-    try {
-        if (typeof saveInvoice === 'function') {
-            await saveInvoice(); 
+    // --- ΔΙΑΧΕΙΡΙΣΗ ΤΙΜΟΛΟΓΙΟΥ ---
+    async function initSystem() {
+        const sel = document.getElementById('customerSelect') || document.getElementById('customer-select');
+        if (!sel) return;
+
+        const { data, error } = await _supabase.from('customers').select('*').order('name');
+        if (error) return console.error("Σφάλμα Supabase:", error.message);
+
+        fetchedCustomers = data;
+        sel.innerHTML = '<option value="">--- ΕΠΙΛΕΞΤΕ ΠΕΛΑΤΗ ---</option>';
+        data.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+        
+        // Φόρτωση προϊόντων
+        const { data: pData } = await _supabase.from('products').select('*').order('name');
+        if (pData) allProducts = pData;
+    }
+
+    function updateInvoiceFields() {
+        const sel = document.getElementById('customerSelect') || document.getElementById('customer-select');
+        if (!sel || !sel.value) return;
+
+        const customer = fetchedCustomers.find(c => c.id == sel.value);
+        if (customer) {
+            if(document.getElementById('custName')) document.getElementById('custName').value = customer.name || '';
+            if(document.getElementById('custAfm')) document.getElementById('custAfm').value = customer.afm || '';
+            if(document.getElementById('custDoy')) document.getElementById('custDoy').value = customer.doy || '';
+            if(document.getElementById('custAddress')) document.getElementById('custAddress').value = customer.address || '';
+            if(document.getElementById('custCity')) document.getElementById('custCity').value = customer.city || '';
+            if(document.getElementById('custZip')) document.getElementById('custZip').value = customer.zip || '';
+            
+            const branchArea = document.getElementById('branchArea');
+            if (branchArea) branchArea.style.display = 'block';
+        }
+        // Ενημέρωση και του Sidebar
+        updateCustomerBalance(sel.value);
+    }
+
+    async function handleSaveAndClose() {
+        // Εδώ καλείς τη δική σου saveInvoice() αν υπάρχει ή την ενσωματωμένη
+        const total = parseFloat(document.getElementById('total-amount')?.value) || 0;
+        const cId = document.getElementById('customerSelect')?.value;
+
+        if (cId && total > 0) {
+            await _supabase.from('customer_ledger').insert([{
+                customer_id: cId,
+                debit: total,
+                credit: 0,
+                description: 'Έκδοση τιμολογίου',
+                date: new Date().toISOString()
+            }]);
         }
         
-        const panel = document.getElementById('tritonSettingsPanel');
-        if (panel) panel.style.display = 'none';
-
+        if(document.getElementById('tritonSettingsPanel')) document.getElementById('tritonSettingsPanel').style.display = 'none';
         closeBalanceSidebar();
-    } catch (err) {
-        console.error("Save Error:", err);
+        alert("Αποθηκεύτηκε!");
     }
-}
+
+    // --- EVENT LISTENERS ---
+    document.addEventListener('change', function(e) {
+        if (e.target && (e.target.id === 'customerSelect' || e.target.id === 'customer-select')) {
+            updateInvoiceFields();
+        }
+    });
+
+    // --- ΕΚΚΙΝΗΣΗ (ΜΟΝΟ ΜΙΑ ΦΟΡΑ) ---
+    window.addEventListener('DOMContentLoaded', () => {
+        // Κλείσιμο Modals αρχικά
+        ['settingsModal', 'previewModal', 'branchPopup', 'tritonSettingsPanel'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        initSystem();
+    });
 </script>

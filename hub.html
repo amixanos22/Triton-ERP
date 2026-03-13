@@ -1778,7 +1778,11 @@ window.addEventListener('load', updateDashboardStats);
     });
 </script>
           <script>
-            
+           // Πρόσθεσε αυτό στην αρχή του script της hub.html
+window.createNewWindow = function(url) {
+    console.log("🔱 Triton Sync - Navigation to:", url);
+    window.location.href = url;
+}; 
 // ==========================================
 // 🛡️ 0. TRITON SAFETY FIRST (ANTI-CRASH)
 // ==========================================

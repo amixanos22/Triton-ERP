@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="el">
 <head>
   
@@ -714,191 +714,175 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
   
  
-   <aside class="sidebar">
+ <aside class="sidebar">
     <div class="logo-container">
         <span style="font-size: 24px;">🚀</span>
         <span class="logo-text">InvoicePro</span>
     </div>
+
     <nav class="nav-group">
-        
-        <a href="#" class="nav-item">☄️ <span class="translate" data-el="Συνοπτική Κατάσταση" data-en="Summary">Συνοπτική Κατάσταση</span></a>
-       <a href="javascript:void(0)" onclick="openHistoryPopup()" class="nav-item">
-    📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span>
-</a>
-        
-   <div class="nav-item-container">
+        <a href="hub.html" class="nav-item">
+            ☄️ <span class="translate" data-el="Συνοπτική Κατάσταση" data-en="Summary">Συνοπτική Κατάσταση</span>
+        </a>
+
+        <a href="javascript:void(0)" onclick="createNewWindow('history.html', '📑 Ιστορικό Παραστατικών', 1100, 800)" class="nav-item">
+            📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span>
+        </a>
+
+        <div class="nav-item-container">
     <a href="#" class="nav-item">
-        💎 <span class="translate" data-el="Πληρωμές" data-en="Payments">Πληρωμές</span>
+        💎 <span class="translate" data-el="Πληρωμές" data-en="pliromi">Πληρωμές</span>
     </a>
     <div class="submenu">
-        <a href="javascript:void(0)" onclick="openEispraxiModal()" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
-        <a href="javascript:void(0)" onclick="openPliromiModal()" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
+        <a href="javascript:void(0)" onclick="createNewWindow('eispraxi.html', '💰 Απόδειξη Είσπραξης', 600, 500)" class="submenu-item translate" data-el="Είσπραξη" data-en="Receipt">Είσπραξη</a>
+        <a href="javascript:void(0)" onclick="createNewWindow('pliromi.html', '💸 Απόδειξη Πληρωμής', 600, 500)" class="submenu-item translate" data-el="Πληρωμή" data-en="Payment">Πληρωμή</a>
     </div>
 </div>
+      
 
-<a href="javascript:void(0)" onclick="openCustomerModal()" class="nav-item">
-    <span>🛸</span> 
-    <span class="translate" data-el="Πελάτες" data-en="Customers">Πελάτες</span>
-</a>
+        <a href="javascript:void(0)" onclick="createNewWindow('customers.html', '🛸 Πελάτες', 1000, 700)" class="nav-item">
+            <span>🛸</span> 
+            <span class="translate" data-el="Πελάτες" data-en="Customers">Πελάτες</span>
+        </a>
 
-<a href="javascript:void(0)" onclick="openShoppingModal()" class="nav-item" style="border-left: 4px solid #0ea5e9; margin-top: 5px;">
-    <span>🛒</span> 
-    <span class="translate" data-el="ShoppingTriton (Αγορές)" data-en="ShoppingTriton (Purchases)">ShoppingTriton (Αγορές)</span>
-</a>
+        <a href="javascript:void(0)" onclick="createNewWindow('shopping.html', '🛒 ShoppingTriton', 1100, 800)" class="nav-item" style="border-left: 4px solid #0ea5e9; margin-top: 5px;">
+            <span>🛒</span> 
+            <span class="translate" data-el="ShoppingTriton (Αγορές)" data-en="ShoppingTriton (Purchases)">ShoppingTriton (Αγορές)</span>
+        </a>
 
-<a href="javascript:void(0)" onclick="openRecipesModal()" class="nav-item" style="border-left: 4px solid #ffffff; margin-top: 5px;">
-    <span>🧪</span> 
-    <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
-</a>
-     <a href="javascript:void(0)" 
-   onclick="createNewWindow('dashboard.html', '📊 Οικονομικό Dashboard', 1280, 800)" 
-   class="nav-item" 
-   style="border-left: 4px solid #6366f1; margin-top: 5px; text-decoration: none; display: flex; align-items: center;">
-          📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
-</a>
-       
-      <a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #f59e0b; margin-top: 5px;">
-    <span>📊</span> 
-    <span class="translate" data-el="Οικονομικό Πλάνο (Κέρδη/Έξοδα)" data-en="Financial Plan (Profit/Expenses)">
-        Οικονομικό Πλάνο (Κέρδη/Έξοδα)
-    </span>
-</a>
-</nav>
-   <div style="margin-top: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #1e293b;">
-    
-    <button onclick="downloadBackup()" style="cursor:pointer; width:100%; border:none; background: linear-gradient(135deg, #0ea5e9, #1e40af); padding: 14px; border-radius: 12px; color: white; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2); transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 20px rgba(14, 165, 233, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(14, 165, 233, 0.2)'">
-        💾 ΛΗΨΗ BACKUP
-    </button>
-    
-    <button onclick="document.getElementById('importFile').click()" style="cursor:pointer; width:100%; border: 1px solid #334155; background: #0f172a; padding: 10px; border-radius: 10px; color: #94a3b8; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: 0.3s;" onmouseover="this.style.borderColor='#7dd3fc'; this.style.color='#7dd3fc'; this.style.background='#1e293b'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'; this.style.background='#0f172a'">
-        📂 ΕΠΑΝΑΦΟΡΑ (IMPORT)
-    </button>
-    
-    <input type="file" id="importFile" style="display:none" accept=".json" onchange="importBackup(event)">
-    
-    <span style="font-size: 9px; color: #475569; text-align: center; font-weight: bold; letter-spacing: 1px;">TRITON SECURE ENGINE</span>
-</div>
+        <a href="javascript:void(0)" onclick="createNewWindow('recipes.html', '🧪 Συνταγές & Κοστολόγηση', 1100, 800)" class="nav-item" style="border-left: 4px solid #ffffff; margin-top: 5px;">
+            <span>🧪</span> 
+            <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
+        </a>
+
+        <a href="javascript:void(0)" onclick="createNewWindow('dashboard.html', '📊 Οικονομικό Dashboard', 1280, 800)" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px; text-decoration: none; display: flex; align-items: center;">
+            📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
+        </a>
+
+        <a href="javascript:void(0)" onclick="createNewWindow('finance.html', '📊 Οικονομικό Πλάνο', 1100, 800)" class="nav-item" style="border-left: 4px solid #f59e0b; margin-top: 5px;">
+            <span>📊</span> 
+            <span class="translate" data-el="Οικονομικό Πλάνο (Κέρδη/Έξοδα)" data-en="Financial Plan (Profit/Expenses)">Οικονομικό Πλάνο (Κέρδη/Έξοδα)</span>
+        </a>
+    </nav>
+
+    <div style="margin-top: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #1e293b;">
+        <button onclick="downloadBackup()" style="cursor:pointer; width:100%; border:none; background: linear-gradient(135deg, #0ea5e9, #1e40af); padding: 14px; border-radius: 12px; color: white; font-weight: 800; font-size: 0.85rem; text-transform: uppercase;">
+            💾 ΛΗΨΗ BACKUP
+        </button>
+    </div>
 </aside>
-
+  
+  
  <div class="main-container">
-        <header class="top-navbar">
-           
-        <div class="current-page translate" data-el="Επισκόπηση" data-en="Dashboard">Επισκόπηση</div>
-          <div class="quick-actions-wrapper" style="display: flex; align-items: center; justify-content: flex-end; gap: 2px;">
-          <div class="top-navbar-right">
-        <span style="font-size: 14px; 
-             color: #64748b; 
-             font-weight: bold; 
-             white-space: nowrap; 
-             position: relative; 
-             left:  150px;"> ΝΕΑ ΕΓΓΡΑΦΗ
-</span>  
-            <div class="top-navbar-right">
-                <div class="quick-actions-wrapper">
-                    <button class="add-btn" id="quickAddBtn">＋</button>
-                  <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
-    
+    <header class="top-navbar">
+        <div class="current-page translate" data-el="Επισκόπηση" data-en="Dashboard">Επισκόπηση</div>
+        
+        <div class="top-navbar-right" style="display: flex; align-items: center; gap: 15px;">
+            <span style="font-size: 14px; color: #64748b; font-weight: bold; white-space: nowrap;">ΝΕΑ ΕΓΓΡΑΦΗ</span>  
 
-         
-        <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
-    <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
-</a>
-                    
-
-<a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ', '📄 Τιμολόγιο Πώλησης', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-        <span>📄</span> Τιμολόγιο Πώλησης
-    </a>
-
-    <a href="javascript:void(0)" onclick="createNewWindow('delivery_note.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-        <span>🚚</span> Δελτίο Αποστολής
-    </a>
-
-    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ', '🔄 Πιστωτικό Τιμολόγιο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-        <span>🔄</span> Πιστωτικό Τιμολόγιο
-    </a>
-
-    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΠΙΣΤΩΤΙΚΟ ΣΥΣΧΕΤΙΖΟΜΕΝΟ', '🔗 Πιστωτικό Συσχετιζόμενο', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-        <span>🔗</span> Πιστωτικό Συσχετιζόμενο
-    </a>
-
-    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-        <span>💰</span> Απόδειξη Είσπραξης
-    </a>
-
-    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
-        <span>💸</span> Απόδειξη Πληρωμής
-    </a>
-                    
-</div>
-                  
-</div></div>
-  
-  
-  
-           
- 
-                <div class="lang-switcher">
-                    <button class="lang-btn active">ΕΛ</button>
-                    <button class="lang-btn">EN</button>
+            <div class="quick-actions-wrapper" style="position: relative; display: flex; align-items: center;">
+                <button class="add-btn" id="quickAddBtn" onclick="toggleTritonDropdown(event)">＋</button>
+                
+                <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
+                    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
+                        <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
+                    </a>
+                    <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ', '📄 Τιμολόγιο Πώλησης', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                        <span>📄</span> Τιμολόγιο Πώλησης
+                    </a>
+                    <a href="javascript:void(0)" onclick="createNewWindow('delivery_note.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                        <span>🚚</span> Δελτίο Αποστολής
+                    </a>
+                    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                        <span>💰</span> Απόδειξη Είσπραξης
+                    </a>
+                    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                        <span>💸</span> Απόδειξη Πληρωμής
+                    </a>
                 </div>
-            <div onclick="openSettings()" style="width: 40px; height: 40px; background: #e0f2fe; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent;" onmouseover="this.style.borderColor='#7dd3fc'; this.style.transform='scale(1.05)';" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)';">
-     👤
-</div>
             </div>
-        </header>
-  
-  <main class="content-body">
-    <div class="stats-grid">
-        <div class="invoice-card" style="border-top: 4px solid #7dd3fc;">
-            <p class="translate" data-el="ΦΠΑ ΠΡΟΣ ΑΠΟΔΟΣΗ" data-en="VAT DUE" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΦΠΑ ΠΡΟΣ ΑΠΟΔΟΣΗ</p>
-            <h2 id="vatDue" style="margin-top: 10px; font-size: 1.8rem;">0,00 €</h2>
+
+            <div class="lang-switcher">
+                <button class="lang-btn active">ΕΛ</button>
+                <button class="lang-btn">EN</button>
+            </div>
+
+            <div onclick="openSettings()" style="width: 40px; height: 40px; background: #e0f2fe; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent;" onmouseover="this.style.borderColor='#7dd3fc'; this.style.transform='scale(1.05)';" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)';">
+                👤
+            </div>
+        </div>
+    </header>
+
+    <main class="content-body">
+        <div class="stats-grid">
+            <div class="invoice-card" style="border-top: 4px solid #7dd3fc;">
+                <p class="translate" data-el="ΦΠΑ ΠΡΟΣ ΑΠΟΔΟΣΗ" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΦΠΑ ΠΡΟΣ ΑΠΟΔΟΣΗ</p>
+                <h2 id="vatDue" style="margin-top: 10px; font-size: 1.8rem;">0,00 €</h2>
+            </div>
+            <div class="invoice-card" style="border-top: 4px solid #ef4444;">
+                <p class="translate" data-el="ΑΝΕΞΟΦΛΗΤΑ" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΑΝΕΞΟΦΛΗΤΑ</p>
+                <h2 id="unpaidAmount" style="margin-top: 10px; font-size: 1.8rem; color: #ef4444;">0,00 €</h2>
+            </div>
+            <div class="invoice-card" style="border-top: 4px solid #10b981;">
+                <p class="translate" data-el="ΕΣΟΔΑ ΜΗΝΑ" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΕΣΟΔΑ ΜΗΝΑ</p>
+                <h2 id="monthlyIncome" style="margin-top: 10px; font-size: 1.8rem; color: #10b981;">0,00 €</h2>
+            </div>
+            <div class="invoice-card" style="border-top: 4px solid #f59e0b;">
+                <p class="translate" data-el="ΕΛΛΕΙΨΕΙΣ STOCK" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΕΛΛΕΙΨΕΙΣ STOCK</p>
+                <ul id="lowStockList" style="margin-top: 10px; list-style: none; font-size: 0.85rem; color: #1e293b; padding:0;">
+                    <li style="color: #94a3b8;">Ενημέρωση...</li>
+                </ul>
+            </div>
         </div>
 
-        <div class="invoice-card" style="border-top: 4px solid #ef4444;">
-            <p class="translate" data-el="ΑΝΕΞΟΦΛΗΤΑ" data-en="UNPAID" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΑΝΕΞΟΦΛΗΤΑ</p>
-            <h2 id="unpaidAmount" style="margin-top: 10px; font-size: 1.8rem; color: #ef4444;">0,00 €</h2>
+        <div class="invoice-card" style="margin-bottom: 30px;">
+            <h3 class="translate" data-el="Ανάλυση Εσόδων" style="margin-bottom: 20px;">Ανάλυση Εσόδων</h3>
+            <div style="height: 350px;"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <div class="invoice-card" style="border-top: 4px solid #10b981;">
-            <p class="translate" data-el="ΕΣΟΔΑ ΜΗΝΑ" data-en="MONTHLY INCOME" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΕΣΟΔΑ ΜΗΝΑ</p>
-            <h2 id="monthlyIncome" style="margin-top: 10px; font-size: 1.8rem; color: #10b981;">0,00 €</h2>
+        <div class="invoice-card">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #f1f5f9;">
+                        <th style="padding: 12px 0;">Πελάτης</th>
+                        <th>Ημερομηνία</th>
+                        <th>Ποσό</th>
+                        <th>Κατάσταση</th>
+                    </tr>
+                </thead>
+                <tbody id="recentInvoicesTable">
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 15px 0; font-weight: 600;">Acme Corp</td>
+                        <td>10/02/2026</td>
+                        <td style="font-weight: 600;">450,00 €</td>
+                        <td><span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">Πληρώθηκε</span></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+    </main>
+</div>
 
-        <div class="invoice-card" style="border-top: 4px solid #f59e0b;">
-            <p class="translate" data-el="ΕΛΛΕΙΨΕΙΣ STOCK" data-en="LOW STOCK" style="color: #64748b; font-size: 0.85rem; font-weight: 600;">ΕΛΛΕΙΨΕΙΣ STOCK</p>
-            <ul id="lowStockList" style="margin-top: 10px; list-style: none; font-size: 0.85rem; color: #1e293b; padding:0;">
-                <li style="color: #94a3b8;">Ενημέρωση...</li>
-            </ul>
-        </div>
-    </div>
+<script>
+function toggleTritonDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('quickAddDropdown');
+    const isVisible = dropdown.style.display === 'flex';
+    dropdown.style.display = isVisible ? 'none' : 'flex';
+}
 
-    <div class="invoice-card" style="margin-bottom: 30px;">
-        <h3 class="translate" data-el="Ανάλυση Εσόδων" data-en="Revenue Analysis" style="margin-bottom: 20px;">Ανάλυση Εσόδων</h3>
-        <div style="height: 350px;"><canvas id="mainChart"></canvas></div>
-    </div>
+// Κλείνει το μενού αν κάνεις κλικ οπουδήποτε αλλού
+document.addEventListener('click', function() {
+    const dropdown = document.getElementById('quickAddDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+});
 
-    <div class="invoice-card">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #f1f5f9;">
-                    <th style="padding: 12px 0;">Πελάτης</th>
-                    <th>Ημερομηνία</th>
-                    <th>Ποσό</th>
-                    <th>Κατάσταση</th>
-                </tr>
-            </thead>
-            <tbody id="recentInvoicesTable">
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 15px 0; font-weight: 600;">Acme Corp</td>
-                    <td>10/02/2026</td>
-                    <td style="font-weight: 600;">450,00 €</td>
-                    <td><span class="status status-paid" style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">Πληρώθηκε</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</main>
-            
+// Συνάρτηση για άνοιγμα παραθύρων (βεβαιώσου ότι την έχεις ορίσει)
+function createNewWindow(url, title, w, h) {
+    console.log("Opening Window:", url);
+    // Εδώ μπαίνει ο κώδικας για το popup ή το iframe modal σου
+}
+</script>
   
    
 <script>
@@ -1375,75 +1359,58 @@ function initMainChart() {
     location.reload(); // Ανανέωση για να "ακουστούν" οι αλλαγές
 }
     </script>      
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 // ==========================================
-// 🔱 1. ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΑΣΦΑΛΕΙΑΣ
+// 🔱 1. CONFIGURATION & CSS
 // ==========================================
+const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-function unlockTriton() {
+const style = document.createElement('style');
+style.innerHTML = `
+    .floating-window { position: fixed; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 10005; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #0284c7; }
+    .win-header { background: #0f172a; color: white; padding: 12px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none; }
+    .taskbar-tab { background: #0f172a; color: #7dd3fc; padding: 8px 15px; border-radius: 8px; border: 1px solid #1e293b; cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+    .taskbar-tab:hover { background: #1e293b; border-color: #7dd3fc; }
+    #taskbar-apps { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px; z-index: 10020; }
+`;
+document.head.appendChild(style);
+
+// ==========================================
+// 🛡️ 2. ΑΣΦΑΛΕΙΑ (MASTER GATE & LOGIN)
+// ==========================================
+window.unlockTriton = function() {
     const key = document.getElementById('masterKey').value;
-    const overlay = document.getElementById('loginOverlay');
-    
     if (key === "TRITON2026") {
-        if (overlay) {
-            overlay.style.display = 'none';
-            overlay.style.pointerEvents = 'none'; // Ελευθερώνει τα κλικ
-            overlay.style.zIndex = "-1";          // Στέλνει το εμπόδιο στο βάθος
-        }
         document.getElementById('masterGate').style.display = 'none';
         document.getElementById('authGate').style.display = 'block';
-        console.log("🔱 Triton: Master Key Δεκτό.");
-    } else {
-        alert("🔱 Λάθος κωδικός πρόσβασης.");
-    }
-}
+    } else { alert("🔱 Λάθος Master Key."); }
+};
 
-function completeLogin() {
+window.completeLogin = function() {
     const email = document.getElementById('userEmail').value;
-    const pass = document.getElementById('userPass').value;
-    const overlay = document.getElementById('loginOverlay');
-
-    if (!email || !email.includes('@')) {
-        alert("⚠️ Εισάγετε έγκυρο Email Επιχείρησης.");
-        return;
-    }
-
-    if (pass.length < 4) {
-        alert("⚠️ Ο κωδικός πρέπει να είναι τουλάχιστον 4 ψηφία.");
-        return;
-    }
-
+    if (!email || !email.includes('@')) { alert("⚠️ Εισάγετε έγκυρο Email."); return; }
     localStorage.setItem('triton_user_email', email);
     localStorage.setItem('triton_is_logged_in', 'true');
-    
-    if (overlay) {
-        overlay.style.display = 'none';
-        overlay.style.pointerEvents = 'none';
-        overlay.style.zIndex = "-1";
-    }
-    
-    console.log("🔱 Triton: Είσοδος Επιτυχής.");
     location.reload(); 
-}
+};
 
 // ==========================================
-// 📊 2. DASHBOARD & STATISTICS (TRITON ENGINE)
+// 📊 3. TRITON ENGINE (STATS & DASHBOARD)
 // ==========================================
-
-function refreshTritonDashboard() {
+window.refreshTritonDashboard = function() {
     const invoices = JSON.parse(localStorage.getItem('triton_invoices') || '[]');
-    const productsData = JSON.parse(localStorage.getItem('triton_products') || '[]');
+    const products = JSON.parse(localStorage.getItem('triton_products') || '[]');
     
-    let income = 0, vat = 0, unpaid = 0;
-
+    let income = 0, unpaid = 0;
     invoices.forEach(inv => {
-        const total = parseFloat(inv.total || inv.amount || inv.totalAmount) || 0;
-        income += total;
-        if (inv.status === 'Εκκρεμεί' || inv.status === 'Ανεξόφλητο') unpaid += total;
+        const val = parseFloat(inv.total || inv.totalAmount) || 0;
+        income += val;
+        if (inv.status === 'Εκκρεμεί' || inv.status === 'Ανεξόφλητο') unpaid += val;
     });
-    
-    // Υπολογισμός ΦΠΑ (24%)
-    vat = income * 0.24 / 1.24;
 
     const updateUI = (id, val) => {
         const el = document.getElementById(id);
@@ -1451,598 +1418,118 @@ function refreshTritonDashboard() {
     };
 
     updateUI('monthlyIncome', income);
-    updateUI('vatDue', vat);
+    updateUI('vatDue', (income * 0.24 / 1.24)); // ΦΠΑ 24%
     updateUI('unpaidAmount', unpaid);
 
-    // Έλεγχος Αποθεμάτων (Low Stock)
     const lowStockList = document.getElementById('lowStockList');
     if (lowStockList) {
-        // Μετατροπή σε πίνακα αν είναι αντικείμενο
-        const productsArray = Array.isArray(productsData) ? productsData : Object.values(productsData);
-        const lowItems = productsArray.filter(p => parseFloat(p.stock) < 5);
-        
-        lowStockList.innerHTML = lowItems.length > 0  
-            ? lowItems.slice(0, 5).map(p => `
-                <li style="list-style:none; padding:8px 0; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between;">
-                    <span>${p.name || p.desc}</span>
-                    <b style="color:#ef4444;">${p.stock}</b>
-                </li>`).join('')
-            : '<li style="color:#10b981; list-style:none; font-weight:bold; padding:10px 0;">✅ Αποθέματα Επαρκή</li>';
-    }
-}
-
-// ==========================================
-// 💾 3. ΣΥΣΤΗΜΑ BACKUP & ΡΥΘΜΙΣΕΙΣ
-// ==========================================
-
-// Λήψη όλων των δεδομένων σε αρχείο JSON
-function downloadBackup() {
-    const data = {
-        bizSettings: JSON.parse(localStorage.getItem('bizSettings')),
-        customers: JSON.parse(localStorage.getItem('customersDB')),
-        products: JSON.parse(localStorage.getItem('triton_products')),
-        invoices: JSON.parse(localStorage.getItem('triton_invoices')),
-        timestamp: new Date().toLocaleString()
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `TRITON_DATA_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-}
-
-// Αποθήκευση Ρυθμίσεων (Διορθωμένα IDs)
-function saveTritonSettings() {
-    const settings = {
-        // Εδώ βάζουμε τα ID που έχεις στο HTML σου
-        aadeUser: document.getElementById('setMyDataUser')?.value || '', 
-        aadeToken: document.getElementById('setMyDataKey')?.value || '',
-        companyName: document.getElementById('setCompanyName')?.value || ''
-    };
-    
-    localStorage.setItem('bizSettings', JSON.stringify(settings));
-    localStorage.setItem('triton_settings', JSON.stringify(settings));
-    
-    alert("🔱 Triton OS: Οι ρυθμίσεις myDATA και Επιχείρησης αποθηκεύτηκαν!");
-    location.reload(); 
-}
-
-// Φόρτωση Ρυθμίσεων (Διορθωμένα IDs)
-function loadSettingsToInputs() {
-    const saved = JSON.parse(localStorage.getItem('bizSettings') || '{}');
-    
-    // Πρέπει να γεμίσουμε τα σωστά πεδία στο Modal
-    if(document.getElementById('setMyDataUser')) 
-        document.getElementById('setMyDataUser').value = saved.aadeUser || '';
-    if(document.getElementById('setMyDataKey')) 
-        document.getElementById('setMyDataKey').value = saved.aadeToken || '';
-    if(document.getElementById('setCompanyName')) 
-        document.getElementById('setCompanyName').value = saved.companyName || '';
-}
-// ==========================================
-// 🚀 4. ΑΡΧΙΚΟΠΟΙΗΣΗ (INITIALIZATION)
-// ==========================================
-
-window.addEventListener('DOMContentLoaded', () => {
-    console.log("🔱 Triton ERP: System Online.");
-
-    // 1. Έλεγχος Login
-    if(localStorage.getItem('triton_is_logged_in') === 'true') {
-        const overlay = document.getElementById('loginOverlay');
-        if(overlay) {
-            overlay.style.setProperty('display', 'none', 'important');
-            overlay.style.pointerEvents = 'none';
-            overlay.style.zIndex = "-1";
-        }
-    }
-
-    // 2. Quick Add Menu Logic
-    const quickBtn = document.getElementById('quickAddBtn');
-    const quickDropdown = document.getElementById('quickAddDropdown');
-
-    if(quickBtn && quickDropdown) {
-        quickBtn.onclick = (e) => {
-            e.stopPropagation();
-            const isHidden = quickDropdown.style.display === 'none' || quickDropdown.style.display === '';
-            quickDropdown.style.display = isHidden ? 'flex' : 'none';
-        };
-        document.addEventListener('click', () => { quickDropdown.style.display = 'none'; });
-    }
-
-    // 3. Φόρτωση ρυθμίσεων αν το modal είναι ανοιχτό
-    loadSettingsToInputs();
-    
-    if (typeof refreshTritonDashboard === "function") {
-        refreshTritonDashboard();
-    }
-});
-  // Έλεγχος κατά την εκκίνηση της σελίδας
-window.addEventListener('DOMContentLoaded', () => {
-    // Αν στη μνήμη φαίνεται ότι είμαστε συνδεδεμένοι
-    if(localStorage.getItem('triton_is_logged_in') === 'true') {
-        const overlay = document.getElementById('loginOverlay');
-        if(overlay) {
-            // Το εξαφανίζουμε τελείως
-            overlay.style.display = 'none';
-        }
-    }
-});
-
-// Η συνάρτηση που τρέχει όταν πατάς "ΕΚΚΙΝΗΣΗ"
-function handleLogin() {
-    // ... εδώ ο κώδικας που ελέγχει το username/password ...
-    
-    // Αν είναι σωστά:
-    localStorage.setItem('triton_is_logged_in', 'true');
-    document.getElementById('loginOverlay').style.display = 'none';
-    
-    // Ενημέρωση του Dashboard
-    refreshTritonDashboard();
-}
-</script>
-<script>
-// ==========================================
-// 🛡️ 1. ΕΛΕΓΧΟΣ ΕΙΣΟΔΟΥ (LOGIN)
-// ==========================================
-function checkPass() {
-    const passInput = document.getElementById('passInput');
-    const pass = passInput.value;
-
-    if (pass === '0000') {
-        // 1. Αποθήκευση της εισόδου (για να μην ξαναζητηθεί στο refresh)
-        localStorage.setItem('triton_is_logged_in', 'true');
-        
-        // 2. Εξαφάνιση του Overlay
-        document.getElementById('loginOverlay').style.display = 'none';
-        
-        console.log("🔱 Triton: Access Granted");
-        
-        // 3. Ανανέωση Dashboard (αν υπάρχει η συνάρτηση)
-        if (typeof refreshTritonDashboard === "function") refreshTritonDashboard();
-        
-    } else {
-        alert('❌ Λάθος Κωδικός Triton');
-        passInput.value = ''; // Καθαρισμός για νέα προσπάθεια
-        passInput.focus();    // Ξαναβάζει τον κέρσορα στο κουτί
-    }
-}
- 
- 
-
- // ==========================================
-// 🛸 ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (ΔΙΟΡΘΩΜΕΝΗ)
-// ==========================================
-
-// --- ΠΕΛΑΤΕΣ & ΠΡΟΜΗΘΕΥΤΕΣ ---
-function openCustomerModal()  { createNewWindow('customers.html', 'Πελάτες', 1200, 800); }
-function openSupplierModal()  { createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); }
-
-// --- ΠΩΛΗΣΕΙΣ & ΕΚΔΟΣΗ ---
-function openInvoiceModal()   { createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1300, 900); }
-function openBillingModal()   { createNewWindow('billing.html', 'Λιανική Πώληση', 1000, 800); }
-function openDeltioModal()    { createNewWindow('deltio.html', 'Δελτίο Διακίνησης', 1100, 800); }
-
-// --- ΑΠΟΘΗΚΗ & ΑΓΟΡΕΣ ---
-function openInventoryModal() { createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); }
-function openShoppingModal()  { createNewWindow('shopping.html', 'Παραγγελίες Αγορών', 1200, 800); }
-function openRecipesModal()   { createNewWindow('recipes.html', 'Συνταγές Παραγωγής', 1100, 800); }
-
-// --- ΟΙΚΟΝΟΜΙΚΑ ---
-function openFinancialModal() { createNewWindow('finance.html', 'Οικονομικό Πλάνο', 1250, 850); }
-function openEispraxiModal()  { createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); }
-function openPliromiModal()   { createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); }
-
-// --- ΣΤΑΤΙΣΤΙΚΑ ---
-function openDashboardModal() { createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); }
-</script>
-  <script>       
-// ==========================================
-// 📊 TRITON ENGINE: ΣΤΑΤΙΣΤΙΚΑ & UI
-// ==========================================
-
-function updateDashboardStats() {
-    const invoices = JSON.parse(localStorage.getItem('triton_invoices')) || [];
-    const products = JSON.parse(localStorage.getItem('triton_products')) || [];
-    
-    let totalIncome = 0, totalVat = 0, unpaid = 0;
-
-    invoices.forEach(inv => {
-        const amount = parseFloat(inv.total) || 0;
-        totalIncome += amount;
-        totalVat += (parseFloat(inv.vatAmount) || 0);
-        if (inv.status === 'Εκκρεμεί' || inv.status === 'Ανεξόφλητο') unpaid += amount;
-    });
-
-    const updateUI = (id, value) => {
-        const el = document.getElementById(id);
-        if(el) el.innerText = value.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
-    };
-
-    updateUI('monthlyIncome', totalIncome);
-    updateUI('vatDue', totalVat);
-    updateUI('unpaidAmount', unpaid);
-
-    // Έλεγχος Αποθεμάτων
-    const lowStockList = document.getElementById('lowStockList');
-    if (lowStockList) {
-        const lowItems = products.filter(p => parseFloat(p.stock) < 5);
+        const lowItems = Array.isArray(products) ? products.filter(p => parseFloat(p.stock) < 5) : [];
         lowStockList.innerHTML = lowItems.length > 0 
-            ? lowItems.map(i => `<li style="margin-bottom:8px; border-left:3px solid #7dd3fc; padding-left:10px; list-style:none;"><span style="color:#1e293b; font-weight:500;">${i.name || i.desc}</span>: <b style="color:#ef4444;">${i.stock}</b></li>`).join('')
-            : '<li style="color:#10b981; font-weight:600; list-style:none;">✅ Όλα επαρκή</li>';
+            ? lowItems.map(p => `<li style="list-style:none; padding:8px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between;"><span>${p.name || p.desc}</span><b style="color:#ef4444;">${p.stock}</b></li>`).join('')
+            : '<li style="color:#10b981; font-weight:bold; padding:10px;">✅ Αποθέματα ΟΚ</li>';
     }
-}
-
-// ==========================================
-// 🔱 ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΘΥΡΩΝ (MODALS)
-// ==========================================
-
-function openModule(pageUrl, title, icon = "🔱") {
-    // ΣΤΑΜΑΤΑΜΕ να χρησιμοποιούμε το στατικό 'tritonGlobalModal'
-    // και χρησιμοποιούμε τη μηχανή που φτιάχνει νέα παράθυρα (Floating Windows)
-    if (typeof createNewWindow === "function") {
-        // Ανοίγει ένα νέο, ανεξάρτητο παράθυρο με τις διαστάσεις που θέλουμε
-        createNewWindow(pageUrl, title, 1300, 850); 
-        console.log(`🔱 Triton Engine: Δυναμικό άνοιγμα του ${title}`);
-    } else {
-        // Αν για κάποιο λόγο δεν έχεις τη createNewWindow στην index, 
-        // εμφάνισε ένα σφάλμα για να ξέρουμε τι φταίει
-        console.error("🔱 Triton Error: Η συνάρτηση createNewWindow λείπει από την index.html!");
-        alert("Σφάλμα συστήματος: Λείπει η μηχανή παραθύρων.");
-    }
-}
- 
-// 1. Η ΜΗΧΑΝΗ ΚΙΝΗΣΗΣ (DRAG ENGINE) - ΜΟΝΟ ΑΥΤΗ ΚΡΑΤΑΜΕ
-function makeDraggable(elmnt, header) {
-    if (!header || !elmnt) return;
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
-    header.onmousedown = (e) => {
-        // ΚΡΙΣΙΜΟ: Αν πατάς SPAN (τα εικονίδια X, _, 🔄), ΜΗΝ ξεκινάς το drag
-        if (e.target.tagName === 'SPAN' || e.target.closest('span') || e.target.closest('[onclick]')) {
-            return; 
-        }
-
-        e.preventDefault();
-        bringToFront(elmnt);
-
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-
-        document.onmouseup = () => { 
-            document.onmouseup = null; 
-            document.onmousemove = null; 
-        };
-
-        document.onmousemove = (e) => {
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-        };
-    };
-}
-
-// 2. Η ΔΙΑΧΕΙΡΙΣΗ ΕΠΙΠΕΔΩΝ (Z-INDEX)
-function bringToFront(element) {
-    // Χαμηλώνουμε όλα τα άλλα παράθυρα
-    document.querySelectorAll('.floating-window').forEach(w => {
-        w.style.zIndex = "10000";
-    });
-    // Φέρνουμε το τρέχον τέρμα μπροστά
-    element.style.zIndex = "10010";
-}
- 
-// Φόρτωση στατιστικών στην εκκίνηση
-window.addEventListener('load', updateDashboardStats);
-</script>
- 
-  <div id="tritonGlobalModal" class="triton-modal" style="display:none; position:fixed; z-index:9999; width:85%; height:85%; top:7%; left:7.5%; background:#fff; border:1px solid #0284c7; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); overflow:hidden;">
-    <div id="tritonModalHeader" style="background:#0f172a; color:#fff; padding:15px; cursor:grab; display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span id="modalIcon">🔱</span>
-            <b id="modalTitleText">Triton ERP</b>
-        </div>
-        <button onclick="closeTritonModal()" style="background:none; border:none; color:#fff; font-size:26px; cursor:pointer; line-height:1;">&times;</button>
-    </div>
-    <div style="width:100%; height:calc(100% - 55px); background:#f8fafc;">
-        <iframe id="modalFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
-    </div>
-</div>
-          
-      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // Έλεγχος αν ο χρήστης είναι όντως μέσα
-    async function checkUser() {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        
-        if (error || !session) {
-            console.log("Δεν βρέθηκε σύνδεση, επιστροφή στην αρχική...");
-            window.location.href = 'index.html'; // Ή login.html αναλόγως πώς τη λες
-        } else {
-            console.log("Καλώς όρισες, " + session.user.email);
-            // Εδώ μπορείς να καλέσεις τις συναρτήσεις σου για να φορτώσουν οι πελάτες
-        }
-    }
-
-    // Τρέξε τον έλεγχο μόλις φορτώσει η σελίδα
-    checkUser();
-
-    // Επίσης, αν αποσυνδεθεί ενώ είναι μέσα, πέτα τον έξω
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT') {
-            window.location.href = 'index.html';
-        }
-    });
-</script>
-<script>
-            
-// --- 🛡️ TRITON SAFE INITIALIZATION ---
-// Χρησιμοποιούμε var για να μην χτυπάει το "redeclaration"
-if (typeof window !== 'undefined') {
-    var supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-    var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Το κλειδί σου
-
-    // Ορίζουμε τον client στο window για να είναι κοινός παντού
-    if (!window._supabase) {
-        window._supabase = supabase.createClient(supabaseUrl, supabaseKey);
-    }
-}
-
-// ==========================================
-// 1. GLOBAL ΜΕΤΑΒΛΗΤΕΣ & STYLE
-// ==========================================
-let openModules = {};
-
-const tritonUI = document.createElement('style');
-tritonUI.innerHTML = `
-    @keyframes pulse-triton {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 211, 252, 0.7); }
-        70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(125, 211, 252, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 211, 252, 0); }
-    }
-    .pulse-active { animation: pulse-triton 1.5s ease-out; }
-    .taskbar-tab { 
-        background: #0f172a; color: #7dd3fc; padding: 8px 15px; 
-        border-radius: 8px; border: 1px solid #1e293b; 
-        cursor: pointer; font-size: 12px; font-weight: bold; 
-        display: flex; align-items: center; gap: 8px; transition: 0.2s;
-    }
-    .taskbar-tab:hover { border-color: #0ea5e9; background: #1e293b; }
-`;
-document.head.appendChild(tritonUI);
-
-// ==========================================
-// 2. Η ΜΗΧΑΝΗ ΤΩΝ ΠΑΡΑΘΥΡΩΝ (WINDOW ENGINE)
-// ==========================================
-// ==========================================
-// 🔱 TRITON WINDOW ENGINE - FULL REPAIR
-// ==========================================
-window.createNewWindow = function(url, title, width, height) {
-    // 1. Σταματάμε το default behavior του link
-    if (window.event) {
-        window.event.preventDefault();
-        window.event.stopPropagation();
-    }
-    
-    // 2. Ρύθμιση διαστάσεων και τίτλου
-    const w = width || 1200;
-    const h = height || 850;
-    const t = title || 'Triton Module';
-    const winId = 'win_' + Date.now();
-
-    console.log("🔱 Triton: Opening", t);
-
-    // 3. Δημιουργία του στοιχείου (ΑΥΤΟ ΕΛΕΙΠΕ)
-    const win = document.createElement('div');
-    win.className = 'floating-window';
-    win.id = winId;
-    
-    const leftPos = (window.innerWidth - w) / 2;
-    const topPos = (window.innerHeight - h) / 2;
-
-    // 4. Εφαρμογή Στυλ & Z-Index (Πολύ υψηλό για να είναι πάντα πάνω)
-    win.style.cssText = `position: fixed; top: ${topPos}px; left: ${leftPos}px; width: ${w}px; height: ${h}px; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 999999; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #0284c7; resize: both; min-width: 400px; min-height: 300px;`;
-
-    // 5. Περιεχόμενο Παραθύρου
-    win.innerHTML = `
-        <div class="win-header" style="background: #0f172a; color: white; padding: 12px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
-            <span>🔱 ${t}</span>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <span onclick="this.closest('.floating-window').querySelector('iframe').src += ''" style="cursor:pointer;" title="Ανανέωση">🔄</span>
-                <span onclick="minimizeWindow('${winId}', '${t}')" style="cursor:pointer; font-size:20px;">_</span>
-                <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;">&times;</span>
-            </div>
-        </div>
-        <iframe src="${url}" style="flex: 1; border: none; width: 100%; height: 100%; background: #f8fafc;"></iframe>
-    `;
-
-    document.body.appendChild(win);
-    
-    // 6. Ενεργοποίηση Drag & Drop και Z-Index Management
-    if (typeof makeDraggable === 'function') makeDraggable(win, win.querySelector('.win-header'));
-    if (typeof bringToFront === 'function') bringToFront(win);
-    
-    win.addEventListener('mousedown', () => {
-        if (typeof bringToFront === 'function') bringToFront(win);
-    });
-
-    return false;
-};
-// ==========================================
-// 🛸 3. ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (ULTRA FIX)
-// ==========================================
-window.openInvoiceModal = function(type = 'TIM') {
-    if (typeof event !== 'undefined') event.preventDefault(); 
-    const url = `invoice.html?type=${type}`;
-    window.createNewWindow(url, 'Έκδοση Παραστατικού', 1300, 900);
-    return false;
 };
 
-window.openBillingModal = function(type = 'DA') {
-    if (typeof event !== 'undefined') event.preventDefault();
-    const url = `billing.html?type=${type}`;
-    window.createNewWindow(url, 'Διαχείριση Παραστατικού', 1200, 850);
-    return false;
-};
-
-window.openCustomerModal = function() {
-    if (typeof event !== 'undefined') event.preventDefault();
-    window.createNewWindow('customers.html', 'Πελάτες', 1200, 800);
-    return false;
-};
-
-window.openSupplierModal = function() { window.createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); };
-window.openInventoryModal = function() { window.createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); };
-window.openEispraxiModal = function()  { window.createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); };
-window.openPliromiModal = function()   { window.createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); };
-window.openDashboardModal = function() { window.createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); };
-
 // ==========================================
-// ⚙️ 4. SETTINGS & myDATA ENGINE
+// 🔱 4. WINDOW ENGINE (Η "ΜΗΧΑΝΗ" ΣΟΥ)
 // ==========================================
-window.openSettings = function() { 
-    const modal = document.getElementById('settingsModal');
-    if (modal) { modal.style.display = 'flex'; loadSettings(); }
-};
-
-window.closeSettings = function() { 
-    const modal = document.getElementById('settingsModal');
-    if (modal) modal.style.display = 'none'; 
-};
-
-window.searchMyData = async function(e) {
-    const afmInput = document.getElementById('newCustAfm');
-    if (!afmInput) return;
-    const afm = afmInput.value.trim();
-    const btn = e ? e.target : (window.event ? window.event.target : null);
-    
-    if (afm.length !== 9) { alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία!"); return; }
-    
-    const originalText = btn ? btn.innerText : "🔍";
-    if (btn) { btn.innerText = "⏳..."; btn.disabled = true; }
-    
-    try {
-        const response = await fetch(`/api/mydata?afm=${afm}`);
-        const data = await response.json();
-        if (data && data.success) {
-            document.getElementById('newCustName').value = data.result.onomasia || "";
-            document.getElementById('newCustDoy').value = data.result.doy_descr || "";
-            document.getElementById('newCustAddress').value = data.result.dieythinsi || "";
-            document.getElementById('newCustCity').value = data.result.poli || "";
-            document.getElementById('newCustZip').value = data.result.tk || "";
-        } else { alert("❌ Το ΑΦΜ δεν βρέθηκε."); }
-    } catch (error) { alert("⚠️ Σφάλμα σύνδεσης API."); }
-    finally { if (btn) { btn.innerText = originalText; btn.disabled = false; } }
-};
-
-window.closeNewCustomerModal = function() {
-    const modal = document.getElementById('newCustomerModal');
-    if (modal) modal.style.display = 'none';
-    const floatingWin = document.querySelector('.floating-window');
-    if (floatingWin) floatingWin.remove();
-};
- <script>
-// ==========================================
-// 🔱 TRITON ERP - FIXED & CLEAN SCRIPT
-// ==========================================
-
-// 1. ΣΥΝΔΕΣΗ SUPABASE
-const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
-
-if (!window.supabaseClient) {
-    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-}
-
-// 2. WINDOW ENGINE (Απλοποιημένη για να μην κολλάει)
-window.createNewWindow = function(url, title = 'Παράθυρο Triton', w = 1200, h = 800) {
-    // Δημιουργία Taskbar αν λείπει
+window.createNewWindow = function(url, title = 'Triton Module', w = 1300, h = 850) {
     if (!document.getElementById('taskbar-apps')) {
         const tb = document.createElement('div');
         tb.id = 'taskbar-apps';
-        tb.style.cssText = "position:fixed; bottom:20px; left:20px; display:flex; gap:10px; z-index:10020;";
         document.body.appendChild(tb);
     }
-
     const winId = 'win_' + Date.now();
     const win = document.createElement('div');
+    win.className = 'floating-window';
     win.id = winId;
-    
     const left = (window.innerWidth - w) / 2;
     const top = (window.innerHeight - h) / 2;
-
-    win.style.cssText = `
-        position: fixed; top: ${top}px; left: ${left}px; 
-        width: ${w}px; height: ${h}px; 
-        background: white; border-radius: 12px; 
-        box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
-        z-index: 10005; display: flex; flex-direction: column; 
-        overflow: hidden; border: 2px solid #0284c7;
-    `;
+    win.style.cssText += `top:${top}px; left:${left}px; width:${w}px; height:${h}px;`;
 
     win.innerHTML = `
-        <div style="background: #0f172a; color: white; padding: 12px 20px; cursor: default; display: flex; justify-content: space-between; align-items: center; font-weight: bold;">
+        <div class="win-header">
             <span>🔱 ${title}</span>
-            <div style="display: flex; gap: 15px;">
-                <span onclick="document.getElementById('${winId}').style.display='none'; addTab('${winId}', '${title}')" style="cursor:pointer; font-size:20px;">_</span>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <span onclick="this.closest('.floating-window').querySelector('iframe').src += ''" style="cursor:pointer;">🔄</span>
+                <span onclick="minimizeWindow('${winId}', '${title}')" style="cursor:pointer;">_</span>
                 <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;">&times;</span>
             </div>
         </div>
-        <iframe src="${url}" style="flex: 1; border: none; width: 100%; height: 100%; background: #f8fafc;"></iframe>
+        <iframe src="${url}" style="flex:1; border:none; width:100%; height:100%; background:#f8fafc;"></iframe>
     `;
-
     document.body.appendChild(win);
+    makeDraggable(win, win.querySelector('.win-header'));
+    bringToFront(win);
 };
 
-// 3. ΣΥΝΑΡΤΗΣΗ ΕΠΑΝΑΦΟΡΑΣ (Taskbar)
-window.addTab = function(winId, title) {
-    const bar = document.getElementById('taskbar-apps');
-    const tab = document.createElement('div');
-    tab.style.cssText = "background:#0f172a; color:#7dd3fc; padding:8px 15px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:bold; border:1px solid #0ea5e9; box-shadow: 0 4px 10px rgba(0,0,0,0.3);";
-    tab.innerHTML = `💠 ${title}`;
-    tab.onclick = function() {
-        document.getElementById(winId).style.display = 'flex';
-        tab.remove();
+function makeDraggable(elmnt, header) {
+    let p1 = 0, p2 = 0, p3 = 0, p4 = 0;
+    header.onmousedown = (e) => {
+        if (e.target.tagName === 'SPAN') return;
+        p3 = e.clientX; p4 = e.clientY;
+        document.onmouseup = () => { document.onmousemove = null; };
+        document.onmousemove = (e) => {
+            p1 = p3 - e.clientX; p2 = p4 - e.clientY;
+            p3 = e.clientX; p4 = e.clientY;
+            elmnt.style.top = (elmnt.offsetTop - p2) + "px";
+            elmnt.style.left = (elmnt.offsetLeft - p1) + "px";
+        };
     };
-    bar.appendChild(tab);
+}
+
+window.minimizeWindow = function(winId, title) {
+    const win = document.getElementById(winId);
+    if (win) {
+        win.style.display = 'none';
+        const tab = document.createElement('div');
+        tab.className = 'taskbar-tab';
+        tab.innerHTML = `💠 ${title}`;
+        tab.onclick = () => { win.style.display = 'flex'; bringToFront(win); tab.remove(); };
+        document.getElementById('taskbar-apps').appendChild(tab);
+    }
 };
 
-// 4. ΠΛΟΗΓΗΣΗ (Τα Κουμπιά)
-window.openDashboardModal = () => createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1300, 850);
-window.openInvoiceModal   = (type='TIM') => createNewWindow(`invoice.html?type=${type}`, 'Έκδοση Παραστατικού', 1250, 850);
+function bringToFront(el) {
+    document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = "10000");
+    el.style.zIndex = "10015";
+}
+
+// ==========================================
+// 🛸 5. NAVIGATION & BACKUP
+// ==========================================
+window.openInvoiceModal   = () => createNewWindow('invoice.html', 'Έκδοση Τιμολογίου', 1350, 900);
 window.openCustomerModal  = () => createNewWindow('customers.html', 'Πελάτες', 1200, 800);
 window.openInventoryModal = () => createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850);
+window.openDashboardModal = () => createNewWindow('dashboard.html', 'Στατιστικά', 1400, 900);
 window.openSupplierModal  = () => createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800);
+window.openFinancialModal = () => createNewWindow('finance.html', 'Οικονομικά', 1250, 850);
 
-// 5. LOGIN & INITIALIZATION
+window.downloadBackup = function() {
+    const data = {
+        products: JSON.parse(localStorage.getItem('triton_products')),
+        invoices: JSON.parse(localStorage.getItem('triton_invoices')),
+        customers: JSON.parse(localStorage.getItem('customersDB')),
+        settings: JSON.parse(localStorage.getItem('bizSettings')),
+        date: new Date().toLocaleString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `TRITON_BACKUP_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+};
+
+// ==========================================
+// 🚀 6. STARTUP
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('triton_is_logged_in') === 'true') {
         const overlay = document.getElementById('loginOverlay');
         if (overlay) overlay.style.display = 'none';
+        refreshTritonDashboard();
     }
 });
-
-window.unlockTriton = function() {
-    if (document.getElementById('masterKey').value === "TRITON2026") {
-        document.getElementById('masterGate').style.display = 'none';
-        document.getElementById('authGate').style.display = 'block';
-    } else {
-        document.getElementById('unlockError').style.display = 'block';
-    }
-};
-
-window.completeLogin = function() {
-    localStorage.setItem('triton_is_logged_in', 'true');
-    location.reload();
-};
-</script>
 </script>
 </body>
 </html>

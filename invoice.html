@@ -4098,6 +4098,136 @@ window.closeNewCustomerModal = () => {
     // 3. Άνοιγμα της billing.html σε νέο παράθυρο για εκτύπωση
     window.open('billing.html', '_blank');
 };
+            // Κεντρική συνάρτηση που εκτελείται όταν πατάς "Εκτύπωση"
+async function finalizeAndPrint() {
+    console.log("🔱 Triton: Έναρξη οριστικοποίησης & ενημέρωσης...");
+
+    // 1. Συλλογή βασικών στοιχείων
+    const invoiceData = {
+        customer_name: document.getElementById('custName')?.value || "Λιανική Πώληση",
+        customer_afm: document.getElementById('custAfm')?.value || "",
+        total_amount: parseFloat(document.getElementById('displayTotal')?.innerText) || 0,
+        invoice_date: document.getElementById('invoiceDate')?.value || new Date().toISOString().split('T')[0],
+        type: new URLSearchParams(window.location.search).get('type') || 'TIM'
+    };
+
+    // 2. Συλλογή προϊόντων για την αποθήκη
+    const items = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const sku = row.querySelector('.row-sku')?.value;
+        const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
+        if (sku && qty > 0) items.push({ sku, qty });
+    });
+
+    try {
+        // Α. Αποθήκευση Παραστατικού στη Supabase
+        const { data: inv, error: invErr } = await _supabase.from('invoices').insert([invoiceData]);
+        if (invErr) throw invErr;
+
+        // Β. Ενημέρωση Αποθήκης (Μείωση Stock)
+        for (const item of items) {
+            const { data: prod } = await _supabase.from('products').select('stock').eq('sku', item.sku).single();
+            if (prod) {
+                await _supabase.from('products').update({ stock: prod.stock - item.qty }).eq('sku', item.sku);
+            }
+        }
+
+        // Γ. Ενημέρωση Καρτέλας Πελάτη (Ledger)
+        if (invoiceData.customer_name !== "Λιανική Πώληση") {
+            await _supabase.from('customer_ledger').insert([{
+                customer_name: invoiceData.customer_name,
+                debit: invoiceData.total_amount,
+                description: `Έκδοση ${invoiceData.type}`
+            }]);
+        }
+
+        // Δ. Προετοιμασία για Εκτύπωση
+        localStorage.setItem('printData', JSON.stringify({
+            ...invoiceData,
+            items: items // Μπορείς να περάσεις και τα ονόματα εδώ αν θες
+        }));
+
+        // Ε. Άνοιγμα της billing.html
+        window.location.href = 'billing.html';
+
+    } catch (err) {
+        console.error("❌ Σφάλμα:", err.message);
+        alert("Παρουσιάστηκε σφάλμα κατά την οριστικοποίηση.");
+    }
+}
+            async function processContract() {
+    console.log("🔱 Triton: Οριστικοποίηση και προετοιμασία εκτύπωσης...");
+
+    // 1. Συλλογή Δεδομένων από τη Φόρμα
+    const invoiceData = {
+        customer_name: document.getElementById('custName')?.value || "Λιανική Πώληση",
+        customer_afm: document.getElementById('custAfm')?.value || "",
+        total_amount: parseFloat(document.getElementById('displayTotal')?.innerText.replace('€', '').replace(',', '.')) || 0,
+        net_amount: parseFloat(document.getElementById('displayNet')?.innerText.replace('€', '').replace(',', '.')) || 0,
+        invoice_date: document.getElementById('invoiceDate')?.value || new Date().toISOString().split('T')[0],
+        type: new URLSearchParams(window.location.search).get('type') || 'TIM'
+    };
+
+    // 2. Συλλογή Προϊόντων από τις γραμμές (για Αποθήκη)
+    const items = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const sku = row.querySelector('.row-sku')?.value;
+        const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
+        const name = row.querySelector('.row-desc')?.value || "";
+        const price = row.querySelector('.row-price')?.value || 0;
+        
+        if (sku && qty > 0) {
+            items.push({ sku, qty, name, price });
+        }
+    });
+
+    if (items.length === 0) {
+        alert("⚠️ Προσθέστε τουλάχιστον ένα προϊόν!");
+        return;
+    }
+
+    try {
+        // Α. Αποθήκευση στο Supabase (Πίνακας invoices)
+        const { data: inv, error: invErr } = await _supabase.from('invoices').insert([invoiceData]).select();
+        if (invErr) throw invErr;
+
+        // Β. Ενημέρωση Αποθήκης (Μείωση Stock)
+        for (const item of items) {
+            // Παίρνουμε το τρέχον stock
+            const { data: prod } = await _supabase.from('products').select('stock').eq('sku', item.sku).single();
+            if (prod) {
+                const newStock = (prod.stock || 0) - item.qty;
+                await _supabase.from('products').update({ stock: newStock }).eq('sku', item.sku);
+            }
+        }
+
+        // Γ. Ενημέρωση Καρτέλας Πελάτη (Χρέωση)
+        if (invoiceData.customer_name !== "Λιανική Πώληση") {
+            await _supabase.from('customer_ledger').insert([{
+                customer_id: document.getElementById('customerSelect')?.value || null, // Αν έχεις ID
+                customer_name: invoiceData.customer_name,
+                debit: invoiceData.total_amount,
+                description: `Έκδοση ${invoiceData.type}`
+            }]);
+        }
+
+        // Δ. Αποστολή δεδομένων στο localStorage για την billing.html (PDF)
+        localStorage.setItem('printData', JSON.stringify({
+            header: invoiceData,
+            details: items
+        }));
+
+        // Ε. Άνοιγμα της billing.html σε νέο παράθυρο (Popup στυλ)
+        const printWindow = window.open('billing.html', 'Εκτύπωση', 'width=1100,height=850');
+        
+        // Προαιρετικά: Καθαρισμός της φόρμας για το επόμενο τιμολόγιο
+        console.log("✅ Triton: Όλες οι βάσεις ενημερώθηκαν.");
+
+    } catch (err) {
+        console.error("❌ Σφάλμα:", err.message);
+        alert("Σφάλμα κατά την αποθήκευση. Ελέγξτε τη σύνδεση και τα δεδομένα.");
+    }
+}
 </script>
  
  

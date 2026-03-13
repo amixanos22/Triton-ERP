@@ -4228,6 +4228,32 @@ async function finalizeAndPrint() {
         alert("Σφάλμα κατά την αποθήκευση. Ελέγξτε τη σύνδεση και τα δεδομένα.");
     }
 }
+            document.addEventListener('DOMContentLoaded', function() {
+    const customerInput = document.getElementById('customerSearch'); // Το ID του input σου
+    const customerList = document.getElementById('customerList'); // Ένα <datalist id="customerList"></datalist>
+    
+    // 1. Τραβάμε τη βάση δεδομένων από το localStorage
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    
+    // 2. Γεμίζουμε τη λίστα με τα ονόματα των πελατών
+    Object.keys(db).forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        customerList.appendChild(option);
+    });
+
+    // 3. Όταν επιλέγεις πελάτη, συμπλήρωσε αυτόματα ΑΦΜ, Διεύθυνση κλπ.
+    customerInput.addEventListener('change', function() {
+        const selectedName = this.value;
+        if (db[selectedName]) {
+            const c = db[selectedName];
+            if(document.getElementById('invAfm')) document.getElementById('invAfm').value = c.afm || '';
+            if(document.getElementById('invAddr')) document.getElementById('invAddr').value = c.addr || '';
+            if(document.getElementById('invDoy')) document.getElementById('invDoy').value = c.doy || '';
+            // Προσθέτεις όποιο άλλο πεδίο έχεις στο τιμολόγιο
+        }
+    });
+});
 </script>
  
  

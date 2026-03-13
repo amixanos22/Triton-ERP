@@ -4193,7 +4193,7 @@ window.generatePDF = function() {
     let fetchedCustomers = [];
     let allProducts = [];
 
-   <script>
+   
 // 1. ΒΑΣΙΚΕΣ ΜΕΤΑΒΛΗΤΕΣ (Χρήση var για αποφυγή Redeclaration Error)
 var suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
 var suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
@@ -4212,7 +4212,28 @@ window.createNewWindow = function(url) {
     window.location.href = url;
 };
 
-// 3. ΔΙΑΧΕΙΡΙΣΗ SIDEBAR
+<script>
+// 1. ΑΣΦΑΛΗΣ ΣΥΝΔΕΣΗ (Χρήση var αντί για const για να μην κρασάρει η Hub)
+var suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+var suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
+
+// Έλεγχος αν ο client υπάρχει ήδη
+if (typeof window._supabase === 'undefined' || window._supabase === null) {
+    window._supabase = supabase.createClient(suUrl, suKey);
+}
+var _supabase = window._supabase;
+
+// 2. ΣΥΝΑΡΤΗΣΗ ΠΛΟΗΓΗΣΗΣ (Πρέπει να είναι πρώτη)
+window.createNewWindow = function(url) {
+    console.log("🔱 Triton Navigate:", url);
+    window.location.href = url;
+};
+
+// 3. ΜΕΤΑΒΛΗΤΕΣ ΔΕΔΟΜΕΝΩΝ
+var fetchedCustomers = [];
+var allProducts = [];
+
+// 4. ΔΙΑΧΕΙΡΙΣΗ SIDEBAR (Αυτό που μου έστειλες)
 function closeBalanceSidebar() {
     const sb = document.getElementById('balance-sidebar');
     if (sb) {
@@ -4248,7 +4269,7 @@ async function updateCustomerBalance(customerId) {
     } catch (err) { console.error("Ledger Error:", err.message); }
 }
 
-// 4. ΑΡΧΙΚΟΠΟΙΗΣΗ ΤΙΜΟΛΟΓΙΟΥ
+// 5. ΑΡΧΙΚΟΠΟΙΗΣΗ ΤΙΜΟΛΟΓΙΟΥ (Αυτό που μου έστειλες)
 async function initSystem() {
     const sel = document.getElementById('customerSelect') || document.getElementById('customer-select');
     if (!sel) return;
@@ -4295,17 +4316,18 @@ function updateInvoiceFields() {
     updateCustomerBalance(sel.value);
 }
 
-// 5. EVENT LISTENERS
+// 6. EVENT LISTENERS
 document.addEventListener('change', function(e) {
     if (e.target && (e.target.id === 'customerSelect' || e.target.id === 'customer-select')) {
         updateInvoiceFields();
     }
 });
 
-// ΕΚΚΙΝΗΣΗ
+// 7. ΕΚΚΙΝΗΣΗ
 window.addEventListener('load', () => {
     console.log("🔱 Triton: System Online.");
     initSystem();
 });
 </script>
+ 
 </script>

@@ -783,25 +783,28 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="quick-actions-wrapper" style="position: relative; display: flex; align-items: center;">
                 <button class="add-btn" id="quickAddBtn" onclick="toggleTritonDropdown(event)">＋</button>
                 
-                <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
+              <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
                     <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
                         <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
                     </a>
                     <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ', '📄 Τιμολόγιο Πώλησης', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
                         <span>📄</span> Τιμολόγιο Πώλησης
                     </a>
-                    <a href="javascript:void(0)" onclick="createNewWindow('delivery_note.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                    <a href="javascript:void(0)" onclick="createNewWindow('deltio.html', '🚚 Δελτίο Αποστολής', 950, 700)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
                         <span>🚚</span> Δελτίο Αποστολής
                     </a>
-                    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                    <a href="javascript:void(0)" onclick="createNewWindow('eispraxi.html?type=ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΗΣ', '💰 Απόδειξη Είσπραξης', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
                         <span>💰</span> Απόδειξη Είσπραξης
                     </a>
-                    <a href="javascript:void(0)" onclick="createNewWindow('finance.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                    <a href="javascript:void(0)" onclick="createNewWindow('pliromi.html?type=ΑΠΟΔΕΙΞΗ ΠΛΗΡΩΜΗΣ', '💸 Απόδειξη Πληρωμής', 550, 600)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; display: flex; align-items: center; gap: 10px; font-size: 14px;">
                         <span>💸</span> Απόδειξη Πληρωμής
                     </a>
+               
                 </div>
             </div>
 
+  
+   
             <div class="lang-switcher">
                 <button class="lang-btn active">ΕΛ</button>
                 <button class="lang-btn">EN</button>

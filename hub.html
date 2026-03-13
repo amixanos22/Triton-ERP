@@ -889,43 +889,39 @@ function createNewWindow(url, title, w, h) {
   
    
 <script>
-// --- ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΕΝΟΙΚΙΑΣΗΣ TRITON ---
+ // --- ΣΥΣΤΗΜΑ ΕΙΣΟΔΟΥ & ΕΝΟΙΚΙΑΣΗΣ TRITON ---
 function checkLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
     const errorMsg = document.getElementById('loginError');
 
-    // 1. Έλεγχος αν ο χρήστης έβαλε τον Master Κωδικό TRITON2026
-    if (pass === "TRITON2026") { 
-        // Αποθηκεύουμε στη μνήμη ότι το πρόγραμμα ξεκλείδωσε
+    // 1. ΑΛΛΑΓΗ ΕΔΩ: Βάλε τον προσωρινό κωδικό αντί για TRITON2026
+    if (pass === "12345") { 
         localStorage.setItem('isLoggedIn', 'true');
-        // Αποθηκεύουμε και το email του χρήστη αν θέλουμε να τον θυμόμαστε
         if(email) localStorage.setItem('triton_user_email', email);
 
-        // Εφέ εξαφάνισης της "πόρτας"
         document.getElementById('loginOverlay').style.opacity = "0";
         setTimeout(() => {
             document.getElementById('loginOverlay').style.display = "none";
         }, 500);
     } else {
-        // Αν ο κωδικός είναι λάθος
         errorMsg.style.display = "block";
-        errorMsg.innerText = "❌ Λάθος Κωδικός Ενοικίασης. Παρακαλώ εισάγετε TRITON2026";
+        // 2. ΑΛΛΑΓΗ ΕΔΩ: Άλλαξε το μήνυμα που βλέπει ο χρήστης
+        errorMsg.innerText = "❌ Λάθος Κωδικός. Εισάγετε 12345";
     }
 }
 
 function loginWithGoogle() {
-    // Στο Google Login, ελέγχουμε αν έχει γραφτεί ο κωδικός στο πεδίο
     const pass = document.getElementById('loginPass').value;
     
-    if (pass === "TRITON2026") {
-        alert("✅ Ο λογαριασμός Google συνδέθηκε επιτυχώς με τον κωδικό ενοικίασης!");
+    // 3. ΑΛΛΑΓΗ ΕΔΩ: Βάλε τον ίδιο προσωρινό κωδικό
+    if (pass === "ΝΕΟΣ_ΚΩΔΙΚΟΣ") {
+        alert("✅ Ο λογαριασμός Google συνδέθηκε επιτυχώς!");
         checkLogin();
     } else {
-        alert("⚠️ Για να συνδεθείτε μέσω Google, πρέπει πρώτα να πληκτρολογήσετε τον Κωδικό Ενοικίασης (TRITON2026) στο πεδίο του κωδικού.");
+        alert("⚠️ Πληκτρολογήστε τον Κωδικό (12345) στο πεδίο.");
     }
 }
-
 // --- 2. ΡΥΘΜΙΣΕΙΣ ΕΠΙΧΕΙΡΗΣΗΣ (FIXED) ---
 function openSettings() {
     // 1. Φορτώνουμε τα υπάρχοντα στοιχεία στα πεδία

@@ -211,6 +211,23 @@ window.onload = async () => {
     const dateEl = document.getElementById('currentDate');
     if (dateEl) dateEl.innerText = new Date().toLocaleDateString('el-GR');
 };
+  window.onload = function() {
+    const data = JSON.parse(localStorage.getItem('currentInvoice'));
+    
+    if (data) {
+        // Συμπλήρωση στοιχείων στο template
+        document.getElementById('print-customer-name').innerText = data.customerName;
+        document.getElementById('print-total').innerText = data.totalAmount;
+        
+        // ... συμπλήρωση των υπόλοιπων πεδίων ...
+
+        // Αυτόματη εντολή εκτύπωσης
+        setTimeout(() => {
+            window.print();
+            // window.close(); // Προαιρετικά, κλείνει το tab μετά την εκτύπωση
+        }, 500);
+    }
+};
 </script>
 </body>
 </html>

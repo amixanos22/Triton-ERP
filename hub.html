@@ -1972,12 +1972,18 @@ window.closeNewCustomerModal = function() {
 
  
 // ==========================================
-// 🔱 TRITON CONFIGURATION
+// 🔱 TRITON CONFIGURATION - FIXED
 // ==========================================
-const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+// Χρησιμοποιούμε var για να επιτρέπεται η επαναδήλωση χωρίς σφάλμα
+var supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 
+// Έλεγχος αν ο client υπάρχει ήδη στο παράθυρο (window) για να μην τον ξαναφτιάχνουμε
+if (!window.supabaseClient) {
+    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+}
+// Χρησιμοποιούμε μια τοπική μεταβλητή για να δουλεύουν οι υπόλοιπες συναρτήσεις (loadCustomers κλπ)
+var supabaseClient = window.supabaseClient;
 // ==========================================
 // 📂 1. DATA LOADING (CUSTOMERS & PRODUCTS)
 // ==========================================

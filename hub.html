@@ -800,9 +800,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
          
-            <a href="javascript:void(0)" onclick="openInvoiceModal()" class="nav-item">
-    <span>📄</span> Τιμολόγιο & Δελτίο
-</a>        
+        <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
+    <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
+</a>
                     
 
 <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ', '📄 Τιμολόγιο Πώλησης', 1100, 750)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px;">
@@ -1949,6 +1949,19 @@ window.closeNewCustomerModal = function() {
     if (floatingWin) floatingWin.remove();
 };
 <script>
+    function createNewWindow(url, title, w, h) {
+    // Υπολογισμός κεντραρίσματος στην οθόνη
+    const left = (window.screen.width / 2) - (w / 2);
+    const top = (window.screen.height / 2) - (h / 2);
+    
+    // Άνοιγμα παραθύρου χωρίς μπάρες εργαλείων για αίσθηση εφαρμογής
+    const newWindow = window.open(url, title, 
+        `toolbar=no, location=no, directories=no, status=no, menubar=no, 
+        scrollbars=yes, resizable=yes, width=${w}, height=${h}, top=${top}, left=${left}`);
+    
+    if (window.focus && newWindow) newWindow.focus();
+    return newWindow;
+}
 // ==========================================
 // 🔱 TRITON ERP - MASTER CONTROL SCRIPT
 // ==========================================

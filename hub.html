@@ -1777,19 +1777,29 @@ window.addEventListener('load', updateDashboardStats);
         }
     });
 </script>
-          <script>
-           // Πρόσθεσε αυτό στην αρχή του script της hub.html
-window.createNewWindow = function(url) {
-    console.log("🔱 Triton Sync - Navigation to:", url);
+<script>
+            
+// ==========================================
+// 🛡️ 1780 - 1790: TRITON SAFETY & NAVIGATION
+// ==========================================
+
+// Ορίζουμε τη συνάρτηση πλοήγησης ΠΡΙΝ από οτιδήποτε άλλο
+window.createNewWindow = window.createNewWindow || function(url) {
+    console.log("🔱 Triton Navigate to:", url);
     window.location.href = url;
-}; 
-// ==========================================
-// 🛡️ 0. TRITON SAFETY FIRST (ANTI-CRASH)
-// ==========================================
-// Αυτό εμποδίζει το ReferenceError: _supabase is not defined
-if (typeof _supabase === 'undefined') {
-    window._supabase = null; 
-    console.warn("🔱 Triton Safety: Supabase protection enabled.");
+};
+
+// Προστασία και Αρχικοποίηση Supabase (Χρήση var για αποφυγή Redeclaration)
+var suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+var suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
+
+if (typeof _supabase === 'undefined' || _supabase === null) {
+    try {
+        window._supabase = supabase.createClient(suUrl, suKey);
+        console.log("✅ Triton Safety: Supabase client is active.");
+    } catch (e) {
+        console.error("❌ Triton Safety Error:", e);
+    }
 }
 
 // ==========================================

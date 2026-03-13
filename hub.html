@@ -795,11 +795,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="actions-dropdown" id="quickAddDropdown" style="position: absolute; right: 0; top: 50px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; min-width: 250px; z-index: 9999; flex-direction: column; overflow: hidden;">
     
 
-         <a href="#" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850); return false;" 
-   style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
-   <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
+          <a href="javascript:void(0)" onclick="createNewWindow('invoice.html?type=TIM', '📄 Τιμολόγιο & Δελτίο', 1200, 850)" style="padding: 12px 15px; text-decoration: none; color: #1e293b; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;">
+    <span>📄</span> Τιμολόγιο & Δελτίο Αποστολής
 </a>
-                      
                     
                     
 
@@ -1819,26 +1817,42 @@ document.head.appendChild(tritonUI);
 // ==========================================
 // 2. Η ΜΗΧΑΝΗ ΤΩΝ ΠΑΡΑΘΥΡΩΝ (WINDOW ENGINE)
 // ==========================================
+// ==========================================
+// 🔱 TRITON WINDOW ENGINE - FULL REPAIR
+// ==========================================
 window.createNewWindow = function(url, title, width, height) {
-    // Force prevent default αν το καλούμε από link <a>
+    // 1. Σταματάμε το default behavior του link
     if (window.event) {
         window.event.preventDefault();
         window.event.stopPropagation();
     }
     
-    // Default τιμές αν λείπουν
-    const w = width || 850;
-    const h = height || 600;
+    // 2. Ρύθμιση διαστάσεων και τίτλου
+    const w = width || 1200;
+    const h = height || 850;
     const t = title || 'Triton Module';
+    const winId = 'win_' + Date.now();
 
-    win.style.cssText = `position: fixed; top: ${topPos}px; left: ${leftPos}px; width: ${width}px; height: ${height}px; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); z-index: 10005; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #0284c7; resize: both; min-width: 400px; min-height: 300px;`;
+    console.log("🔱 Triton: Opening", t);
 
+    // 3. Δημιουργία του στοιχείου (ΑΥΤΟ ΕΛΕΙΠΕ)
+    const win = document.createElement('div');
+    win.className = 'floating-window';
+    win.id = winId;
+    
+    const leftPos = (window.innerWidth - w) / 2;
+    const topPos = (window.innerHeight - h) / 2;
+
+    // 4. Εφαρμογή Στυλ & Z-Index (Πολύ υψηλό για να είναι πάντα πάνω)
+    win.style.cssText = `position: fixed; top: ${topPos}px; left: ${leftPos}px; width: ${w}px; height: ${h}px; background: white; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 999999; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #0284c7; resize: both; min-width: 400px; min-height: 300px;`;
+
+    // 5. Περιεχόμενο Παραθύρου
     win.innerHTML = `
         <div class="win-header" style="background: #0f172a; color: white; padding: 12px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
-            <span>🔱 ${title}</span>
+            <span>🔱 ${t}</span>
             <div style="display: flex; gap: 15px; align-items: center;">
                 <span onclick="this.closest('.floating-window').querySelector('iframe').src += ''" style="cursor:pointer;" title="Ανανέωση">🔄</span>
-                <span onclick="minimizeWindow('${winId}', '${title}')" style="cursor:pointer; font-size:20px;">_</span>
+                <span onclick="minimizeWindow('${winId}', '${t}')" style="cursor:pointer; font-size:20px;">_</span>
                 <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;">&times;</span>
             </div>
         </div>
@@ -1846,50 +1860,17 @@ window.createNewWindow = function(url, title, width, height) {
     `;
 
     document.body.appendChild(win);
-    makeDraggable(win, win.querySelector('.win-header'));
-    bringToFront(win);
-    win.addEventListener('mousedown', () => bringToFront(win));
+    
+    // 6. Ενεργοποίηση Drag & Drop και Z-Index Management
+    if (typeof makeDraggable === 'function') makeDraggable(win, win.querySelector('.win-header'));
+    if (typeof bringToFront === 'function') bringToFront(win);
+    
+    win.addEventListener('mousedown', () => {
+        if (typeof bringToFront === 'function') bringToFront(win);
+    });
+
+    return false;
 };
-
-window.minimizeWindow = function(winId, title) {
-    const win = document.getElementById(winId);
-    const bar = document.getElementById('taskbar-apps'); 
-    if (win && bar) {
-        win.style.display = 'none';
-        const tab = document.createElement('div');
-        tab.className = 'taskbar-tab pulse-active';
-        tab.innerHTML = `💠 ${title}`;
-        tab.onclick = function() {
-            win.style.display = 'flex';
-            bringToFront(win);
-            tab.remove();
-        };
-        bar.appendChild(tab);
-        setTimeout(() => tab.classList.remove('pulse-active'), 2000);
-    }
-};
-
-function bringToFront(element) {
-    document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = "10000");
-    element.style.zIndex = "10015";
-}
-
-function makeDraggable(elmnt, header) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    header.onmousedown = (e) => {
-        if (e.target.tagName === 'SPAN') return;
-        e.preventDefault();
-        pos3 = e.clientX; pos4 = e.clientY;
-        document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
-        document.onmousemove = (e) => {
-            pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-            pos3 = e.clientX; pos4 = e.clientY;
-            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-        };
-    };
-}
-
 // ==========================================
 // 🛸 3. ΠΛΗΡΗΣ ΠΛΟΗΓΗΣΗ TRITON (ULTRA FIX)
 // ==========================================

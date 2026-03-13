@@ -1761,7 +1761,6 @@ var updateUI = function(id, value, isHtml) {
     if (el) {
         if (isHtml) el.innerHTML = value;
         else el.innerText = value;
-    }
 };
 
 // 🔱 Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΕΡΝΕΙ ΤΑ ΣΤΟΙΧΕΙΑ ΑΠΟ ΤΗΝ ΑΑΔΕ ΜΕΣΩ VERCEL
@@ -4194,66 +4193,69 @@ window.generatePDF = function() {
     let fetchedCustomers = [];
     let allProducts = [];
 
-    // --- ΣΥΝΑΡΤΗΣΕΙΣ ΠΛΟΗΓΗΣΗΣ (Για να δουλεύει η hub.html) ---
-    window.createNewWindow = function(url) {
-        console.log("🔱 Triton Navigate:", url);
-        window.location.href = url;
-    };
+   <script>
+// 1. ΒΑΣΙΚΕΣ ΜΕΤΑΒΛΗΤΕΣ (Χρήση var για αποφυγή Redeclaration Error)
+var suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+var suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
 
-    // --- ΔΙΑΧΕΙΡΙΣΗ SIDEBAR & MODALS ---
-    function closeBalanceSidebar() {
-        const sb = document.getElementById('balance-sidebar');
-        if (sb) {
-            sb.style.right = '-350px';
-            sb.style.pointerEvents = 'none';
-            sb.style.visibility = 'hidden';
-        }
-    }
+// Έλεγχος αν ο client υπάρχει ήδη
+if (typeof _supabase === 'undefined') {
+    var _supabase = supabase.createClient(suUrl, suKey);
+}
 
-    async function updateCustomerBalance(customerId) {
-        if (!customerId) return;
-        const sb = document.getElementById('balance-sidebar');
-        const balanceValue = document.getElementById('sidebar-balance-value');
-        if (!sb || !balanceValue) return;
+var fetchedCustomers = [];
+var allProducts = [];
 
-        try {
-            const { data: trans, error } = await _supabase
-                .from('customer_ledger')
-                .select('debit, credit')
-                .eq('customer_id', customerId);
-
-            if (error) throw error;
-
-            let balance = 0;
-            if (trans) trans.forEach(t => balance += (Number(t.debit) || 0) - (Number(t.credit) || 0));
-
-            balanceValue.innerHTML = balance.toFixed(2) + " €";
-            balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
-            
-            sb.style.visibility = 'visible'; 
-            sb.style.pointerEvents = 'auto'; 
-            sb.style.right = '0';
-        } catch (err) { console.error("Ledger Error:", err.message); }
-    }
-
-   // 1. NAVIGATION - ΠΡΕΠΕΙ ΝΑ ΕΙΝΑΙ ΠΡΩΤΟ ΓΙΑ ΝΑ ΤΟ ΒΛΕΠΕΙ Η HUB.HTML
+// 2. ΣΥΝΑΡΤΗΣΗ ΠΛΟΗΓΗΣΗΣ (Μία φορά, στην αρχή)
 window.createNewWindow = function(url) {
     console.log("🔱 Triton Navigate:", url);
     window.location.href = url;
 };
 
-// 2. ΑΡΧΙΚΟΠΟΙΗΣΗ ΣΥΣΤΗΜΑΤΟΣ
+// 3. ΔΙΑΧΕΙΡΙΣΗ SIDEBAR
+function closeBalanceSidebar() {
+    const sb = document.getElementById('balance-sidebar');
+    if (sb) {
+        sb.style.right = '-350px';
+        sb.style.pointerEvents = 'none';
+        sb.style.visibility = 'hidden';
+    }
+}
+
+async function updateCustomerBalance(customerId) {
+    if (!customerId) return;
+    const sb = document.getElementById('balance-sidebar');
+    const balanceValue = document.getElementById('sidebar-balance-value');
+    if (!sb || !balanceValue) return;
+
+    try {
+        const { data: trans, error } = await _supabase
+            .from('customer_ledger')
+            .select('debit, credit')
+            .eq('customer_id', customerId);
+
+        if (error) throw error;
+
+        let balance = 0;
+        if (trans) trans.forEach(t => balance += (Number(t.debit) || 0) - (Number(t.credit) || 0));
+
+        balanceValue.innerHTML = balance.toFixed(2) + " €";
+        balanceValue.style.color = balance > 0 ? "#0c4a6e" : "#059669";
+        
+        sb.style.visibility = 'visible'; 
+        sb.style.pointerEvents = 'auto'; 
+        sb.style.right = '0';
+    } catch (err) { console.error("Ledger Error:", err.message); }
+}
+
+// 4. ΑΡΧΙΚΟΠΟΙΗΣΗ ΤΙΜΟΛΟΓΙΟΥ
 async function initSystem() {
     const sel = document.getElementById('customerSelect') || document.getElementById('customer-select');
-    if (!sel) return; // Εδώ είναι σωστό, δεν υπάρχει κώδικας από κάτω
+    if (!sel) return;
 
     try {
         const { data, error } = await _supabase.from('customers').select('*').order('name');
-        
-        if (error) {
-            console.error("Σφάλμα Supabase:", error.message);
-            return; 
-        }
+        if (error) throw error;
 
         if (data) {
             fetchedCustomers = data;
@@ -4263,16 +4265,11 @@ async function initSystem() {
             });
         }
         
-        // Φόρτωση προϊόντων
         const { data: pData } = await _supabase.from('products').select('*').order('name');
         if (pData) allProducts = pData;
-
-    } catch (e) {
-        console.error("Κρίσιμο σφάλμα στο init:", e);
-    }
+    } catch (e) { console.error("Init Error:", e.message); }
 }
 
-// 3. ΕΝΗΜΕΡΩΣΗ ΠΕΔΙΩΝ ΤΙΜΟΛΟΓΙΟΥ
 function updateInvoiceFields() {
     const sel = document.getElementById('customerSelect') || document.getElementById('customer-select');
     if (!sel || !sel.value) return;
@@ -4280,7 +4277,6 @@ function updateInvoiceFields() {
     const customer = fetchedCustomers.find(c => c.id == sel.value);
     if (!customer) return;
 
-    // Λίστα με τα IDs και τις τιμές για αποφυγή επαναλαμβανόμενων if
     const fieldMap = {
         'custName': customer.name,
         'custAfm': customer.afm,
@@ -4295,64 +4291,21 @@ function updateInvoiceFields() {
         if (el) el.value = value || '';
     }
     
-    const branchArea = document.getElementById('branchArea');
-    if (branchArea) branchArea.style.display = 'block';
-
-    // Ενημέρωση και του Sidebar
-    if (typeof updateCustomerBalance === 'function') {
-        updateCustomerBalance(sel.value);
-    }
+    if (document.getElementById('branchArea')) document.getElementById('branchArea').style.display = 'block';
+    updateCustomerBalance(sel.value);
 }
 
-// 4. ΑΠΟΘΗΚΕΥΣΗ
-async function handleSaveAndClose() {
-    const totalInput = document.getElementById('total-amount');
-    const total = totalInput ? parseFloat(totalInput.value) : 0;
-    const sel = document.getElementById('customerSelect') || document.getElementById('customer-select');
-    const cId = sel ? sel.value : null;
-
-    if (cId && total > 0) {
-        try {
-            await _supabase.from('customer_ledger').insert([{
-                customer_id: cId,
-                debit: total,
-                credit: 0,
-                description: 'Έκδοση τιμολογίου',
-                date: new Date().toISOString()
-            }]);
-            alert("Αποθηκεύτηκε στο Ledger!");
-        } catch (err) {
-            console.error("Save Error:", err);
-        }
-    }
-    
-    const panel = document.getElementById('tritonSettingsPanel');
-    if (panel) panel.style.display = 'none';
-    
-    if (typeof closeBalanceSidebar === 'function') {
-        closeBalanceSidebar();
-    }
-}
-
-// 5. EVENT LISTENERS & DOM LOAD
+// 5. EVENT LISTENERS
 document.addEventListener('change', function(e) {
     if (e.target && (e.target.id === 'customerSelect' || e.target.id === 'customer-select')) {
         updateInvoiceFields();
     }
 });
 
-// Καθαρή εκκίνηση χωρίς "unreachable" κινδύνους
+// ΕΚΚΙΝΗΣΗ
 window.addEventListener('load', () => {
-    console.log("🔱 Triton: Σύστημα έτοιμο.");
-    
-    // Ορισμός της συνάρτησης παγκόσμια
-    window.createNewWindow = function(url) {
-        window.location.href = url;
-    };
-
-    // Εκτέλεση αρχικοποίησης
-    if (typeof initSystem === 'function') {
-        initSystem();
-    }
+    console.log("🔱 Triton: System Online.");
+    initSystem();
 });
+</script>
 </script>

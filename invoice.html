@@ -4185,7 +4185,7 @@ window.generatePDF = function() {
     </div>
 </div>
 
-<script>
+ 
     // --- ΡΥΘΜΙΣΕΙΣ SUPABASE ---
     const suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
     const suKey = 'sb_publishable_8lbtn4itPf_AD8UYz_rPMg_VvBBqY4G';
@@ -4341,14 +4341,18 @@ document.addEventListener('change', function(e) {
     }
 });
 
-window.addEventListener('DOMContentLoaded', () => {
-    // Κλείσιμο Modals αρχικά
-    const modals = ['settingsModal', 'previewModal', 'branchPopup', 'tritonSettingsPanel'];
-    modals.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
+// Καθαρή εκκίνηση χωρίς "unreachable" κινδύνους
+window.addEventListener('load', () => {
+    console.log("🔱 Triton: Σύστημα έτοιμο.");
+    
+    // Ορισμός της συνάρτησης παγκόσμια
+    window.createNewWindow = function(url) {
+        window.location.href = url;
+    };
 
-    initSystem();
+    // Εκτέλεση αρχικοποίησης
+    if (typeof initSystem === 'function') {
+        initSystem();
+    }
 });
 </script>

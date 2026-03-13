@@ -1969,7 +1969,14 @@ window.closeNewCustomerModal = function() {
     const floatingWin = document.querySelector('.floating-window');
     if (floatingWin) floatingWin.remove();
 };
+// --- 🛡️ ΜΟΝΑΔΙΚΗ ΚΑΙ ΑΣΦΑΛΗΣ ΔΗΛΩΣΗ ---
+var supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Το κλειδί σου
 
+if (!window.supabaseClient) {
+    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+}
+var supabaseClient = window.supabaseClient;
  
 // ==========================================
 // 🔱 TRITON CONFIGURATION - FIXED

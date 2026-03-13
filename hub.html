@@ -1948,77 +1948,47 @@ window.closeNewCustomerModal = function() {
     const floatingWin = document.querySelector('.floating-window');
     if (floatingWin) floatingWin.remove();
 };
-<script>
-    function createNewWindow(url, title, w, h) {
-    // Υπολογισμός κεντραρίσματος στην οθόνη
-    const left = (window.screen.width / 2) - (w / 2);
-    const top = (window.screen.height / 2) - (h / 2);
-    
-    // Άνοιγμα παραθύρου χωρίς μπάρες εργαλείων για αίσθηση εφαρμογής
-    const newWindow = window.open(url, title, 
-        `toolbar=no, location=no, directories=no, status=no, menubar=no, 
-        scrollbars=yes, resizable=yes, width=${w}, height=${h}, top=${top}, left=${left}`);
-    
-    if (window.focus && newWindow) newWindow.focus();
-    return newWindow;
-}
 // ==========================================
 // 🔱 TRITON ERP - MASTER CONTROL SCRIPT
 // ==========================================
 
-// 1. ΑΣΦΑΛΗΣ ΑΡΧΙΚΟΠΟΙΗΣΗ (Global Scope)
-var supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
-var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+// 1. ΣΥΝΔΕΣΗ SUPABASE
+const supabaseUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 
 if (!window.supabaseClient) {
     window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 }
-var supabaseClient = window.supabaseClient;
+const supabaseClient = window.supabaseClient;
 
-// 2. ΣΥΝΑΡΤΗΣΗ ΠΛΟΗΓΗΣΗΣ & WINDOW ENGINE
-window.createNewWindow = function(url, title, width, height) {
-    // 1. Έλεγχος αν δόθηκαν διαστάσεις, αλλιώς βάλε default
-    const w = width || 850;
-    const h = height || 600;
-    const t = title || 'Παράθυρο Triton';
+// 2. WINDOW ENGINE (Η Μηχανή των Παραθύρων)
+window.createNewWindow = function(url, title = 'Παράθυρο Triton', width = 1200, height = 800) {
+    console.log("🔱 Opening:", title);
 
-    console.log("🔱 Opening Window:", t, "URL:", url);
-
-    // 2. Δημιουργία ID
     const winId = 'win_' + Date.now();
     const win = document.createElement('div');
     win.className = 'floating-window';
     win.id = winId;
     
-    // 3. Υπολογισμός θέσης (κεντράρισμα)
-    const leftPos = (window.innerWidth - w) / 2;
-    const topPos = (window.innerHeight - h) / 2;
+    // Υπολογισμός κεντραρίσματος
+    const leftPos = (window.innerWidth - width) / 2;
+    const topPos = (window.innerHeight - height) / 2;
 
     win.style.cssText = `
-        position: fixed; 
-        top: ${topPos}px; 
-        left: ${leftPos}px; 
-        width: ${w}px; 
-        height: ${h}px; 
-        background: white; 
-        border-radius: 12px; 
+        position: fixed; top: ${topPos}px; left: ${leftPos}px; 
+        width: ${width}px; height: ${height}px; 
+        background: white; border-radius: 12px; 
         box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
-        z-index: 10005; 
-        display: flex; 
-        flex-direction: column; 
-        overflow: hidden; 
-        border: 2px solid #0284c7; 
-        resize: both; 
-        min-width: 400px; 
-        min-height: 300px;
+        z-index: 10005; display: flex; flex-direction: column; 
+        overflow: hidden; border: 2px solid #0284c7; resize: both;
     `;
 
     win.innerHTML = `
         <div class="win-header" style="background: #0f172a; color: white; padding: 12px 20px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
-            <span>🔱 ${t}</span>
+            <span>🔱 ${title}</span>
             <div style="display: flex; gap: 15px; align-items: center;">
                 <span onclick="this.closest('.floating-window').querySelector('iframe').src += ''" style="cursor:pointer;" title="Ανανέωση">🔄</span>
-                <span onclick="minimizeWindow('${winId}', '${t}')" style="cursor:pointer; font-size:20px;">_</span>
+                <span onclick="minimizeWindow('${winId}', '${title}')" style="cursor:pointer; font-size:20px;">_</span>
                 <span onclick="document.getElementById('${winId}').remove()" style="cursor:pointer; font-size:22px;">&times;</span>
             </div>
         </div>
@@ -2026,35 +1996,12 @@ window.createNewWindow = function(url, title, width, height) {
     `;
 
     document.body.appendChild(win);
-    
-    // Ενεργοποίηση Drag & Drop
-    if (typeof makeDraggable === 'function') {
-        makeDraggable(win, win.querySelector('.win-header'));
-    }
-    
+    makeDraggable(win, win.querySelector('.win-header'));
     bringToFront(win);
     win.addEventListener('mousedown', () => bringToFront(win));
 };
-// 3. UI & STYLES
-const tritonUI = document.createElement('style');
-tritonUI.innerHTML = `
-    @keyframes pulse-triton {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 211, 252, 0.7); }
-        70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(125, 211, 252, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 211, 252, 0); }
-    }
-    .pulse-active { animation: pulse-triton 1.5s ease-out; }
-    .taskbar-tab { 
-        background: #0f172a; color: #7dd3fc; padding: 8px 15px; 
-        border-radius: 8px; border: 1px solid #1e293b; 
-        cursor: pointer; font-size: 12px; font-weight: bold; 
-        display: flex; align-items: center; gap: 8px; transition: 0.2s;
-    }
-    .taskbar-tab:hover { border-color: #0ea5e9; background: #1e293b; }
-`;
-document.head.appendChild(tritonUI);
 
-// 4. WINDOW MANAGEMENT
+// 3. ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΘΥΡΩΝ (Minimize/Front)
 window.minimizeWindow = function(winId, title) {
     const win = document.getElementById(winId);
     const bar = document.getElementById('taskbar-apps'); 
@@ -2069,7 +2016,6 @@ window.minimizeWindow = function(winId, title) {
             tab.remove();
         };
         bar.appendChild(tab);
-        setTimeout(() => tab.classList.remove('pulse-active'), 2000);
     }
 };
 
@@ -2094,61 +2040,22 @@ function makeDraggable(elmnt, header) {
     };
 }
 
-// 5. ΠΛΟΗΓΗΣΗ MODULES
-window.openInvoiceModal = function(type = 'TIM') {
-    window.createNewWindow(`invoice.html?type=${type}`, 'Έκδοση Παραστατικού', 1300, 900);
-};
+// 4. ΠΛΟΗΓΗΣΗ (Τα Κουμπιά σου)
+window.openDashboardModal = () => createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1350, 850);
+window.openInvoiceModal   = (type='TIM') => createNewWindow(`invoice.html?type=${type}`, 'Έκδοση Παραστατικού', 1300, 900);
+window.openCustomerModal  = () => createNewWindow('customers.html', 'Πελάτες', 1200, 800);
+window.openInventoryModal = () => createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850);
+window.openSupplierModal  = () => createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800);
 
-window.openBillingModal = function(type = 'DA') {
-    window.createNewWindow(`billing.html?type=${type}`, 'Διαχείριση Παραστατικού', 1200, 850);
-};
-
-window.openCustomerModal = function() {
-    window.createNewWindow('customers.html', 'Πελάτες', 1200, 800);
-};
-
-window.openSupplierModal = function() { window.createNewWindow('suppliers.html', 'Προμηθευτές', 1200, 800); };
-window.openInventoryModal = function() { window.createNewWindow('inventory.html', 'Αποθήκη & Stock', 1200, 850); };
-window.openEispraxiModal = function()  { window.createNewWindow('eispraxi.html', 'Απόδειξη Είσπραξης', 900, 700); };
-window.openPliromiModal = function()   { window.createNewWindow('pliromi.html', 'Απόδειξη Πληρωμής', 900, 700); };
-window.openDashboardModal = function() { window.createNewWindow('dashboard.html', 'Dashboard Στατιστικών', 1400, 900); };
-
-// 6. ΔΕΔΟΜΕΝΑ (LOADERS)
-async function loadCustomers() {
-    const select = document.getElementById('customer-select');
-    if (!select) return;
-    const { data, error } = await supabaseClient.from('customers').select('id, name').order('name');
-    if (data) {
-        select.innerHTML = '<option value="">Επιλέξτε Πελάτη...</option>';
-        data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-    }
-}
-
-async function loadProducts() {
-    const select = document.getElementById('product-select');
-    if (!select) return;
-    const { data } = await supabaseClient.from('products').select('id, title, price').order('title');
-    if (data) {
-        select.innerHTML = '<option value="">Επιλέξτε Προϊόν...</option>';
-        data.forEach(p => select.innerHTML += `<option value="${p.id}" data-price="${p.price}">${p.title}</option>`);
-    }
-}
-
-// 7. INITIALIZATION
+// 5. LOGIN & INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🔱 Triton: Initializing System...");
-    
-    // Auth Check
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session || localStorage.getItem('triton_is_logged_in') === 'true') {
+    const isLoggedIn = localStorage.getItem('triton_is_logged_in') === 'true';
+    if (isLoggedIn) {
         const overlay = document.getElementById('loginOverlay');
         if (overlay) overlay.style.display = 'none';
-        loadCustomers();
-        loadProducts();
     }
 });
 
-// Gate Functions
 window.unlockTriton = function() {
     if (document.getElementById('masterKey').value === "TRITON2026") {
         document.getElementById('masterGate').style.display = 'none';

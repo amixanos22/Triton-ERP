@@ -750,9 +750,13 @@ document.addEventListener('DOMContentLoaded', () => {
     <span>🧪</span> 
     <span class="translate" data-el="Συνταγές & Κοστολόγηση" data-en="Recipes & Costing">Συνταγές & Κοστολόγηση</span>
 </a>
-      <a href="dashboard.html" class="nav-item" style="border-left: 4px solid #6366f1; margin-top: 5px;">  
-    📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
-</a> 
+     <a href="javascript:void(0)" 
+   onclick="createNewWindow('dashboard.html', '📊 Οικονομικό Dashboard', 1280, 800)" 
+   class="nav-item" 
+   style="border-left: 4px solid #6366f1; margin-top: 5px; text-decoration: none; display: flex; align-items: center;">
+          📊 ΟΙΚΟΝΟΜΙΚΟ DASHBOARD
+</a>
+       
       <a href="javascript:void(0)" onclick="openFinancialModal()" class="nav-item" style="border-left: 4px solid #f59e0b; margin-top: 5px;">
     <span>📊</span> 
     <span class="translate" data-el="Οικονομικό Πλάνο (Κέρδη/Έξοδα)" data-en="Financial Plan (Profit/Expenses)">

@@ -430,10 +430,12 @@ input:focus, select:focus {
     <div class="input-group" style="position: relative;">
         <label style="font-weight:bold; color:#0ea5e9; display:block; margin-bottom:5px;">🚚 Τόπος Παράδοσης</label>
         <div style="display: flex; gap: 5px;">
-            <input type="text" id="deliveryPoint" readonly 
-                   placeholder="Επιλογή..." 
-                   onclick="toggleBranchPopup()" 
-                   style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 2px solid #0ea5e9; border-radius: 5px; cursor: pointer; background: #f0f9ff; font-weight: bold; font-size: 13px;">
+    <input type="text" id="deliveryPoint" 
+       placeholder="Κάντε κλικ ή γράψτε για αναζήτηση..." 
+       onclick="toggleBranchPopup()" 
+       oninput="searchBranch(this.value)"
+       autocomplete="off" 
+       style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 2px solid #0ea5e9; border-radius: 5px; cursor: pointer; background: #f0f9ff; font-weight: bold; font-size: 13px;">
             <button type="button" onclick="clearDeliveryPoint()" 
                     style="height:38px; background:#64748b; color:white; border:none; border-radius:5px; padding: 0 8px; cursor:pointer;">✕</button>
         </div>
@@ -3573,24 +3575,41 @@ function refreshCustomerList() {
 }
 
 // Αυτή η συνάρτηση εκτελείται κάθε φορά που πληκτρολογείς ή επιλέγεις όνομα
-function fillCustomerData(name) {
+ function fillCustomerData(name) {
     const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
     const c = db[name];
     
     if (c) {
-        // Αντιστοίχιση των πεδίων της billing.html με τα πεδία της invoice.html
-        // Τα IDs είναι αυτά που μου έστειλες στο προηγούμενο μήνυμα
-        if(document.getElementById('custAfm'))     document.getElementById('custAfm').value = c.afm || '';
-        if(document.getElementById('custDoy'))     document.getElementById('custDoy').value = c.doy || '';
-        if(document.getElementById('custCity'))    document.getElementById('custCity').value = c.city || '';
-        if(document.getElementById('custZip'))     document.getElementById('custZip').value = c.tk || ''; 
+        // 1. Συμπλήρωση βασικών στοιχείων έδρας
+        if(document.getElementById('custAfm')) document.getElementById('custAfm').value = c.afm || '';
+        if(document.getElementById('custDoy')) document.getElementById('custDoy').value = c.doy || '';
         if(document.getElementById('custAddress')) document.getElementById('custAddress').value = c.addr || '';
-        if(document.getElementById('custPhone'))   document.getElementById('custPhone').value = c.phone || '';
-        if(document.getElementById('custEmail'))   document.getElementById('custEmail').value = c.email || '';
-        if(document.getElementById('custJob'))     document.getElementById('custJob').value = c.job || ''; // Αν υπάρχει επάγγελμα
-        
-        // Κρατάμε τα υποκαταστήματα για το αναδυόμενο πλαίσιο διευθύνσεων
-        window.currentCustomerBranches = c.branches || [];
+        if(document.getElementById('custCity')) document.getElementById('custCity').value = c.city || '';
+        if(document.getElementById('custPhone')) document.getElementById('custPhone').value = c.phone || '';
+        if(document.getElementById('custEmail')) document.getElementById('custEmail').value = c.email || '';
+
+        // 2. Έλεγχος υποκαταστημάτων
+        const branches = c.branches || [];
+        const deliveryInput = document.getElementById('deliveryPoint');
+
+        if (branches.length === 0) {
+            // ΑΝ ΔΕΝ ΕΧΕΙ ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ: Συμπλήρωσε αυτόματα την Έδρα
+            if (deliveryInput) {
+                deliveryInput.value = "ΕΔΡΑ: " + (c.addr || '') + " " + (c.city || '');
+                deliveryInput.style.color = "#64748b"; // Γκρι χρώμα για να φαίνεται ότι είναι η προεπιλογή
+                deliveryInput.readOnly = true; // Κλειδώνει το πεδίο αφού δεν υπάρχει άλλη επιλογή
+            }
+            window.currentCustomerBranches = [];
+        } else {
+            // ΑΝ ΕΧΕΙ ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ: Άφησε το πεδίο ελεύθερο για αναζήτηση
+            if (deliveryInput) {
+                deliveryInput.value = "";
+                deliveryInput.placeholder = "🔍 Επιλέξτε υποκατάστημα...";
+                deliveryInput.style.color = "#0ea5e9";
+                deliveryInput.readOnly = false;
+            }
+            window.currentCustomerBranches = branches;
+        }
     }
 }
 </script>
@@ -3641,7 +3660,7 @@ function fillCustomerData(name) {
 }
 
 // 3. Αναζήτηση και Εμφάνιση Υποκαταστημάτων
- function searchBranch(val) {
+function searchBranch(val) {
     const popup = document.getElementById('branchPopup');
     const branches = window.currentCustomerBranches || [];
     
@@ -3650,13 +3669,51 @@ function fillCustomerData(name) {
         return;
     }
 
-    // Φιλτράρουμε τα υποκαταστήματα
+    // Φιλτράρισμα
     const filtered = branches.filter(b => 
         (b.addr && b.addr.toLowerCase().includes(val.toLowerCase())) || 
-        (b.city && b.city.toLowerCase().includes(val.toLowerCase())) ||
-        (b.manager && b.manager.toLowerCase().includes(val.toLowerCase()))
+        (b.city && b.city.toLowerCase().includes(val.toLowerCase()))
     );
 
+    if (filtered.length > 0) {
+        // Χρησιμοποιούμε onmousedown για να προλάβουμε το κλείσιμο του popup
+        popup.innerHTML = filtered.map((b) => `
+            <div style="padding:12px; border-bottom:1px solid #f1f5f9; cursor:pointer; background:white;" 
+                 onmousedown="executeSelection('${b.addr.replace(/'/g, "\\'")}', '${b.city.replace(/'/g, "\\'")}', '${b.phone || ''}', '${b.email || ''}')">
+                <div style="font-weight:bold; color:#0ea5e9; pointer-events:none;">📍 ${b.addr}</div>
+                <div style="font-size:11px; color:#64748b; pointer-events:none;">${b.city}</div>
+            </div>
+        `).join('');
+        popup.style.display = 'block';
+    } else {
+        popup.style.display = 'none';
+    }
+}
+
+function executeSelection(addr, city, phone, email) {
+    // 1. Βρίσκουμε το πεδίο Τόπος Παράδοσης
+    const deliveryInput = document.getElementById('deliveryPoint');
+    
+    if (deliveryInput) {
+        deliveryInput.value = addr + ", " + city;
+        deliveryInput.style.fontWeight = "bold";
+        deliveryInput.style.color = "#0369a1";
+    }
+
+    // 2. Ενημέρωση Τηλεφώνου/Email αν θες να αλλάζουν με του υποκαταστήματος
+    if (phone && phone !== 'undefined' && phone !== '') {
+        const phoneInput = document.getElementById('custPhone');
+        if (phoneInput) phoneInput.value = phone;
+    }
+    
+    if (email && email !== 'undefined' && email !== '') {
+        const emailInput = document.getElementById('custEmail');
+        if (emailInput) emailInput.value = email;
+    }
+
+    // 3. Κλείνουμε το popup αμέσως
+    document.getElementById('branchPopup').style.display = 'none';
+}
     if (filtered.length > 0) {
         // ΕΔΩ ΕΙΝΑΙ Η ΑΛΛΑΓΗ: 
         // 1. Χρησιμοποιούμε το index (idx) από το branches

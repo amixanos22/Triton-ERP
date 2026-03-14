@@ -2505,24 +2505,33 @@ input:focus, select:focus {
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 3.2fr 1fr 1fr; gap: 15px; align-items: flex-end;">
-            <div class="input-group" style="position: relative;"> 
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση / Υποκατάστημα</label>
-                <input type="text" id="custAddress" oninput="searchBranch(this.value)" placeholder="Αναζήτηση υποκαταστήματος..." autocomplete="off" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
-                <div id="branchPopup" style="display:none; position:absolute; top:65px; left:0; width:100%; max-height:200px; overflow-y:auto; background:white; border:2px solid #0ea5e9; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index:9999; border-radius:5px;"></div>
-            </div>
-            <div class="input-group">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Τηλέφωνο</label>
-                <input type="text" id="custPhone" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
-            </div>
-            <div class="input-group">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Email</label>
-                <input type="email" id="custEmail" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
-            </div>
-        </div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 15px; align-items: flex-end;">
+    <div class="input-group">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση Έδρας</label>
+        <input type="text" id="custAddress" readonly style="width:100%; height:38px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:5px; padding:0 10px;">
+    </div>
+
+    <div class="input-group">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">Τηλέφωνο</label>
+        <input type="text" id="custPhone" style="width:100%; height:38px; border:1px solid #cbd5e1; border-radius:5px; padding:0 10px;">
+    </div>
+
+    <div class="input-group">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">Email</label>
+        <input type="email" id="custEmail" style="width:100%; height:38px; border:1px solid #cbd5e1; border-radius:5px; padding:0 10px;">
+    </div>
+
+    <div class="input-group" style="position: relative;">
+        <label style="font-weight:bold; color:#0ea5e9; display:block; margin-bottom:5px;">🚚 Τόπος Παράδοσης</label>
+        <input type="text" id="deliveryPoint" 
+               oninput="searchBranch(this.value)" 
+               placeholder="Αναζήτηση υποκαταστήματος..." 
+               autocomplete="off" 
+               style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 2px solid #0ea5e9; border-radius: 5px; background: #eff6ff;">
+        
+        <div id="branchPopup" style="display:none; position:absolute; top:65px; left:0; width:100%; max-height:200px; overflow-y:auto; background:white; border:2px solid #0ea5e9; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index:9999; border-radius:5px;"></div>
     </div>
 </div>
- 
   
 <div style="padding: 0 25px;">
    

@@ -417,6 +417,25 @@ input:focus, select:focus {
                 <input type="text" id="custAddress" oninput="searchBranch(this.value)" placeholder="Αναζήτηση υποκαταστήματος..." autocomplete="off" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
                 <div id="branchPopup" style="display:none; position:absolute; top:65px; left:0; width:100%; max-height:200px; overflow-y:auto; background:white; border:2px solid #0ea5e9; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index:9999; border-radius:5px;"></div>
             </div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px;">
+    <div class="input-group" style="position: relative;">
+        <label style="font-weight:bold; color:#0ea5e9; display:block; margin-bottom:5px;">🚚 Τόπος Παράδοσης (Επιλογή από Υποκαταστήματα)</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="deliveryPoint" readonly 
+                   placeholder="Κάντε κλικ για να επιλέξετε υποκατάστημα παράδοσης..." 
+                   onclick="toggleBranchPopup()" 
+                   style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 2px solid #0ea5e9; border-radius: 5px; cursor: pointer; background: #f0f9ff; font-weight: bold;">
+            <button type="button" onclick="clearDeliveryPoint()" 
+                    style="width:40px; height:38px; background:#64748b; color:white; border:none; border-radius:5px; cursor:pointer;">✕</button>
+        </div>
+        
+        <div id="branchPopup" style="display:none; position:absolute; top:65px; left:0; width:100%; max-height:250px; overflow-y:auto; background:white; border:2px solid #0ea5e9; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index:9999; border-radius:8px;">
+            </div>
+    </div>
+</div>  
+
+              
             <div class="input-group">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">Τηλέφωνο</label>
                 <input type="text" id="custPhone" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
@@ -4388,6 +4407,90 @@ async function finalizeAndPrint() {
             // Προσθέτεις όποιο άλλο πεδίο έχεις στο τιμολόγιο
         }
     });
+});
+            // Μεταβλητή για να ξέρουμε ποια υποκαταστήματα έχει ο επιλεγμένος πελάτης
+let currentCustomerBranches = [];
+
+// Αυτή η συνάρτηση συμπληρώνει τα βασικά στοιχεία (Έδρα)
+function fillCustomerData(name) {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const c = db[name];
+    
+    if (c) {
+        // Στοιχεία Έδρας
+        if(document.getElementById('custAfm')) document.getElementById('custAfm').value = c.afm || '';
+        if(document.getElementById('custDoy')) document.getElementById('custDoy').value = c.doy || '';
+        if(document.getElementById('custAddress')) document.getElementById('custAddress').value = c.addr || '';
+        if(document.getElementById('custCity')) document.getElementById('custCity').value = c.city || '';
+        if(document.getElementById('custZip')) document.getElementById('custZip').value = c.tk || '';
+        
+        // Αποθηκεύουμε τα υποκαταστήματα στη μνήμη για το Popup
+        currentCustomerBranches = c.branches || [];
+        
+        // Καθαρίζουμε τον προηγούμενο τόπο παράδοσης αν αλλάξουμε πελάτη
+        clearDeliveryPoint();
+    }
+}
+
+// Εμφάνιση/Απόκρυψη του Popup
+function toggleBranchPopup() {
+    const popup = document.getElementById('branchPopup');
+    
+    if (currentCustomerBranches.length === 0) {
+        alert("Δεν έχουν βρεθεί αποθηκευμένα υποκαταστήματα για αυτόν τον πελάτη.");
+        return;
+    }
+
+    if (popup.style.display === 'block') {
+        popup.style.display = 'none';
+    } else {
+        renderBranches();
+        popup.style.display = 'block';
+    }
+}
+
+// Δημιουργία της λίστας των υποκαταστημάτων μέσα στο Popup
+function renderBranches() {
+    const popup = document.getElementById('branchPopup');
+    popup.innerHTML = currentCustomerBranches.map((b, index) => `
+        <div style="padding:15px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background 0.2s;" 
+             onmouseover="this.style.background='#f0f9ff'" 
+             onmouseout="this.style.background='white'"
+             onclick="selectDeliveryAddress(${index})">
+            <div style="font-weight:bold; color:#0f172a;">📍 ${b.addr}, ${b.city}</div>
+            <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                👤 Διευθυντής: ${b.manager || '-'} | 📞 Τηλ: ${b.phone || '-'}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Όταν ο χρήστης επιλέγει ένα υποκατάστημα
+function selectDeliveryAddress(index) {
+    const b = currentCustomerBranches[index];
+    const input = document.getElementById('deliveryPoint');
+    
+    // Γράφουμε τη διεύθυνση παράδοσης στο πεδίο
+    input.value = "ΠΑΡΑΔΟΣΗ ΣΕ: " + b.addr + ", " + b.city;
+    input.style.color = "#059669"; // Πράσινο χρώμα για να ξεχωρίζει
+    
+    document.getElementById('branchPopup').style.display = 'none';
+}
+
+function clearDeliveryPoint() {
+    const input = document.getElementById('deliveryPoint');
+    input.value = "";
+    input.style.color = "inherit";
+    document.getElementById('branchPopup').style.display = 'none';
+}
+
+// Κλείσιμο του popup αν κάνουμε κλικ έξω από αυτό
+document.addEventListener('click', function(e) {
+    const popup = document.getElementById('branchPopup');
+    const input = document.getElementById('deliveryPoint');
+    if (popup && e.target !== input && !popup.contains(e.target)) {
+        popup.style.display = 'none';
+    }
 });
 </script>
  

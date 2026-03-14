@@ -4461,14 +4461,25 @@ function renderBranches() {
 }
 
 // Όταν ο χρήστης επιλέγει ένα υποκατάστημα
-function selectDeliveryAddress(index) {
+ function selectDeliveryAddress(index) {
+    // 1. Παίρνουμε το υποκατάστημα από τον πίνακα
     const b = currentCustomerBranches[index];
+    
+    // 2. Εντοπίζουμε το input
     const input = document.getElementById('deliveryPoint');
     
-    // Γράφουμε τη διεύθυνση παράδοσης στο πεδίο
-    input.value = "ΠΑΡΑΔΟΣΗ ΣΕ: " + b.addr + ", " + b.city;
-    input.style.color = "#059669"; // Πράσινο χρώμα για να ξεχωρίζει
+    // 3. ΕΛΕΓΧΟΣ: Αν το βρήκε, προχώρα στην εγγραφή
+    if (input) {
+        input.value = "ΠΑΡΑΔΟΣΗ ΣΕ: " + b.addr + ", " + b.city;
+        input.style.color = "#059669";
+        input.style.fontWeight = "bold";
+        console.log("Η διεύθυνση μπήκε επιτυχώς!");
+    } else {
+        // Αν δεις αυτό το μήνυμα στην κονσόλα (F12), σημαίνει ότι το ID είναι λάθος
+        console.error("Σφάλμα: Δεν βρέθηκε input με id='deliveryPoint'");
+    }
     
+    // 4. Κλείνουμε το popup
     document.getElementById('branchPopup').style.display = 'none';
 }
 

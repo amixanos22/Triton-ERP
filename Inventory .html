@@ -1,0 +1,225 @@
+ <!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Triton ERP - Inventory Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* KILL BLOGGER BAR */
+        #navbar-iframe, .navbar, .navbar-themed { display: none !important; height: 0 !important; visibility: hidden !important; }
+        body { top: 0 !important; margin: 0; padding: 15px; background: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+
+        .popup-container { 
+            max-width: 950px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 3px solid #0ea5e9; 
+            padding-bottom: 15px; 
+            margin-bottom: 20px; 
+        }
+        .header h1 { margin: 0; font-size: 28px; color: #0f172a; }
+
+        .action-bar { display: flex; gap: 15px; margin-bottom: 20px; }
+        .search-input { 
+            flex: 1; 
+            padding: 15px; 
+            font-size: 18px; 
+            font-weight: 700; 
+            border: 2px solid #cbd5e1; 
+            border-radius: 8px; 
+            outline: none;
+        }
+        .search-input:focus { border-color: #0ea5e9; }
+
+        .btn-new { 
+            background: #0ea5e9; 
+            color: white; 
+            border: none; 
+            padding: 0 25px; 
+            border-radius: 8px; 
+            font-weight: 900; 
+            cursor: pointer; 
+            font-size: 16px;
+        }
+
+        .scroll-area { max-height: 500px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1e293b; color: white; padding: 12px; text-align: left; font-size: 13px; position: sticky; top: 0; }
+        td { padding: 15px 12px; font-size: 17px; font-weight: 700; border-bottom: 1px solid #f1f5f9; }
+
+        .price { color: #0ea5e9; font-weight: 900; }
+        .stock { background: #f1f5f9; padding: 5px 10px; border-radius: 5px; }
+        .low { color: #ef4444; border: 1px solid #ef4444; font-weight: 900; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; }
+        .modal-content { background: white; width: 500px; margin: 50px auto; padding: 30px; border-radius: 15px; }
+        .modal-content input, .modal-content select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; font-weight: 700; box-sizing: border-box; }
+        .modal-content label { font-size: 11px; font-weight: 900; color: #64748b; text-transform: uppercase; }
+        
+        .btn-save { width: 100%; padding: 15px; background: #0f172a; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="popup-container">
+    <div class="header">
+        <h1>✦ Αποθήκη Cloud</h1>
+        <div id="stat" style="font-weight:900; color:#0ea5e9;">0 ΕΙΔΗ</div>
+    </div>
+
+    <div class="action-bar">
+        <input type="text" id="pSearch" class="search-input" placeholder="Αναζήτηση στην αποθήκη..." onkeyup="render()">
+        <button class="btn-new" onclick="openModal()">+ ΝΕΟ ΕΙΔΟΣ</button>
+    </div>
+
+    <div class="scroll-area">
+        <table>
+            <thead>
+                <tr>
+                    <th>Περιγραφή</th>
+                    <th>Τιμή Πώλησης</th>
+                    <th>Απόθεμα</th>
+                    <th style="width:30px;"></th>
+                </tr>
+            </thead>
+            <tbody id="pBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="prodModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin:0 0 20px 0; color:#0f172a;">Στοιχεία Είδους</h2>
+        <label>Περιγραφή Προϊόντος</label>
+        <input type="text" id="pDesc" placeholder="π.χ. ΛΑΔΙΑ 10W40">
+        
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;"><label>Τιμή (€)</label><input type="number" id="pPrice" step="0.01"></div>
+            <div style="flex:1;"><label>Έκπτωση %</label><input type="number" id="pDisc" value="0"></div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;"><label>Stock</label><input type="number" id="pStock" value="0"></div>
+            <div style="flex:1;"><label>ΦΠΑ %</label>
+                <select id="pVat">
+                    <option value="24">24%</option>
+                    <option value="13">13%</option>
+                    <option value="0">0%</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn-save" onclick="save()">ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer; color:gray; font-weight:bold;">ΑΚΥΡΩΣΗ</button>
+    </div>
+</div>
+
+<script>
+const _supabase = supabase.createClient('URL_ΣΟΥ', 'KEY_ΣΟΥ');
+const TABLE = 'products';
+
+// 1. ΕΜΦΑΝΙΣΗ ΠΡΟΪΟΝΤΩΝ
+async function render() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return;
+
+    const search = document.getElementById('pSearch').value.toLowerCase();
+    const tbody = document.getElementById('pBody');
+    
+    let { data: products, error } = await _supabase
+        .from(TABLE)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+
+    if (error) return;
+
+    tbody.innerHTML = '';
+    let count = 0;
+
+    products.forEach(p => {
+        if(p.name.toLowerCase().includes(search)) {
+            count++;
+            const isLow = (p.stock || 0) <= 5;
+            tbody.innerHTML += `
+                <tr onclick="edit('${p.id}', '${p.name}', ${p.unit_price}, ${p.discount || 0}, ${p.stock || 0}, ${p.vat || 24})" style="cursor:pointer">
+                    <td>${p.name}</td>
+                    <td class="price">${parseFloat(p.unit_price).toFixed(2)}€</td>
+                    <td><span class="stock ${isLow ? 'low' : ''}">${p.stock || 0}</span></td>
+                    <td><button onclick="event.stopPropagation(); del('${p.id}')" style="border:none; background:none; cursor:pointer;">🗑️</button></td>
+                </tr>`;
+        }
+    });
+    document.getElementById('stat').innerText = count + " ΕΙΔΗ";
+}
+
+// 2. ΑΠΟΘΗΚΕΥΣΗ / UPDATE
+async function save() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    const desc = document.getElementById('pDesc').value.trim().toUpperCase();
+    if(!desc || !user) return;
+
+    const payload = {
+        user_id: user.id,
+        name: desc,
+        unit_price: document.getElementById('pPrice').value || 0,
+        discount: document.getElementById('pDisc').value || 0,
+        stock: document.getElementById('pStock').value || 0,
+        vat: document.getElementById('pVat').value
+    };
+
+    const currentId = document.getElementById('prodModal').dataset.editId;
+    if (currentId) payload.id = currentId;
+
+    const { error } = await _supabase.from(TABLE).upsert(payload);
+
+    if (error) alert("Σφάλμα: " + error.message);
+    else { closeModal(); render(); }
+}
+
+// 3. ΕΠΕΞΕΡΓΑΣΙΑ & ΔΙΑΓΡΑΦΗ
+function edit(id, name, price, disc, stock, vat) {
+    document.getElementById('pDesc').value = name;
+    document.getElementById('pPrice').value = price;
+    document.getElementById('pDisc').value = disc;
+    document.getElementById('pStock').value = stock;
+    document.getElementById('pVat').value = vat;
+    document.getElementById('prodModal').dataset.editId = id;
+    openModal();
+}
+
+async function del(id) {
+    if(confirm("Διαγραφή είδους από την αποθήκη;")) {
+        await _supabase.from(TABLE).delete().eq('id', id);
+        render();
+    }
+}
+
+function openModal() { document.getElementById('prodModal').style.display = 'block'; }
+function closeModal() { 
+    document.getElementById('prodModal').style.display = 'none'; 
+    delete document.getElementById('prodModal').dataset.editId;
+    document.getElementById('pDesc').value = '';
+    document.getElementById('pPrice').value = '';
+}
+
+// Αρχική φόρτωση
+window.onload = render;
+
+// REAL-TIME: Αν αλλάξει κάτι στη βάση από το Billing, ανανέωσε τη λίστα
+_supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => {
+    render();
+}).subscribe();
+</script>
+</body>
+</html>

@@ -4518,5 +4518,62 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
- 
+ <script>
+// Αυτή η συνάρτηση τρέχει όταν γράφεις στο πεδίο "Τόπος Παράδοσης"
+function searchBranch(val) {
+    const popup = document.getElementById('branchPopup');
+    // Χρησιμοποιούμε τη μεταβλητή που γεμίζει όταν επιλέγεις πελάτη (π.χ. currentCustomerBranches)
+    const branches = window.currentCustomerBranches || [];
+    
+    if (!val || branches.length === 0) {
+        popup.style.display = 'none';
+        return;
+    }
+
+    const filtered = branches.filter(b => 
+        (b.addr && b.addr.toLowerCase().includes(val.toLowerCase())) || 
+        (b.city && b.city.toLowerCase().includes(val.toLowerCase()))
+    );
+
+    if (filtered.length > 0) {
+        popup.innerHTML = filtered.map((b, idx) => `
+            <div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
+                 onclick="selectBranch('${b.addr}', '${b.city}', '${b.phone}', '${b.email}')">
+                <div style="font-weight:bold; color:#0ea5e9;">📍 ${b.addr}</div>
+                <div style="font-size:11px; color:#64748b;">${b.city}</div>
+            </div>
+        `).join('');
+        popup.style.display = 'block';
+    } else {
+        popup.style.display = 'none';
+    }
+}
+
+// Η συνάρτηση που "ακούει" το κλικ και συμπληρώνει το πεδίο
+function selectBranch(addr, city, phone, email) {
+    const deliveryInput = document.getElementById('deliveryPoint');
+    
+    if (deliveryInput) {
+        // Γράφει τη διεύθυνση στο πεδίο Τόπος Παράδοσης
+        deliveryInput.value = addr + ", " + city;
+        deliveryInput.style.fontWeight = "bold";
+        deliveryInput.style.color = "#0369a1";
+    }
+
+    // Αν θέλεις να ενημερώνονται και τα τηλέφωνα/email με του υποκαταστήματος:
+    if(phone) document.getElementById('custPhone').value = phone;
+    if(email) document.getElementById('custEmail').value = email;
+
+    // Κλείσιμο του popup
+    document.getElementById('branchPopup').style.display = 'none';
+}
+
+// Κλείσιμο αν πατήσουμε έξω
+document.addEventListener('click', function(e) {
+    const popup = document.getElementById('branchPopup');
+    if (popup && e.target.id !== 'deliveryPoint') {
+        popup.style.display = 'none';
+    }
+});
+</script>
  

@@ -3632,17 +3632,16 @@ function fillCustomerData(name) {
 }
 
 // 3. Αναζήτηση και Εμφάνιση Υποκαταστημάτων
-function searchBranch(val) {
+ function searchBranch(val) {
     const popup = document.getElementById('branchPopup');
     const branches = window.currentCustomerBranches || [];
     
-    // Αν δεν έχουμε γράψει κάτι ή ο πελάτης δεν έχει υποκαταστήματα, κλείσε το popup
     if (!val || branches.length === 0) {
         popup.style.display = 'none';
         return;
     }
 
-    // Φιλτράρισμα υποκαταστημάτων βάσει διεύθυνσης, πόλης ή διευθυντή
+    // Φιλτράρουμε τα υποκαταστήματα
     const filtered = branches.filter(b => 
         (b.addr && b.addr.toLowerCase().includes(val.toLowerCase())) || 
         (b.city && b.city.toLowerCase().includes(val.toLowerCase())) ||
@@ -3650,15 +3649,26 @@ function searchBranch(val) {
     );
 
     if (filtered.length > 0) {
-        popup.innerHTML = filtered.map(b => `
-            <div style="padding:12px; border-bottom:1px solid #f1f5f9; cursor:pointer; hover:background:#f8fafc;" 
-                 onclick="selectBranch('${b.addr}', '${b.city}', '${b.phone}', '${b.email}')">
-                <div style="font-weight:bold; color:#0ea5e9; font-size:14px;">📍 ${b.addr}, ${b.city}</div>
-                <div style="font-size:11px; color:#64748b; margin-top:3px;">
-                    👤 Διευθυντής: ${b.manager || '-'} | 📞 ${b.phone || '-'}
+        // ΕΔΩ ΕΙΝΑΙ Η ΑΛΛΑΓΗ: 
+        // 1. Χρησιμοποιούμε το index (idx) από το branches
+        // 2. Καλούμε τη σωστή συνάρτηση selectDeliveryAddress
+        popup.innerHTML = branches.map((b, idx) => {
+            // Ελέγχουμε αν αυτό το υποκατάστημα περιλαμβάνεται στα φιλτραρισμένα
+            const isMatch = filtered.includes(b);
+            if (!isMatch) return ''; // Αν δεν ταιριάζει στην αναζήτηση, μην το δείξεις
+
+            return `
+                <div style="padding:12px; border-bottom:1px solid #f1f5f9; cursor:pointer;" 
+                     onmouseover="this.style.background='#f0f9ff'"
+                     onmouseout="this.style.background='white'"
+                     onclick="selectDeliveryAddress(${idx})">
+                    <div style="font-weight:bold; color:#0ea5e9; font-size:14px;">📍 ${b.addr}, ${b.city}</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:3px;">
+                        👤 Διευθυντής: ${b.manager || '-'} | 📞 ${b.phone || '-'}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         popup.style.display = 'block';
     } else {
         popup.style.display = 'none';

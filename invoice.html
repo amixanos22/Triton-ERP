@@ -3526,6 +3526,52 @@ window.updateDateTime = function() {
     safeText('transTime', "🕒 " + timeStr);
 };
 </script>
+
+<script>
+// Αυτό τρέχει μόλις ανοίξει η σελίδα για να γεμίσει τη λίστα με τα ονόματα
+document.addEventListener('DOMContentLoaded', function() {
+    refreshCustomerList();
+});
+
+function refreshCustomerList() {
+    // Τραβάμε τη βάση "customersDB". 
+    // Βεβαιώσου ότι στην billing.html αποθηκεύεις με αυτό το όνομα!
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const list = document.getElementById('customersList');
+    
+    if (list) {
+        list.innerHTML = '';
+        Object.keys(db).sort().forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            list.appendChild(option);
+        });
+    }
+}
+
+// Αυτή η συνάρτηση εκτελείται κάθε φορά που πληκτρολογείς ή επιλέγεις όνομα
+function fillCustomerData(name) {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const c = db[name];
+    
+    if (c) {
+        // Αντιστοίχιση των πεδίων της billing.html με τα πεδία της invoice.html
+        // Τα IDs είναι αυτά που μου έστειλες στο προηγούμενο μήνυμα
+        if(document.getElementById('custAfm'))     document.getElementById('custAfm').value = c.afm || '';
+        if(document.getElementById('custDoy'))     document.getElementById('custDoy').value = c.doy || '';
+        if(document.getElementById('custCity'))    document.getElementById('custCity').value = c.city || '';
+        if(document.getElementById('custZip'))     document.getElementById('custZip').value = c.tk || ''; 
+        if(document.getElementById('custAddress')) document.getElementById('custAddress').value = c.addr || '';
+        if(document.getElementById('custPhone'))   document.getElementById('custPhone').value = c.phone || '';
+        if(document.getElementById('custEmail'))   document.getElementById('custEmail').value = c.email || '';
+        if(document.getElementById('custJob'))     document.getElementById('custJob').value = c.job || ''; // Αν υπάρχει επάγγελμα
+        
+        // Κρατάμε τα υποκαταστήματα για το αναδυόμενο πλαίσιο διευθύνσεων
+        window.currentCustomerBranches = c.branches || [];
+    }
+}
+</script>
+          
       <script>
 // 🔱 TRITON ERP - INVOICE ENGINE (FINAL CHECKED)
 var suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 

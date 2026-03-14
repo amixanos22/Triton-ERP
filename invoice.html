@@ -3536,7 +3536,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 300);
 });
-               <!DOCTYPE html>
+         <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8">
@@ -7074,7 +7074,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 300);
 });
-        // --- ΕΛΕΓΧΟΣ MODALS (ΑΝΟΙΓΜΑ/ΚΛΕΙΣΙΜΟ) ---
+  // --- ΕΛΕΓΧΟΣ MODALS (ΑΝΟΙΓΜΑ/ΚΛΕΙΣΙΜΟ) ---
 
 // 1. ΝΕΟΣ ΠΕΛΑΤΗΣ
 window.openNewCustomerModal = function() {
@@ -7101,11 +7101,25 @@ window.closeVendorModal = function() {
 
 // 3. ΚΑΡΤΕΛΕΣ ΠΕΛΑΤΩΝ (Εμφάνιση/Απόκρυψη Section)
 window.showCustomers = function() {
-    const s = document.getElementById('customerSection');
-    if (s) {
-        s.style.display = (s.style.display === 'none' || s.style.display === '') ? 'block' : 'none';
-        // Αν το ανοίγουμε, κάνουμε scroll εκεί
-        if (s.style.display === 'block') s.scrollIntoView({ behavior: 'smooth' });
+    // Ψάχνουμε το section με όλα τα πιθανά IDs που μπορεί να χρησιμοποιήθηκαν
+    const section = document.getElementById('customerSection') || 
+                    document.getElementById('ledgerSection') || 
+                    document.getElementById('customerLedger');
+
+    if (section) {
+        // Εναλλαγή εμφάνισης (Toggle)
+        if (section.style.display === 'none' || section.style.display === '') {
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+            console.log("✅ Το Section της Καρτέλας άνοιξε.");
+        } else {
+            section.style.display = 'none';
+            console.log("✅ Το Section της Καρτέλας έκλεισε.");
+        }
+    } else {
+        // Αν δεν βρει το ID, βγάζει μήνυμα στην κονσόλα για να ξέρουμε τι φταίει
+        console.error("❌ Σφάλμα: Δεν βρέθηκε στοιχείο με ID 'customerSection' ή 'ledgerSection'.");
+        alert("⚠️ Δεν βρέθηκε το τμήμα της καρτέλας στο HTML. Ελέγξτε το ID του.");
     }
 };
 

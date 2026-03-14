@@ -3571,7 +3571,96 @@ function fillCustomerData(name) {
     }
 }
 </script>
-          
+          <script>
+// 1. Αρχικοποίηση κατά το άνοιγμα της σελίδας
+document.addEventListener('DOMContentLoaded', function() {
+    refreshCustomerList();
+    
+    // Κλείσιμο του popup υποκαταστημάτων αν πατήσουμε οπουδήποτε αλλού
+    document.addEventListener('click', function(e) {
+        const popup = document.getElementById('branchPopup');
+        if (e.target.id !== 'custAddress' && popup) {
+            popup.style.display = 'none';
+        }
+    });
+});
+
+function refreshCustomerList() {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const list = document.getElementById('customersList');
+    if (list) {
+        list.innerHTML = '';
+        Object.keys(db).sort().forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            list.appendChild(option);
+        });
+    }
+}
+
+// 2. Συμπλήρωση Στοιχείων Πελάτη
+function fillCustomerData(name) {
+    const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
+    const c = db[name];
+    
+    if (c) {
+        document.getElementById('custAfm').value = c.afm || '';
+        document.getElementById('custDoy').value = c.doy || '';
+        document.getElementById('custCity').value = c.city || '';
+        document.getElementById('custZip').value = c.tk || ''; 
+        document.getElementById('custAddress').value = c.addr || '';
+        document.getElementById('custPhone').value = c.phone || '';
+        document.getElementById('custEmail').value = c.email || '';
+        
+        // Αποθήκευση των υποκαταστημάτων του πελάτη στη μνήμη της σελίδας
+        window.currentCustomerBranches = c.branches || [];
+    }
+}
+
+// 3. Αναζήτηση και Εμφάνιση Υποκαταστημάτων
+function searchBranch(val) {
+    const popup = document.getElementById('branchPopup');
+    const branches = window.currentCustomerBranches || [];
+    
+    // Αν δεν έχουμε γράψει κάτι ή ο πελάτης δεν έχει υποκαταστήματα, κλείσε το popup
+    if (!val || branches.length === 0) {
+        popup.style.display = 'none';
+        return;
+    }
+
+    // Φιλτράρισμα υποκαταστημάτων βάσει διεύθυνσης, πόλης ή διευθυντή
+    const filtered = branches.filter(b => 
+        (b.addr && b.addr.toLowerCase().includes(val.toLowerCase())) || 
+        (b.city && b.city.toLowerCase().includes(val.toLowerCase())) ||
+        (b.manager && b.manager.toLowerCase().includes(val.toLowerCase()))
+    );
+
+    if (filtered.length > 0) {
+        popup.innerHTML = filtered.map(b => `
+            <div style="padding:12px; border-bottom:1px solid #f1f5f9; cursor:pointer; hover:background:#f8fafc;" 
+                 onclick="selectBranch('${b.addr}', '${b.city}', '${b.phone}', '${b.email}')">
+                <div style="font-weight:bold; color:#0ea5e9; font-size:14px;">📍 ${b.addr}, ${b.city}</div>
+                <div style="font-size:11px; color:#64748b; margin-top:3px;">
+                    👤 Διευθυντής: ${b.manager || '-'} | 📞 ${b.phone || '-'}
+                </div>
+            </div>
+        `).join('');
+        popup.style.display = 'block';
+    } else {
+        popup.style.display = 'none';
+    }
+}
+
+// 4. Επιλογή Υποκαταστήματος από τη λίστα
+function selectBranch(addr, city, phone, email) {
+    document.getElementById('custAddress').value = addr;
+    if(city) document.getElementById('custCity').value = city;
+    if(phone) document.getElementById('custPhone').value = phone;
+    if(email) document.getElementById('custEmail').value = email;
+    
+    document.getElementById('branchPopup').style.display = 'none';
+}
+</script>
       <script>
 // 🔱 TRITON ERP - INVOICE ENGINE (FINAL CHECKED)
 var suUrl = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 

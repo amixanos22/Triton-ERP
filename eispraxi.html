@@ -251,6 +251,19 @@
     });
     
     window.addEventListener('load', init);
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const afm = urlParams.get('afm');
+
+    if (afm) {
+        const afmInput = document.getElementById('targetAfm'); // Το ID του input στο eispraxi.html
+        if (afmInput) {
+            afmInput.value = afm;
+            // Προαιρετικά: Κάλεσε αυτόματα τη searchMyData() για να φέρει το όνομα
+            if (typeof searchMyData === "function") searchMyData();
+        }
+    }
+});
 </script>
 
 </body>

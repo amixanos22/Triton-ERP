@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -167,67 +167,59 @@ async function autoFillCustomer(name) {
 }
 
 window.onload = async () => {
-    console.log("🔱 Triton: Booting...");
-    
-    // 1. Έλεγχος Χρήστη (URL UID ή Session)
-    let user_id = new URLSearchParams(window.location.search).get('uid');
-    if (!user_id) {
-        const { data: { user } } = await _supabase.auth.getUser();
-        if (user) user_id = user.id;
-    }
-
-    if (user_id) {
-        currentUser = { id: user_id };
-        await loadProfile(user_id);
-
-        // 2. Φόρτωση ΠΡΟΪΟΝΤΩΝ (Ταξινομημένα Α-Ω)
-        const { data: ps } = await _supabase.from('products').select('*').eq('user_id', user_id).order('name', { ascending: true });
-        if (ps) {
-            allProducts = ps;
-            const pL = document.getElementById('prodList');
-            ps.forEach(p => { 
-                let o = document.createElement('option'); 
-                o.value = p.name; 
-                pL.appendChild(o); 
-            });
-        }
-        
-        // 3. Φόρτωση ΠΕΛΑΤΩΝ (Ταξινομημένα Α-Ω)
-        const { data: cs } = await _supabase.from('customers').select('name').eq('user_id', user_id).order('name', { ascending: true });
-        if (cs) {
-            const cL = document.getElementById('custList');
-            cs.forEach(c => { 
-                let o = document.createElement('option'); 
-                o.value = c.name; 
-                cL.appendChild(o); 
-            });
-        }
-
-        addRow();
-    } else {
-        document.getElementById('dispCompName').innerText = "ΣΦΑΛΜΑ UID: ΔΕΝ ΒΡΕΘΗΚΕ ΧΡΗΣΤΗΣ";
-    }
-    
-    const dateEl = document.getElementById('currentDate');
-    if (dateEl) dateEl.innerText = new Date().toLocaleDateString('el-GR');
-};
-  window.onload = function() {
+    // Λήψη του "φακέλου" από το LocalStorage
     const data = JSON.parse(localStorage.getItem('currentInvoice'));
     
     if (data) {
-        // Συμπλήρωση στοιχείων στο template
-        document.getElementById('print-customer-name').innerText = data.customerName;
-        document.getElementById('print-total').innerText = data.totalAmount;
-        
-        // ... συμπλήρωση των υπόλοιπων πεδίων ...
+        // --- 1. Στοιχεία Πελάτη & Εγγράφου ---
+        document.getElementById('cName').value = data.customerName;
+        document.getElementById('cAfm').value = data.customerAfm;
+        document.getElementById('cAddr').value = data.customerAddr;
+        document.getElementById('cCity').value = data.customerCity;
+        document.getElementById('docTitle').innerText = data.docTitle;
+        document.getElementById('currentDate').innerText = data.date;
 
-        // Αυτόματη εντολή εκτύπωσης
+        // --- 2. Δημιουργία Γραμμών στον Πίνακα ---
+        const rowsContainer = document.getElementById('rows');
+        rowsContainer.innerHTML = ''; 
+        
+        data.items.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:10px; border-bottom:1px solid #eee;">${item.description}</td>
+                <td style="text-align:center;">${item.qty}</td>
+                <td style="text-align:right;">${item.price} €</td>
+                <td style="text-align:center;">${item.vat}%</td>
+                <td style="text-align:right; font-weight:bold;">${item.total}</td>
+            `;
+            rowsContainer.appendChild(tr);
+        });
+
+        // --- 3. Σύνολα (Κάτω μέρος) ---
+        document.getElementById('pNetVal').innerText = data.netValue;
+        document.getElementById('pTaxVal').innerText = data.vatValue;
+        document.getElementById('pGrandVal').innerText = data.totalAmount;
+
+        // --- 4. Εντολή Εκτύπωσης ---
+        // Δίνουμε 800ms χρόνο να "κάτσουν" τα δεδομένα πριν βγει το παράθυρο εκτύπωσης
         setTimeout(() => {
             window.print();
-            // window.close(); // Προαιρετικά, κλείνει το tab μετά την εκτύπωση
-        }, 500);
+        }, 800);
+    }
+    
+    // Εδώ συνεχίζει ο κώδικας για το loadProfile αν το χρειάζεσαι για το λογότυπο
+    let user_id = new URLSearchParams(window.location.search).get('uid');
+    if (user_id) {
+        currentUser = { id: user_id };
+        await loadProfile(user_id);
     }
 };
+  window.onafterprint = () => {
+    localStorage.removeItem('currentInvoice');
+};
+  
+  
+  
 </script>
 </body>
 </html>

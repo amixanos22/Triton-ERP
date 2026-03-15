@@ -264,6 +264,23 @@
         }
     }
 });
+  document.addEventListener('DOMContentLoaded', () => {
+    // Διαβάζει τις παραμέτρους από το URL (?name=...&amount=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name');
+    const amount = urlParams.get('amount');
+
+    // Συμπληρώνει αυτόματα τα πεδία αν υπάρχουν
+    if (name && name !== "ΛΙΑΝΙΚΗ ΠΩΛΗΣΗ") {
+        const nameInput = document.getElementById('customerSearchInput'); // Βάλε το σωστό ID του input σου
+        if (nameInput) nameInput.value = name;
+    }
+
+    if (amount) {
+        const amountInput = document.getElementById('amountInput'); // Βάλε το σωστό ID του ποσού σου
+        if (amountInput) amountInput.value = amount;
+    }
+});
 </script>
 
 </body>

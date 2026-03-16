@@ -19,329 +19,136 @@
         console.error("❌ Triton: Σφάλμα αρχικοποίησης Supabase:", e);
     }
 </script>
-  <style type="text/css">
-    /* 1. ΒΑΣΙΚΟ LAYOUT & ΧΡΩΜΑΤΑ (ΑΠΟ ΤΟΝ ΚΑΛΟ ΣΟΥ ΚΩΔΙΚΑ) */
+  
+ <style type="text/css">
+    /* 1. ΒΑΣΙΚΟ LAYOUT & ΧΡΩΜΑΤΑ TRITON */
     body { background: #f0f9ff; color: #1e293b; font-family: "Segoe UI", sans-serif; margin: 0; }
-    #content { width: 95%; max-width: 1300px; margin: 100px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(2, 6, 23, 0.05); }
-    #header { background: #020617; padding: 15px 25px; border-bottom: 3px solid #7dd3fc; display: flex; justify-content: space-between; align-items: center; }
-    #header h1 { font-size: 1.2rem; color: #7dd3fc; margin: 0; font-weight: 800; text-transform: uppercase; }
+    
+    .top-banner { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 60px; 
+        background: linear-gradient(90deg, #020617 0%, #0ea5e9 100%); 
+        z-index: 9999; display: flex; align-items: center; justify-content: space-between; 
+        padding: 0 30px; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+    }
 
-    .top-banner { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: linear-gradient(90deg, #020617 0%, #0ea5e9 100%); z-index: 9999; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-    #content { margin-top: 80px !important; }
+    #content { 
+        width: 95%; max-width: 1300px; margin: 80px auto 20px auto !important; 
+        background: #ffffff; border-radius: 16px; overflow: hidden; 
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.05); 
+    }
+
+    #header { 
+        background: #020617; padding: 15px 25px; border-bottom: 3px solid #7dd3fc; 
+        display: flex; justify-content: space-between; align-items: center; 
+    }
+
+    /* 2. ΠΑΝΩ ΕΝΟΤΗΤΑ (ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ) */
+    .top-section { 
+        display: grid; grid-template-columns: 180px 110px 1fr 150px; 
+        gap: 20px; padding: 20px 25px; align-items: flex-end; 
+    }
     
-    /* 2. ΠΑΝΩ ΕΝΟΤΗΤΑ (ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ/ΠΑΡΑΣΤΑΤΙΚΟΥ) */
-    .top-section { display: grid; grid-template-columns: 150px 100px 1fr 180px 180px; gap: 15px; padding: 20px 25px; align-items: start; }
-    .input-group { display: flex; flex-direction: column; margin-bottom: 10px; }
-    .input-group label { font-size: 0.65rem; color: #64748b; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+    .input-group { display: flex; flex-direction: column; }
+    .input-group label { font-size: 11px; color: #64748b; margin-bottom: 5px; font-weight: 700; text-transform: uppercase; }
     
-    input, select { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: #1e293b; }
+    input, select { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; font-size: 0.9rem; color: #1e293b; }
+    input:focus { outline: none; border-color: #0ea5e9 !important; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
 
     /* 3. ΠΙΝΑΚΑΣ ΠΡΟΪΟΝΤΩΝ */
-    .items-header-bar { display: grid; grid-template-columns: 50px 120px 1fr 90px 110px 80px 110px 40px; gap: 10px; background: #020617; color: #7dd3fc; padding: 12px 15px; border-radius: 8px 8px 0 0; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 10px; }
-    #scrollContainer { height: 400px; overflow-y: scroll; border: 1px solid #e2e8f0; border-top: none; background: #fff; }
-    
-    .item-row { display: grid; grid-template-columns: 50px 120px 1fr 90px 110px 80px 110px 40px; gap: 10px; padding: 8px 15px; border-bottom: 1px solid #f1f5f9; align-items: center; }
-    .item-row input { border: 1px solid #e2e8f0 !important; background: #fff !important; width: 100%; padding: 6px; border-radius: 4px; }
-    
-    .text-right { text-align: right; }
-    .col-aa { text-align: center; font-weight: bold; color: #64748b; }
-
-    /* 4. BOTTOM BAR & BUTTONS */
-    .bottom-bar { padding: 20px 25px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .btn-save { background: linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%); color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: transform 0.2s; }
-    .btn-save:hover { transform: scale(1.02); }
-    
-    .button-stack { display: flex; flex-direction: column; gap: 8px; }
-    .btn-side { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.75rem; color: white; }
-    .btn-blue { background: #0ea5e9; }
-    .btn-indigo { background: #6366f1; }
-
-    /* 5. MODALS & ANIMATIONS */
-    #previewModal, #settingsModal, #newCustomerModal, #stockModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center; }
-    .modal-box, .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; }
-    .modal-header { background: #020617; color: #7dd3fc; padding: 15px 25px; display: flex; justify-content: space-between; }
-    .modal-body { padding: 30px; background: white; max-height: 75vh; overflow-y: auto; }
-    .modal-footer { padding: 15px 25px; background: #f8fafc; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
-    
-    @keyframes slideIn {
-        from { transform: translateY(-10%); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+    .items-header-bar { 
+        display: grid; grid-template-columns: 50px 120px 1fr 90px 110px 80px 110px 40px; 
+        gap: 10px; background: #020617; color: #7dd3fc; padding: 12px 15px; 
+        font-size: 11px; font-weight: 800; text-transform: uppercase; 
     }
 
-    /* 6. BRANCH POPUP (AUTOCOMPLETE) */
-    #branchPopup {
-        position: absolute;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        z-index: 9999;
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-        display: none;
-    }
-    #branchPopup div { padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 13px; }
-    #branchPopup div:hover { background-color: #f0f9ff !important; color: #0ea5e9 !important; }
-
-    /* 7. PRINT SETTINGS */
-    @media print {
-      .no-print, .top-banner, #header, .bottom-bar, .button-stack, #branchPopup { display: none !important; }
-      body { background: white; }
-      #content { margin: 0 !important; box-shadow: none; width: 100%; }
-      #printableArea { position: absolute; left: 0; top: 0; width: 100%; visibility: visible; }
-    }
-
-    /* 8. ΙΣΤΟΡΙΚΟ (ΠΟΥ ΠΡΟΣΘΕΣΑΜΕ) */
-    .history-section { margin-top: 20px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+    #scrollContainer { height: 400px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; }
     
-    /* Custom Scrollbar για το Triton */
-#scrollContainer::-webkit-scrollbar {
-    width: 8px;
-}
-#scrollContainer::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-#scrollContainer::-webkit-scrollbar-thumb {
-    background: #0ea5e9;
-    border-radius: 10px;
+    .item-row { 
+        display: grid; grid-template-columns: 50px 120px 1fr 90px 110px 80px 110px 40px; 
+        gap: 10px; padding: 10px 15px; border-bottom: 1px solid #f1f5f9; align-items: center; 
+    }
+    .item-row:hover { background-color: #f8fafc; }
+
+    /* 4. BOTTOM BAR & TOTALS */
+    .bottom-bar { 
+        padding: 20px 25px; background: #f8fafc; border-top: 1px solid #e2e8f0; 
+        display: flex; justify-content: space-between; align-items: center; 
+    }
+
+    .total-display-box { 
+        background: #020617; color: #7dd3fc; padding: 15px 25px; 
+        border-radius: 12px; text-align: right; font-weight: bold; font-size: 1.2rem; 
+    }
+
+    /* 5. AUTOCOMPLETE & MODALS */
+    .autocomplete-items {
+        position: absolute; border: 1px solid #334155; background: #1e293b; 
+        z-index: 10000; width: 100%; max-height: 250px; overflow-y: auto; 
+        border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); margin-top: 2px;
+    }
+    .autocomplete-items div { padding: 12px; cursor: pointer; color: #f8fafc; border-bottom: 1px solid #334155; font-size: 14px; }
+    .autocomplete-items div:hover, .autocomplete-active { background-color: #0ea5e9 !important; color: white !important; }
+
+    #newCustomerModal {
+        display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%;
+        background: rgba(2, 6, 23, 0.8); align-items: center; justify-content: center; backdrop-filter: blur(4px);
+    }
+    #newCustomerModal > div {
+        animation: modalFadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        max-width: 600px; width: 90%; overflow: hidden;
+    }
+
+    @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    /* 6. UTILITIES */
+    .no-print { display: initial; } /* Στη φόρμα τα βλέπουμε όλα */
+    @media print { .no-print { display: none !important; } }
+    
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    /* ΕΠΑΝΑΦΟΡΑ ΤΟΥ ΚΟΥΜΠΙΟΥ ΚΑΤΑΧΩΡΗΣΗ */
+.btn-save { 
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); 
+    color: white; 
+    border: none; 
+    padding: 12px 30px; 
+    border-radius: 12px; 
+    font-weight: 800; 
+    cursor: pointer; 
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
 }
 
-/* Focus Effects */
-input:focus, select:focus {
-    outline: none;
-    border-color: #0ea5e9 !important;
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+.btn-save:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 15px rgba(14, 165, 233, 0.4);
+    filter: brightness(1.1);
 }
 
-/* Hover εφέ στις γραμμές */
-.item-row:hover {
-    background-color: #f8fafc;
+/* Αν χρησιμοποιείς stack για τα κουμπιά */
+.button-stack { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
 }
 
-/* Διόρθωση για το "κολλημένο" σύνολο στο κάτω μέρος */
-.total-display-box {
-    background: #020617;
-    color: #7dd3fc;
-    padding: 10px 20px;
-    border-radius: 12px;
-    text-align: right;
-    min-width: 200px;
-}
-    /* Ρυθμίσεις για προεπισκόπηση και PDF */
-#printableArea {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 15mm;
-    margin: auto;
-    background: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #1e293b;
-    box-sizing: border-box;
-}
-
-.invoice-header {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 3px solid #020617;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
-
-.company-info h2 { color: #0ea5e9; margin: 0; text-transform: uppercase; }
-.company-info p { margin: 2px 0; font-size: 12px; }
-
-.invoice-details { text-align: right; }
-.invoice-details h1 { margin: 0; color: #020617; font-size: 24px; }
-
-.billing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    margin-bottom: 30px;
-}
-
-.billing-box h4 {
-    background: #f1f5f9;
-    padding: 5px 10px;
-    border-left: 4px solid #0ea5e9;
-    margin-bottom: 8px;
-    font-size: 13px;
-}
-
-.invoice-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-}
-
-.invoice-table th {
-    background: #020617;
-    color: #7dd3fc;
-    padding: 10px;
-    text-align: left;
-    font-size: 12px;
-}
-
-.invoice-table td {
-    padding: 10px;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 13px;
-}
-
-.totals-section {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.totals-table { width: 250px; }
-.totals-table tr td { padding: 5px; }
-.totals-table tr.grand-total { 
+.btn-side { 
+    border: none; 
+    padding: 10px 15px; 
+    border-radius: 8px; 
+    cursor: pointer; 
     font-weight: bold; 
-    font-size: 18px; 
-    color: #0ea5e9;
-    border-top: 2px solid #020617;
+    font-size: 0.75rem; 
+    color: white; 
 }
-
-@media print {
-    body { background: none; }
-    .no-print { display: none !important; }
-    #printableArea { margin: 0; border: none; padding: 0; }
-}
- .autocomplete-suggestions {
-    position: absolute;
-    background: white;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    width: auto;
-    min-width: 250px;
-}
-
-.suggestion-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 14px;
-    color: #1e293b;
-    display: flex;
-    justify-content: space-between;
-}
-
-.suggestion-item:last-child { border-bottom: none; }
-
-.suggestion-item:hover {
-    background-color: #f0f9ff;
-    color: #0ea5e9;
-}
-
-.suggestion-price {
-    font-weight: bold;
-    color: #64748b;
-    margin-left: 10px;
-}
+.btn-blue { background: #0ea5e9; }
+.btn-indigo { background: #6366f1; }
 </style>
-   
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <style>
-  /* TRITON AUTOCOMPLETE UI */
-.autocomplete-items {
-    position: absolute;
-    border: 1px solid #334155;
-    background: #1e293b; /* Dark Triton Blue */
-    z-index: 1000;
-    width: 100%;
-    max-height: 250px;
-    overflow-y: auto;
-    border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-    margin-top: 2px;
-}
 
-.autocomplete-items div {
-    padding: 12px;
-    cursor: pointer;
-    color: #f8fafc; /* Σχεδόν λευκό */
-    border-bottom: 1px solid #334155;
-    font-size: 14px;
-    transition: background 0.2s;
-}
-
-.autocomplete-items div:last-child {
-    border-bottom: none;
-}
-
-.autocomplete-items div:hover {
-    background-color: #0ea5e9; /* Triton Cyan */
-    color: white;
-}
-
-/* Scrollbar styling για το autocomplete */
-.autocomplete-items::-webkit-scrollbar {
-    width: 6px;
-}
-.autocomplete-items::-webkit-scrollbar-thumb {
-    background: #475569;
-    border-radius: 10px;
-}
-    /* Custom Scrollbar για το Triton Autocomplete */
-.autocomplete-items::-webkit-scrollbar {
-    width: 6px;
-}
-.autocomplete-items::-webkit-scrollbar-track {
-    background: #1e293b;
-}
-.autocomplete-items::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 10px;
-}
-
-/* highlight για πλοήγηση με πληκτρολόγιο */
-.autocomplete-active {
-    background-color: #0ea5e9 !important; 
-    color: #ffffff !important;
-}
-    @keyframes modalFadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* ΤΟ ΚΛΕΙΔΙ ΓΙΑ ΝΑ ΔΟΥΛΕΨΟΥΝ ΤΑ ΚΟΥΜΠΙΑ */
-#newCustomerModal {
-    display: none;             /* Αρχικά κρυφό - Η JS το κάνει 'flex' */
-    position: fixed;           /* Κλειδωμένο στην οθόνη */
-    z-index: 999999;           /* Πάνω από ΟΛΑ */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7); 
-    align-items: center;       
-    justify-content: center;
-    pointer-events: auto;      /* Επιτρέπει κλικ στο background */
-}
-
-/* Το εσωτερικό πλαίσιο (Η φόρμα σου) */
-#newCustomerModal > div {
-    animation: modalFadeIn 0.3s ease-out;
-    pointer-events: auto !important; /* ΚΛΕΙΔΩΝΕΙ ότι τα κουμπιά θα ακούνε */
-    position: relative;
-    z-index: 1000000;
-}
-    /* Για Chrome, Safari, Edge και Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Για Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
-</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  
   
 </head>
  <body>
@@ -386,7 +193,7 @@ input[type=number] {
      </div>    
     </div>
    
-   
+    
    
  <div class="customer-section" style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eef2f6; padding-bottom: 10px; margin-bottom: 15px;">
@@ -421,25 +228,27 @@ input[type=number] {
           
           
           
-            <div class="input-group">
-                <label style="font-weight:bold; color:#0ea5e9; display:block; margin-bottom:5px;">🏷️ Τιμοκατάλογος</label>
-                <select id="priceLevelSelect" style="width:100%; height:38px; box-sizing: border-box; border:1px solid #3b82f6; background:#eff6ff; border-radius:5px;">
-                    <option value="retail">Λιανική Πώληση</option>
-                    <option value="wholesale">Χονδρική Πώληση</option>
-                    <option value="special">Ειδική Τιμή (VIP)</option>
-                </select>
-            </div>
-            <div class="input-group">
+      <div class="input-group">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">Επάγγελμα</label>
                 <input type="text" id="custJob" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr; gap: 15px; align-items: flex-end;">
-            <div class="input-group">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Α.Φ.Μ.</label>
-                <input type="text" id="custAfm" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
-            </div>
+       <div style="display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr; gap: 15px; align-items: flex-end; margin-bottom: 15px;">
+    
+    <div class="input-group">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">Α.Φ.Μ.</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="text" id="custAfm" placeholder="9 ψηφία" 
+                   style="flex-grow: 1; min-width: 180px; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px; outline-color: #0ea5e9;">
+            
+            <button onclick="searchMyData(document.getElementById('custAfm').value)" 
+                    type="button"
+                    style="height: 38px; padding: 0 15px; background: #0ea5e9; color: white; border: none; border-radius: 5px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 13px; transition: background 0.2s;">
+                Αναζήτηση myDATA
+            </button>
+        </div>
+    </div>
             <div class="input-group">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">Δ.Ο.Υ.</label>
                 <input type="text" id="custDoy" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
@@ -469,7 +278,9 @@ input[type=number] {
         <label style="font-weight:bold; display:block; margin-bottom:5px;">Email</label>
         <input type="email" id="custEmail" style="width:100%; height:38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
     </div>
-
+        
+        
+        
     <div class="input-group" style="position: relative;">
         <label style="font-weight:bold; color:#0ea5e9; display:block; margin-bottom:5px;">🚚 Τόπος Παράδοσης</label>
         <div style="display: flex; gap: 5px;">
@@ -488,22 +299,24 @@ input[type=number] {
 </div>
  
  <div style="padding: 0 25px;">
-   
-    <div class="items-header-bar" style="display: grid; grid-template-columns: 50px 120px 1fr 100px 100px 80px 100px 40px; gap: 10px; background: #f1f5f9; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; color: #475569; margin-top: 20px;">
-        <div class="col-aa">Α/Α</div>
-        <div>ΚΩΔΙΚΟΣ</div>
-        <div>ΠΕΡΙΓΡΑΦΗ</div>
-        <div class="text-right">ΠΟΣΟΤΗΤΑ</div>
-        <div class="text-right">ΤΙΜΗ</div>
-        <div class="text-right">ΕΚΠΤ.%</div>
-        <div class="text-right">ΑΞΙΑ</div>
-        <div></div>
-    </div>
-    <div id="scrollContainer" style="min-height: 200px;">
-        <div id="itemsContainer"></div>
+   <div class="items-header-bar" style="display: grid; grid-template-columns: 50px 110px 1fr 100px 100px 80px 100px 40px; gap: 20px; background: #f1f5f9; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 0.75rem; color: #475569; align-items: center;">
+    <div style="text-align: center;">Α/Α</div>
+    <div style="text-align: left;">ΚΩΔΙΚΟΣ</div>
+    <div style="text-align: left;">ΠΕΡΙΓΡΑΦΗ</div>
+    <div style="text-align: center;">ΠΟΣΟΤΗΤΑ</div>
+    <div style="text-align: center;">ΤΙΜΗ</div>
+    <div style="text-align: center;">ΕΚΠΤ.%</div>
+    <div style="text-align: right; padding-right: 10px;">ΑΞΙΑ</div>
+    <div></div>
+</div>
+
+    <div id="scrollContainer" style="margin-top: 5px;">
+        <div id="itemsContainer" style="display: flex; flex-direction: column; gap: 0;">
+            </div>
     </div>
 </div>
-     
+      
+   
  <div id="lowStockAlert" style="margin: 0 20px 10px 20px; display: none;">
     <div style="background: #020617; border: 2px solid #ef4444; border-radius: 12px; padding: 12px;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -575,47 +388,33 @@ function initializeDateTime() {
 // 2. ΔΗΜΙΟΥΡΓΙΑ ΓΡΑΜΜΗΣ (Με όλες τις συνδέσεις)
 window.addNewLine = function(productData = null) {
     const container = document.getElementById('itemsContainer');
-    if (!container) return;
-
     const row = document.createElement('div');
     row.className = 'item-row';
     
-    // 1. Προσθήκη ΦΠΑ (Default 24 αν είναι νέα γραμμή)
-    const vatRate = productData && productData.vat_rate ? productData.vat_rate : 24;
-    row.setAttribute('data-vat', vatRate);
+    // ΤΑΥΤΙΣΗ ΜΕ ΤΟ HEADER: 50px 110px 1fr 100px 100px 80px 100px 40px
+    row.style.display = "grid";
+    row.style.gridTemplateColumns = "50px 110px 1fr 100px 100px 80px 100px 40px";
+    row.style.gap = "20px"; 
+    row.style.padding = "8px 20px"; 
+    row.style.alignItems = "center";
+    row.style.borderBottom = "1px solid #f1f5f9";
 
-    row.style = "display: grid; grid-template-columns: 50px 120px 1fr 100px 100px 80px 100px 40px; gap: 10px; padding: 10px; border-bottom: 1px solid #e2e8f0; align-items: center; background: #ffffff; position: relative;";
-    
+    const inputStyle = "width: 100%; height: 38px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #f8fafc;";
+
     row.innerHTML = `
-        <div class="row-nr" style="text-align: center; font-weight: bold; color: #64748b;">${container.children.length + 1}</div>
-        <input type="text" class="row-code" placeholder="ΚΩΔ" value="${productData ? productData.code : ''}" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; width: 100%;">
-        <input type="text" class="row-desc" placeholder="Περιγραφή..." value="${productData ? productData.name : ''}" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; width: 100%;">
-        <input type="number" class="row-qty" value="1" step="any" oninput="window.calculateTotal()" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; text-align: right; width: 100%;">
-        <input type="number" class="row-price" value="${productData ? productData.price : '0.00'}" step="0.01" oninput="window.calculateTotal()" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; text-align: right; width: 100%;">
-        <input type="number" class="row-disc" value="0" step="0.1" oninput="window.calculateTotal()" style="background: #f8fafc; color: #94a3b8; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; text-align: right; width: 100%;">
-        <div class="row-total" style="text-align: right; font-weight: bold; color: #0ea5e9;">0,00 €</div>
-        <button type="button" onclick="this.parentElement.remove(); window.calculateTotal(); updateRowNumbers();" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2rem;">&times;</button>
+        <div style="text-align: center; color: #94a3b8; font-weight: bold;">${container.children.length + 1}</div>
+        <input type="text" class="row-code" placeholder="ΚΩΔ" value="${productData ? productData.code : ''}" style="${inputStyle}">
+        <input type="text" class="row-desc" placeholder="Περιγραφή..." value="${productData ? productData.name : ''}" style="${inputStyle}">
+        <input type="number" class="row-qty" value="1" style="${inputStyle} text-align: center;">
+        <input type="number" class="row-price" value="${productData ? productData.price : '0.00'}" style="${inputStyle} text-align: center;">
+        <input type="number" class="row-disc" value="0" style="${inputStyle} text-align: center;">
+        <div class="row-total" style="text-align: right; font-weight: bold; color: #0ea5e9; padding-right: 10px;">0.00 €</div>
+        <button type="button" onclick="this.parentElement.remove(); window.calculateTotal();" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
     `;
 
     container.appendChild(row);
-
-    const codeInput = row.querySelector('.row-code');
-    const descInput = row.querySelector('.row-desc');
-
-    // 2. Σύνδεση με τις συναρτήσεις αναζήτησης
-    codeInput.addEventListener('change', () => fetchProductData(codeInput));
-    descInput.addEventListener('input', () => searchProductByDesc(descInput));
-
-    // 3. Focus: Αν είναι κενή γραμμή στον κωδικό, αν έχει δεδομένα στην ποσότητα
-    if (!productData) {
-        codeInput.focus();
-    } else {
-        row.querySelector('.row-qty').focus();
-    }
-
     window.calculateTotal();
 };
-
 // Βοηθητική συνάρτηση για να ξαναμετράει 1, 2, 3... αν σβήσεις μια ενδιάμεση γραμμή
 function updateRowNumbers() {
     const rows = document.querySelectorAll('.item-row .row-nr');
@@ -1342,7 +1141,14 @@ async function searchCustomer(input) {
             };
             list.appendChild(myDataItem);
         }
-
+myDataItem.onclick = async () => {
+    list.remove();
+    openNewCustomerModal(); // Ανοίγει το παράθυρο
+    // Δίνουμε χρόνο στο DOM να φορτώσει και μετά καλούμε την ΑΑΔΕ
+    setTimeout(() => {
+        searchMyData(term); 
+    }, 300);
+};
         // 7. Εμφάνιση στο DOM αν υπάρχει περιεχόμενο
         if (list.children.length > 0) {
             document.body.appendChild(list);
@@ -1723,6 +1529,150 @@ function updateFooterField(id, value) {
         if (btn) { btn.disabled = false; btn.innerText = "💾 Οριστικοποίηση"; }
     }
 }
+     function generateMyDataXML(invoiceData, items) {
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+    <InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0">
+        <invoice>
+            <issuer>
+                <vatNumber>012345678</vatNumber> <country>GR</country>
+                <branch>0</branch>
+            </issuer>
+            <counterpart>
+                <vatNumber>${invoiceData.customer_afm}</vatNumber>
+                <country>GR</country>
+                <branch>0</branch>
+            </counterpart>
+            <invoiceHeader>
+                <invoiceType>1.1</invoiceType> <invoiceSeries>Α</invoiceSeries>
+                <invoiceNumber>${invoiceData.id}</invoiceNumber>
+                <issueDate>${new Date().toISOString().split('T')[0]}</issueDate>
+                <currency>EUR</currency>
+            </invoiceHeader>
+            <invoiceDetails>`;
+
+    // Προσθήκη γραμμών προϊόντων
+    items.forEach((item, index) => {
+        xml += `
+                <lineItem>
+                    <lineNumber>${index + 1}</lineNumber>
+                    <netValue>${item.price * item.quantity}</netValue>
+                    <vatCategory>${getVatCategory(item.vat_rate)}</vatCategory>
+                    <vatAmount>${(item.price * item.quantity) * (item.vat_rate / 100)}</vatAmount>
+                </lineItem>`;
+    });
+
+    xml += `
+            </invoiceDetails>
+            <invoiceSummary>
+                <totalNetValue>${invoiceData.subtotal}</totalNetValue>
+                <totalVatAmount>${invoiceData.vat_amount}</totalVatAmount>
+                <totalWithheldAmount>0.00</totalWithheldAmount>
+                <totalFeesAmount>0.00</totalFeesAmount>
+                <totalStampDutyAmount>0.00</totalStampDutyAmount>
+                <totalOtherTaxesAmount>0.00</totalOtherTaxesAmount>
+                <totalDeductionsAmount>0.00</totalDeductionsAmount>
+                <totalGrossValue>${invoiceData.grand_total}</totalGrossValue>
+            </invoiceSummary>
+        </invoice>
+    </InvoicesDoc>`;
+    
+    return xml;
+}
+
+// Βοηθητική συνάρτηση για κατηγορίες ΦΠΑ ΑΑΔΕ
+function getVatCategory(rate) {
+    if (rate === 24) return 1;
+    if (rate === 13) return 2;
+    if (rate === 6) return 3;
+    return 7; // 0% ή άνευ
+}
+     async function sendToMyData(invoiceId) {
+    const btn = document.getElementById('myDataBtn');
+    btn.innerText = "⏳ Αποστολή...";
+    
+    try {
+        // 1. Παίρνουμε το XML
+        const xmlBody = generateMyDataXML(currentInvoice, currentItems);
+
+        // 2. Αποστολή μέσω Proxy (για να μην έχουμε CORS error)
+        const response = await fetch('https://api.triton-erp.gr/mydata/send', {
+            method: 'POST',
+            headers: {
+                'aade-user-id': localStorage.getItem('myDataUser'),
+                'ocp-apim-subscription-key': localStorage.getItem('myDataKey'),
+                'Content-Type': 'application/xml'
+            },
+            body: xmlBody
+        });
+
+        const result = await response.text(); // Η ΑΑΔΕ απαντάει σε XML
+
+        // 3. Επεξεργασία Απάντησης
+        if (result.includes("<statusCode>Success</statusCode>")) {
+            const mark = extractMark(result); // Βρίσκουμε το MARK από την απάντηση
+            alert(`✅ Επιτυχία! MARK: ${mark}`);
+            
+            // Ενημέρωση Supabase με το MARK
+            await _supabase.from('invoices').update({ mark: mark }).eq('id', invoiceId);
+        } else {
+            alert("❌ Σφάλμα myDATA: " + result);
+        }
+    } catch (err) {
+        alert("❌ Αποτυχία σύνδεσης: " + err.message);
+    } finally {
+        btn.innerText = "📡 Επαναποστολή";
+    }
+}
+     window.updateMyDataUI = function(mark = null) {
+    const icon = document.getElementById('statusIcon');
+    const text = document.getElementById('statusText');
+    const markDiv = document.getElementById('markDisplay');
+    const markSpan = document.getElementById('markValue');
+
+    if (mark) {
+        // ΕΠΙΤΥΧΗΣ ΑΠΟΣΤΟΛΗ
+        icon.innerText = "✅";
+        text.innerText = "Διαβιβάστηκε στο myDATA";
+        text.style.color = "#16a34a"; // Πράσινο Triton
+        markDiv.style.display = "inline-block";
+        markSpan.innerText = mark;
+    } else {
+        // ΕΚΚΡΕΜΟΤΗΤΑ
+        icon.innerText = "⏳";
+        text.innerText = "Εκκρεμεί Αποστολή";
+        text.style.color = "#ef4444"; // Κόκκινο Προειδοποίησης
+        markDiv.style.display = "none";
+    }
+};
+     
+ function addItemRow() {
+    const container = document.getElementById('itemsContainer');
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    
+    // ΕΔΩ ΟΡΙΖΟΥΜΕ ΤΟΝ "ΑΕΡΑ" (Gap)
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '40px 110px 1fr 80px 90px 70px 100px 30px'; 
+    row.style.gap = '15px'; // <-- ΑΥΤΟ ΞΕΚΟΛΛΑΕΙ ΤΑ ΠΕΔΙΑ
+    row.style.alignItems = 'center';
+    row.style.padding = '8px 0'; // Αέρας πάνω-κάτω ανάμεσα στις γραμμές
+
+    // Αυτό το στυλ εξασφαλίζει ότι τα inputs δεν θα "ξεχειλίζουν"
+    const inputStyle = "width: 100%; height: 36px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;";
+
+    row.innerHTML = `
+        <div style="text-align: center; color: #94a3b8;">${container.children.length + 1}</div>
+        <input type="text" class="row-code" placeholder="ΚΩΔ" style="${inputStyle}">
+        <input type="text" class="row-desc" placeholder="ΠΕΡΙΓΡΑΦΗ" oninput="searchProductByDesc(this)" style="${inputStyle}">
+        <input type="number" class="row-qty" value="1.00" style="${inputStyle} text-align: right;">
+        <input type="number" class="row-price" placeholder="0.00" style="${inputStyle} text-align: right;">
+        <input type="number" class="row-disc" value="0" style="${inputStyle} text-align: center;">
+        <div class="row-total" style="text-align: right; font-weight: bold;">0.00</div>
+        <button onclick="this.closest('.item-row').remove();" style="color: #ef4444; background: none; border: none; cursor: pointer;">✕</button>
+    `;
+    
+    container.appendChild(row);
+}
  </script>  
    
  <div id="newCustomerModal" class="triton-modal" style="display:none; position:fixed; z-index:20000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
@@ -1744,49 +1694,59 @@ function updateFooterField(id, value) {
             </button>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-            <div style="grid-column: span 2;">
-                <label style="font-size:12px; color:#64748b;">Επωνυμία / Ονοματεπώνυμο</label>
-                <input type="text" id="newCustName" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-            
-            <div>
-                <label style="font-size:12px; color:#64748b;">ΔΟΥ</label>
-                <input type="text" id="newCustDoy" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-            
-            <div>
-                <label style="font-size:12px; color:#64748b;">Διεύθυνση</label>
-                <input type="text" id="newCustAddress" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-
-            <div>
-                <label style="font-size:12px; color:#64748b;">Πόλη</label>
-                <input type="text" id="newCustCity" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-
-            <div>
-                <label style="font-size:12px; color:#64748b;">Τ.Κ.</label>
-                <input type="text" id="newCustZip" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-
-            <div>
-                <label style="font-size:12px; color:#64748b;">Email</label>
-                <input type="email" id="newCustEmail" placeholder="optional" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-
-            <div>
-                <label style="font-size:12px; color:#64748b;">Τηλέφωνο</label>
-                <input type="text" id="newCustPhone" placeholder="optional" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-            </div>
-        </div>
-
-        <div style="margin-top:25px; display:flex; justify-content:flex-end; gap:10px;">
-            <button onclick="closeNewCustomerModal()" style="background:#f1f5f9; color:#475569; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">Άκυρο</button>
-            <button id="saveCustBtn" onclick="saveNewCustomer()" style="background:#059669; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold;">💾 Αποθήκευση</button>
-        </div>
+      <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap: 20px; padding: 10px;">
+    
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Επωνυμία / Ονοματεπώνυμο</label>
+        <input type="text" id="newCustName" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
     </div>
-</div>  
+    
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Επάγγελμα</label>
+        <input type="text" id="newCustJob" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Α.Φ.Μ.</label>
+        <input type="text" id="newCustAfm" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+    
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Δ.Ο.Υ.</label>
+        <input type="text" id="newCustDoy" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση</label>
+        <input type="text" id="newCustAddress" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Πόλη</label>
+        <input type="text" id="newCustCity" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Τ.Κ.</label>
+        <input type="text" id="newCustZip" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Τηλέφωνο</label>
+        <input type="text" id="newCustPhone" placeholder="Προαιρετικό" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+    <div style="grid-column: span 2;">
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Email</label>
+        <input type="email" id="newCustEmail" placeholder="Προαιρετικό" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+</div>
+
+<div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px; padding: 0 10px;">
+    <button onclick="closeNewCustomerModal()" style="background:#f1f5f9; color:#475569; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold;">Άκυρο</button>
+    <button id="saveCustBtn" onclick="saveNewCustomer()" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">💾 Αποθήκευση</button>
+</div>
+      
    
   <div id="newProductModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10020; align-items: center; justify-content: center;">
     <div style="background: white; padding: 25px; border-radius: 12px; width: 380px; box-shadow: 0 15px 30px rgba(0,0,0,0.3); border-top: 6px solid #0ea5e9; font-family: sans-serif;">

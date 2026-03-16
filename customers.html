@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
@@ -72,7 +72,7 @@
                 <label>ΑΦΜ</label>
                 <div style="display:flex; gap:5px;">
                     <input type="text" id="mAfm" maxlength="9">
-                    <button onclick="alert('Αναζήτηση ΑΑΔΕ...')" style="background:var(--triton-blue); color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer;">🔍</button>
+                    <button onclick="searchAade(this)" style="background:var(--triton-blue); color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer;">🔍</button>
                 </div>
             </div>
             <div><label>Επωνυμία</label><input type="text" id="mName"></div>
@@ -233,6 +233,49 @@
     }
 
     document.addEventListener('DOMContentLoaded', render);
+  async function searchAade(btn) {
+    const afmInput = document.getElementById('mAfm');
+    const afm = afmInput.value.trim();
+
+    if (afm.length !== 9) {
+        alert("⚠️ Το ΑΦΜ πρέπει να είναι ακριβώς 9 ψηφία.");
+        return;
+    }
+
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = "⏳"; // Δείξε ότι φορτώνει
+    btn.disabled = true;
+
+    try {
+        // ΣΗΜΕΙΩΣΗ: Εδώ καλείς το API σου ή το Proxy που επικοινωνεί με την ΑΑΔΕ
+        // Για το παράδειγμα, χρησιμοποιούμε μια fetch κλήση
+        const response = await fetch(`https://your-api-gateway.com/get-aade-data?afm=${afm}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            const info = result.data;
+            // Αυτόματη συμπλήρωση πεδίων
+            document.getElementById('mName').value = info.onomasia || '';
+            document.getElementById('mDoy').value = info.doy_descr || '';
+            document.getElementById('mAddr').value = info.address || '';
+            document.getElementById('mCity').value = info.city || '';
+            document.getElementById('mTk').value = info.postal_code || '';
+            
+            // Προαιρετικά: Αν υπάρχει email ή τηλέφωνο στην ΑΑΔΕ
+            if(info.email) document.getElementById('mEmail').value = info.email;
+            
+            console.log("🔱 Στοιχεία ανακτήθηκαν από ΑΑΔΕ");
+        } else {
+            alert("❌ Δεν βρέθηκαν στοιχεία. Ελέγξτε το ΑΦΜ ή τις ρυθμίσεις myDATA.");
+        }
+    } catch (error) {
+        console.error("AADE Search Error:", error);
+        alert("❌ Σφάλμα σύνδεσης με την υπηρεσία ΑΑΔΕ.");
+    } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+}
 </script>
 </body>
 </html>

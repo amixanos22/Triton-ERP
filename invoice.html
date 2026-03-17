@@ -458,30 +458,46 @@ window.calculateTotal = function() {
     let totalVatAmount = 0;
 
     document.querySelectorAll('.item-row').forEach(row => {
-        const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.row-price').value) || 0;
-        const disc = parseFloat(row.querySelector('.row-disc').value) || 0;
+        // 1. Λήψη τιμών με ασφάλεια
+        const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
+        const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
+        const disc = parseFloat(row.querySelector('.row-disc')?.value) || 0;
         
-        // Λήψη ΦΠΑ από το attribute της γραμμής (προεπιλογή 24%)
-        const rowVatRate = parseFloat(row.getAttribute('data-vat')) || 24;
+        // 2. Διασφάλιση ότι υπάρχει το data-vat (default 24 αν λείπει)
+        if (!row.hasAttribute('data-vat')) {
+            row.setAttribute('data-vat', '24');
+        }
+        const rowVatRate = parseFloat(row.getAttribute('data-vat'));
 
-        const lineNet = (qty * price) * (1 - disc / 100);
-        const lineVat = lineNet * (rowVatRate / 100);
+        // 3. Υπολογισμός γραμμής με στρογγυλοποίηση 2 δεκαδικών σε κάθε στάδιο
+        // Καθαρή αξία γραμμής μετά την έκπτωση
+        const lineNet = Math.round(((qty * price) * (1 - disc / 100)) * 100) / 100;
+        
+        // ΦΠΑ γραμμής
+        const lineVat = Math.round((lineNet * (rowVatRate / 100)) * 100) / 100;
 
-        row.querySelector('.row-total').innerText = lineNet.toFixed(2).replace('.', ',') + " €";
+        // 4. Ενημέρωση του UI στη γραμμή (Αξία προ ΦΠΑ)
+        const rowTotalDisplay = row.querySelector('.row-total');
+        if (rowTotalDisplay) {
+            rowTotalDisplay.innerText = lineNet.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
+        }
 
         totalNet += lineNet;
         totalVatAmount += lineVat;
     });
 
-    // Ενημέρωση των πεδίων σύνοψης
+    // 5. Ενημέρωση των πεδίων σύνοψης (Footer)
     const netElem = document.getElementById('netAmount');
     const vatElem = document.getElementById('vatAmount');
     const totalElem = document.getElementById('totalAmount');
 
-    if (netElem) netElem.innerText = totalNet.toFixed(2).replace('.', ',') + " €";
-    if (vatElem) vatElem.innerText = totalVatAmount.toFixed(2).replace('.', ',') + " €";
-    if (totalElem) totalElem.innerText = (totalNet + totalVatAmount).toFixed(2).replace('.', ',') + " €";
+    // Χρήση toLocaleString για σωστά ελληνικά (κόμμα αντί για τελεία)
+    if (netElem) netElem.innerText = totalNet.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
+    if (vatElem) vatElem.innerText = totalVatAmount.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
+    if (totalElem) {
+        const grandTotal = totalNet + totalVatAmount;
+        totalElem.innerText = grandTotal.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
+    }
 };
 
 // 4. ΑΝΑΖΗΤΗΣΗ ΣΤΟ SUPABASE
@@ -492,35 +508,29 @@ async function fetchProductData(inputElement) {
     const row = inputElement.closest('.item-row');
     
     try {
-        // Χρήση του _supabase (ή supabase ανάλογα πώς το έχεις ορίσει)
         const { data, error } = await _supabase
             .from('products')
             .select('*')
             .eq('code', code)
-            .single();
+            .maybeSingle(); // Το maybeSingle() είναι καλύτερο από το single() γιατί δεν πετάει error αν δεν βρει τίποτα
 
         if (data) {
-            // Γέμισμα στοιχείων στη γραμμή
             row.querySelector('.row-desc').value = data.name;
             row.querySelector('.row-price').value = data.price;
             row.setAttribute('data-vat', data.vat_rate || 24); 
             
-            window.calculateTotal(); // Επαναϋπολογισμός συνόλων
-            row.querySelector('.row-qty').focus(); // Μεταπήδηση στην ποσότητα
+            window.calculateTotal();
+            row.querySelector('.row-qty').focus();
         } else {
-            // Αν δεν βρεθεί, άνοιγμα του Modal με προ-συμπληρωμένο τον κωδικό
+            // Αν το data είναι null (δεν βρέθηκε)
             if (confirm(`📦 Ο κωδικός "${code}" δεν υπάρχει. Δημιουργία νέου προϊόντος;`)) {
                 openProductModal(code);
             }
         }
     } catch (err) { 
-        // Το .single() πετάει σφάλμα αν δεν βρει τίποτα
-        if (confirm(`📦 Ο κωδικός "${code}" είναι νέος. Προσθήκη στη βάση;`)) {
-            openProductModal(code);
-        }
+        console.error("🔱 Triton Fetch Error:", err.message);
     }
 }
-
 // 2. ΑΝΑΖΗΤΗΣΗ ΜΕ ΠΕΡΙΓΡΑΦΗ (Autocomplete)
 async function searchProductByDesc(inputElement) {
     const term = inputElement.value.trim();
@@ -1449,46 +1459,65 @@ window.saveNewProduct = async function() {
 };
      
  window.calculateTotal = function() {
-    let subtotal = 0; // Καθαρή αξία
-    let totalVat = 0; // Συνολικός ΦΠΑ
-    let grandTotal = 0; // Τελικό ποσό
+    let subtotal = 0; 
+    let totalVat = 0; 
 
-    // Επιλέγουμε όλες τις γραμμές προϊόντων
+    // 1. Επιλογή όλων των γραμμών με ασφάλεια
     const rows = document.querySelectorAll('.item-row');
 
     rows.forEach(row => {
-        const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.row-price').value) || 0;
+        // Χρήση ?. για να μην "σκάσει" αν λείπει κάποιο input
+        const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
+        const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
         const disc = parseFloat(row.querySelector('.row-disc')?.value) || 0;
         
-        // Διάβασμα του ΦΠΑ από το attribute που βάλαμε στην αναζήτηση
+        // Λήψη ΦΠΑ από το attribute (default 24)
         const vatRate = parseFloat(row.getAttribute('data-vat')) || 24;
 
-        // 1. Υπολογισμός Καθαρής Αξίας Γραμμής (μετά την έκπτωση)
-        const lineNet = (qty * price) * (1 - disc / 100);
+        // 2. Υπολογισμός Καθαρής Αξίας με στρογγυλοποίηση 2 δεκαδικών
+        const lineNet = Math.round(((qty * price) * (1 - disc / 100)) * 100) / 100;
         
-        // 2. Υπολογισμός ΦΠΑ Γραμμής
-        const lineVat = lineNet * (vatRate / 100);
+        // Υπολογισμός ΦΠΑ γραμμής
+        const lineVat = Math.round((lineNet * (vatRate / 100)) * 100) / 100;
         
-        // 3. Ενημέρωση του "Σύνολο Γραμμής" στο UI (αν υπάρχει πεδίο .row-total)
+        // 3. Ενημέρωση του "Σύνολο Γραμμής" (Value αν είναι input, InnerText αν είναι span/div)
         const lineTotalField = row.querySelector('.row-total');
         if (lineTotalField) {
-            lineTotalField.value = (lineNet + lineVat).toFixed(2);
+            const displayTotal = (lineNet + lineVat).toFixed(2);
+            if (lineTotalField.tagName === 'INPUT') {
+                lineTotalField.value = displayTotal;
+            } else {
+                lineTotalField.innerText = displayTotal + " €";
+            }
         }
 
-        // Προσθήκη στα γενικά σύνολα
         subtotal += lineNet;
         totalVat += lineVat;
     });
 
-    grandTotal = subtotal + totalVat;
+    // 4. Ενημέρωση Footer με formatting για Ελλάδα (κόμμα αντί για τελεία)
+    const formatCurrency = (val) => val.toLocaleString('el-GR', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    }) + " €";
 
-    // Ενημέρωση των πεδίων στο Footer του Τιμολογίου
-    updateFooterField('footerSubtotal', subtotal);
-    updateFooterField('footerVat', totalVat);
-    updateFooterField('footerGrandTotal', grandTotal);
+    const fields = {
+        'footerSubtotal': subtotal,
+        'footerVat': totalVat,
+        'footerGrandTotal': subtotal + totalVat,
+        'netAmount': subtotal,    // εναλλακτικό ID
+        'vatAmount': totalVat,    // εναλλακτικό ID
+        'totalAmount': subtotal + totalVat // εναλλακτικό ID
+    };
+
+    // Ενημερώνει όποιο ID βρει από τα παραπάνω στο DOM
+    Object.entries(fields).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerText = formatCurrency(value);
+        }
+    });
 };
-
 // Βοηθητική συνάρτηση για το UI
 function updateFooterField(id, value) {
     const el = document.getElementById(id);

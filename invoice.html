@@ -3,34 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <title>Τιμολόγηση - Πωλήσεις</title>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://js.hcaptcha.com https://js.stripe.com https://frontend-assets.supabase.com https://ss.supabase.com https://ph.supabase.com https://vercel.live https://*.pusher.com https://maps.googleapis.com https://web.cmp.usercentrics.eu https://cdn.jsdelivr.net; connect-src 'self' https://pizzmcznytsfqlxnttbv.supabase.co https://*.supabase.co;">
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
- var _supabase; // Η μεταβλητή παραμένει καθολική (global)
+var _supabase;
 
 function initTritonSupabase() {
-    const SUPABASE_URL = 'https://pizzmcznytsfqlynttbv.supabase.co';
+    // Χρησιμοποιούμε το URL που μόλις έστειλες
+    const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 
     try {
         if (typeof supabase !== 'undefined') {
             _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("✅ Triton: Supabase Client Ready (Project: pizzm...)");
-            
-            // Μόλις ετοιμαστεί ο client, ξεκινάμε τη φόρτωση των δεδομένων
-            if (typeof loadProducts === 'function') {
-                loadProducts();
-            }
-        } else {
-            console.error("❌ Triton: Το Supabase SDK λείπει από τη σελίδα.");
+            console.log("✅ Triton: Supabase Client Initialized.");
+            loadProductsFromSupabase();
         }
     } catch (e) {
-        console.error("❌ Triton: Σφάλμα αρχικοποίησης Supabase:", e);
+        console.error("❌ Triton: Error initializing Supabase:", e);
     }
 }
 
-// Περιμένουμε να φορτώσει η σελίδα ΚΑΙ το SDK πριν τρέξουμε την αρχικοποίηση
-window.addEventListener('load', initTritonSupabase);;
+// 2. Η συνάρτηση φόρτωσης
+async function loadProductsFromSupabase() {
+    // Έλεγχος ασφαλείας
+    if (!_supabase) {
+        console.warn("⏳ Triton: Αναμονή για αρχικοποίηση Client...");
+        return; 
+    }
+
+    try {
+        const { data, error } = await _supabase.from('products').select('*');
+        if (error) throw error;
+        
+        if (data) {
+            window.allProducts = data;
+            console.log("📦 Triton: " + data.length + " προϊόντα φορτώθηκαν.");
+        }
+    } catch (e) {
+        console.error("❌ Supabase Load Error:", e.message);
+    }
+}
+
+// Εκτέλεση όταν η σελίδα είναι έτοιμη
+window.addEventListener('load', initTritonSupabase);
 </script>
   
  <style type="text/css">

@@ -1558,6 +1558,32 @@ checkLowStock();
 
 // Προαιρετικά: Επαναλαμβανόμενος έλεγχος κάθε 5 λεπτά
 setInterval(checkLowStock, 300000);
+      async function updateLowStockBadge() {
+    try {
+        // Παίρνουμε τον αριθμό των προϊόντων που έχουν απόθεμα κάτω από 5
+        const { count, error } = await _supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .lt('stock', 5); // lte = Less Than or Equal
+
+        const badge = document.getElementById('lowStockBadge');
+        
+        if (!error && count > 0) {
+            badge.innerText = count;
+            badge.style.display = 'block'; // Το εμφανίζουμε μόνο αν υπάρχουν ελλείψεις
+        } else {
+            badge.style.display = 'none'; // Το κρύβουμε αν όλα είναι οκ
+        }
+    } catch (err) {
+        console.error("Badge Error:", err);
+    }
+}
+
+// Εκτέλεση ελέγχου κάθε φορά που ανοίγει η σελίδα
+updateLowStockBadge();
+
+// Ανανέωση κάθε 2 λεπτά για να είναι πάντα ενημερωμένο
+setInterval(updateLowStockBadge, 120000);
 </script>
 </body>
 </html>

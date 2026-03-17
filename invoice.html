@@ -813,12 +813,14 @@ window.sendCustomerEmail = async function() {
 async function searchCustomer(input) {
     const term = input.value.trim();
     
+    // Αφαίρεση παλιάς λίστας αν υπάρχει
     let existingList = document.getElementById('customer-dropdown');
     if (existingList) existingList.remove();
 
     if (term.length < 2) return;
 
     try {
+        // Αναζήτηση στη Supabase - Φέρνουμε όλες τις στήλες (*)
         const { data, error } = await supabase
             .from('customers')
             .select('*')
@@ -827,58 +829,89 @@ async function searchCustomer(input) {
 
         if (error || !data || data.length === 0) return;
 
+        // Δημιουργία του Dropdown με το στυλ του Triton
         const list = document.createElement('div');
         list.id = 'customer-dropdown';
 
-        // --- ΕΔΩ ΕΙΝΑΙ Η ΑΛΛΑΓΗ ΠΟΥ ΕΙΠΑΜΕ ---
         const rect = input.getBoundingClientRect();
         list.style.position = 'absolute';
         list.style.top = (rect.bottom + window.scrollY) + 'px';
         list.style.left = (rect.left + window.scrollX) + 'px';
         list.style.width = rect.width + 'px';
-        // -------------------------------------
-
-        // Προσθέτουμε και το design του Triton
         list.style.background = 'white';
         list.style.border = '1px solid #0ea5e9';
         list.style.borderRadius = '8px';
         list.style.boxShadow = '0 10px 15px rgba(0,0,0,0.1)';
-        list.style.zIndex = '1000';
+        list.style.zIndex = '20001'; // Πιο πάνω από το Modal
         list.style.maxHeight = '200px';
         list.style.overflowY = 'auto';
 
         data.forEach(cust => {
             const item = document.createElement('div');
-            item.style = "padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px;";
-            item.innerHTML = `<b>${cust.name}</b> <span style="color:#64748b; font-size:12px;">(${cust.afm || '---'})</span>`;
+            item.style = "padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b;";
+            item.innerHTML = `<b>${cust.name}</b> <br> <span style="color:#64748b; font-size:12px;">ΑΦΜ: ${cust.afm || '---'} | ${cust.city || ''}</span>`;
             
             item.onclick = () => {
-                document.getElementById('customerName').innerText = cust.name;
-                document.getElementById('customerEmail').innerText = cust.email || "-";
-                document.getElementById('customerAFM').innerText = cust.afm || "-";
+                // --- ΕΔΩ ΓΙΝΕΤΑΙ Η ΑΥΤΟΜΑΤΗ ΣΥΜΠΛΗΡΩΣΗ ΟΛΩΝ ΤΩΝ ΠΕΔΙΩΝ ---
+                
+                // 1. Ενημέρωση των labels (αν υπάρχουν στην κεφαλίδα)
+                if(document.getElementById('customerName')) document.getElementById('customerName').innerText = cust.name;
+                if(document.getElementById('customerEmail')) document.getElementById('customerEmail').innerText = cust.email || "-";
+                if(document.getElementById('customerAFM')) document.getElementById('customerAFM').innerText = cust.afm || "-";
+
+                // 2. Ενημέρωση των Input Πεδίων της φόρμας
+                const setVal = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val || '';
+                };
+
+                // Χρησιμοποιούμε τα IDs που έχεις στη φόρμα σου
+                setVal('newCustName', cust.name);
+                setVal('newCustJob', cust.job || cust.occupation || ''); // Δοκιμάζει και τα δύο ονόματα στήλης
+                setVal('newCustDoy', cust.doy);
+                setVal('newCustAddress', cust.address);
+                setVal('newCustCity', cust.city);
+                setVal('newCustZip', cust.zip);
+                setVal('newCustEmail', cust.email);
+                setVal('newCustPhone', cust.phone);
+
+                // Ενημέρωση του ΑΦΜ (επειδή μπορεί να έχεις δύο πεδία με το ίδιο ID)
+                const afmFields = document.querySelectorAll('#newCustAfm');
+                afmFields.forEach(field => field.value = cust.afm || '');
+
+                // 3. Καθαρισμός και Focus στο επόμενο βήμα
                 input.value = cust.name;
                 list.remove();
                 
-                // ΠΡΟΑΙΡΕΤΙΚΟ: Μετά την επιλογή πελάτη, στείλε τον κέρσορα στο πρώτο προϊόν
+                // Μετακίνηση κέρσορα στην αναζήτηση προϊόντων
                 const firstProductInput = document.querySelector('input[oninput*="searchProductByDesc"]');
                 if (firstProductInput) firstProductInput.focus();
+                
+                console.log("✅ Triton: Τα στοιχεία του πελάτη " + cust.name + " συμπληρώθηκαν.");
             };
+
+            // Εφέ hover για τη λίστα
+            item.onmouseover = () => item.style.background = '#f0f9ff';
+            item.onmouseout = () => item.style.background = 'white';
+
             list.appendChild(item);
         });
 
         document.body.appendChild(list);
 
     } catch (err) {
-        console.error("Search error:", err);
+        console.error("❌ Search error:", err);
     }
 }
-// Κλείσιμο της λίστας αν πατήσεις εκτός
+
+// Κλείσιμο της λίστας αν πατήσεις οπουδήποτε αλλού στη σελίδα
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('#customerSearchInput')) {
-        const list = document.getElementById('customer-dropdown');
-        if (list) list.remove();
+    const list = document.getElementById('customer-dropdown');
+    const input = document.getElementById('customerSearchInput'); // Βεβαιώσου ότι το input σου έχει αυτό το ID
+    if (list && e.target !== input && !list.contains(e.target)) {
+        list.remove();
     }
-});    
+});
  /* --- ΔΙΟΡΘΩΜΕΝΟ ΤΜΗΜΑ: ΠΛΗΡΩΜΕΣ & ΚΑΡΤΕΛΑ --- */
 
 // 1. ΟΡΙΣΤΙΚΟΠΟΙΗΣΗ ΠΩΛΗΣΗΣ (Η ΣΩΣΤΗ ΕΚΔΟΣΗ)

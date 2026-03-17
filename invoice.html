@@ -1163,19 +1163,18 @@ myDataItem.onclick = async () => {
 }
 // 2. Η ΓΕΦΥΡΑ ΜΕ ΤΗΝ ΑΑΔΕ (Εμπλουτισμένη)
 var searchMyData = async function(manualAfm = null) {
-    // Παίρνουμε το ΑΦΜ είτε από την παράμετρο (αυτόματο) είτε από το input (χειροκίνητο)
-    const afmInput = document.getElementById('newCustAfm');
-    const afm = (typeof manualAfm === 'string') ? manualAfm : (afmInput ? afmInput.value.trim() : "");
-    
-    if (manualAfm && afmInput) afmInput.value = manualAfm;
+    const afmInput = document.getElementById('custAfm');
+    let afm = (manualAfm && typeof manualAfm === 'string') ? manualAfm : (afmInput ? afmInput.value.trim() : "");
 
-    if (!afm || afm.length !== 9) {
-        alert("⚠️ Παρακαλώ εισάγετε ένα έγκυρο ΑΦΜ (9 ψηφία).");
+    // 🔥 ΚΡΙΣΙΜΟ: Κρατάμε μόνο τα νούμερα (αφαιρεί κενά, παύλες κλπ)
+    afm = afm.replace(/\D/g, ''); 
+
+    if (afm.length !== 9) {
+        alert("⚠️ Το ΑΦΜ πρέπει να έχει ακριβώς 9 ψηφία. (Βρέθηκαν: " + afm.length + ")");
         return;
     }
 
-    // Οπτική ένδειξη στο κουμπί αναζήτησης
-    const btn = document.querySelector('[onclick*="searchMyData"]');
+    const btn = document.querySelector('button[onclick*="searchMyData"]');
     if(btn) { btn.innerText = "⏳..."; btn.disabled = true; }
 
     try {
@@ -1183,34 +1182,34 @@ var searchMyData = async function(manualAfm = null) {
         const data = await response.json();
 
         if (data.success && data.result) {
-            // Mapping των αποτελεσμάτων στα πεδία του Modal
+            // Mapping στα IDs του δικού σου HTML
             const mapping = {
-                'newCustName': data.result.onomasia,
-                'newCustDoy': data.result.doy_descr,
-                'newCustAddress': data.result.dieythinsi,
-                'newCustCity': data.result.poli,
-                'newCustZip': data.result.tk
+                'custName': data.result.onomasia,
+                'custJob': data.result.drastiriotita_descr || data.result.kad_descr,
+                'custDoy': data.result.doy_descr,
+                'custAddress': data.result.dieythinsi,
+                'custCity': data.result.poli,
+                'custZip': data.result.tk
             };
 
             for (const [id, value] of Object.entries(mapping)) {
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = value || "";
-                    el.style.backgroundColor = "#e0f2fe"; // Feedback χρώμα
-                    setTimeout(() => el.style.backgroundColor = "", 1000);
+                    // Triton Feedback: Μπλε highlight για 2 δευτερόλεπτα
+                    el.style.backgroundColor = "#e0f2fe"; 
+                    setTimeout(() => el.style.backgroundColor = (el.readOnly ? "#f8fafc" : ""), 2000);
                 }
             }
-            console.log("✅ Triton Cloud: Τα στοιχεία ήρθαν από ΑΑΔΕ.");
         } else {
-            alert("❌ Η ΑΑΔΕ δεν βρήκε στοιχεία: " + (data.error || ""));
+            alert("❌ ΑΑΔΕ: " + (data.error || "Δεν βρέθηκαν στοιχεία. Ελέγξτε αν είστε σε Production περιβάλλον."));
         }
     } catch (error) {
-        console.error("🔱 MyData Error:", error);
+        alert("❌ Σφάλμα σύνδεσης με την υπηρεσία myDATA.");
     } finally {
-        if(btn) { btn.innerText = "🔍 myDATA"; btn.disabled = false; }
+        if(btn) { btn.innerText = "Αναζήτηση myDATA"; btn.disabled = false; }
     }
 };
-
 // 3. ΒΟΗΘΗΤΙΚΗ: ΓΕΜΙΣΜΑ UI ΣΤΗΝ ΚΥΡΙΑ ΟΘΟΝΗ
 function fillCustomerUI(cust) {
     const fields = {

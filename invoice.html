@@ -6,24 +6,31 @@
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  var _supabase;
+ var _supabase; // Η μεταβλητή παραμένει καθολική (global)
 
-try {
-    // Στοιχεία που προκύπτουν από το JWT σου:
-    const SUPABASE_URL = 'https://pizzmcznytsfqlynttbv.supabase.co'; 
+function initTritonSupabase() {
+    const SUPABASE_URL = 'https://pizzmcznytsfqlynttbv.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 
-    if (typeof supabase !== 'undefined') {
-        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("✅ Triton: Supabase Client Ready (Project: pizzm...)");
-    } else {
-        console.error("❌ Triton: Supabase SDK is missing from the page.");
+    try {
+        if (typeof supabase !== 'undefined') {
+            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log("✅ Triton: Supabase Client Ready (Project: pizzm...)");
+            
+            // Μόλις ετοιμαστεί ο client, ξεκινάμε τη φόρτωση των δεδομένων
+            if (typeof loadProducts === 'function') {
+                loadProducts();
+            }
+        } else {
+            console.error("❌ Triton: Το Supabase SDK λείπει από τη σελίδα.");
+        }
+    } catch (e) {
+        console.error("❌ Triton: Σφάλμα αρχικοποίησης Supabase:", e);
     }
-} catch (e) {
-    console.error("❌ Triton: Σφάλμα αρχικοποίησης Supabase:", e);
 }
-// Εκτέλεση μόλις φορτώσει η σελίδα
-window.addEventListener('DOMContentLoaded', initTritonSupabase);
+
+// Περιμένουμε να φορτώσει η σελίδα ΚΑΙ το SDK πριν τρέξουμε την αρχικοποίηση
+window.addEventListener('load', initTritonSupabase);;
 </script>
   
  <style type="text/css">

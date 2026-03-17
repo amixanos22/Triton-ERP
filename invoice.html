@@ -1236,7 +1236,6 @@ if (typeof window.updateUI === 'undefined') {
 
 /* 🔱 TRITON ERP - UNIFIED SMART SEARCH & AADE BRIDGE */
 
-// 1. Η ΕΝΟΠΟΙΗΜΕΝΗ ΣΥΝΑΡΤΗΣΗ ΑΝΑΖΗΤΗΣΗΣ (Supabase + myDATA)
 async function searchCustomer(input) {
     const term = input.value.trim();
     
@@ -1271,12 +1270,11 @@ async function searchCustomer(input) {
                 item.style = "padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; transition: background 0.2s;";
                 item.innerHTML = `<b>${cust.name}</b> <span style="color:#64748b; font-size:12px;">(ΑΦΜ: ${cust.afm})</span>`;
                 
-                // Εφέ επιλογής
                 item.onmouseover = () => item.style.background = "#f0f9ff";
                 item.onmouseout = () => item.style.background = "white";
                 
                 item.onclick = () => {
-                    fillCustomerUI(cust);
+                    fillCustomerUI(cust); // Καλεί τη συνάρτηση που γεμίζει τα πεδία
                     list.remove();
                     input.value = cust.name;
                 };
@@ -1284,7 +1282,7 @@ async function searchCustomer(input) {
             });
         } 
         
-        // 6. ΕΞΥΠΝΗ ΠΡΟΤΑΣΗ ΑΑΔΕ: Μόνο αν είναι 9 ψηφία και ΔΕΝ υπάρχει στη βάση μας
+        // 6. ΕΞΥΠΝΗ ΠΡΟΤΑΣΗ ΑΑΔΕ
         const alreadyInDb = data && data.some(c => c.afm === term);
         
         if (term.length === 9 && !isNaN(term) && !alreadyInDb) {
@@ -1292,39 +1290,93 @@ async function searchCustomer(input) {
             myDataItem.style = "padding: 12px; cursor: pointer; background: #f0f9ff; color: #0369a1; font-weight: bold; border-top: 2px solid #0ea5e9; font-size: 13px; text-align: center;";
             myDataItem.innerHTML = `🔍 Νέο ΑΦΜ; Αναζήτηση "${term}" στην ΑΑΔΕ;`;
             
-            myDataItem.onclick = () => {
+            myDataItem.onclick = async () => {
                 list.remove();
                 if (typeof openNewCustomerModal === 'function') openNewCustomerModal();
-                if (typeof searchMyData === 'function') searchMyData(term);
+                setTimeout(() => {
+                    if (typeof searchMyData === 'function') searchMyData(term); 
+                }, 300);
             };
             list.appendChild(myDataItem);
         }
-myDataItem.onclick = async () => {
-    list.remove();
-    openNewCustomerModal(); // Ανοίγει το παράθυρο
-    // Δίνουμε χρόνο στο DOM να φορτώσει και μετά καλούμε την ΑΑΔΕ
-    setTimeout(() => {
-        searchMyData(term); 
-    }, 300);
-};
-        // 7. Εμφάνιση στο DOM αν υπάρχει περιεχόμενο
+
+        // 7. Εμφάνιση στο DOM
         if (list.children.length > 0) {
             document.body.appendChild(list);
         }
 
     } catch (err) {
         console.error("🔱 Search Error:", err.message);
-        // Καθαρισμός αν κάτι πάει στραβά
         const list = document.getElementById('customer-dropdown');
         if (list) list.remove();
     }
 }
-// 2. Η ΓΕΦΥΡΑ ΜΕ ΤΗΝ ΑΑΔΕ (Εμπλουτισμένη)
+     // Αυτή η συνάρτηση θα γεμίζει αυτόματα όλα τα πεδία
+// 1. Η ΜΟΝΑΔΙΚΗ ΚΑΙ ΣΩΣΤΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΓΕΜΙΣΜΑ ΠΕΔΙΩΝ
+window.fillCustomerUI = function(cust) {
+    console.log("🔱 Triton: Συμπλήρωση στοιχείων για:", cust);
+
+    // Λίστα με όλα τα πιθανά IDs που μπορεί να έχεις στην HTML σου
+    const fieldMapping = {
+        'name': cust.name || cust.onomasia,
+        'afm': cust.afm || cust.vat_number,
+        'doy': cust.doy || cust.doy_descr,
+        'address': cust.address || cust.dieythinsi,
+        'city': cust.city || cust.poli,
+        'zip': cust.zip || cust.tk,
+        'email': cust.email,
+        'phone': cust.phone,
+        'job': cust.job || cust.drastiriotita_descr || cust.occupation
+    };
+
+    // Ενημέρωση INPUT fields (Κουτάκια)
+    for (let key in fieldMapping) {
+        // Δοκιμάζουμε όλους τους συνδυασμούς ID που είδαμε στον κώδικά σου
+        const possibleIds = [
+            'newCust' + key.charAt(0).toUpperCase() + key.slice(1), // π.χ. newCustAfm
+            'cust' + key.charAt(0).toUpperCase() + key.slice(1),    // π.χ. custAfm
+            key                                                     // π.χ. afm
+        ];
+
+        possibleIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = fieldMapping[key] || '';
+                // Πυροδότηση event για να σταματήσει το σφάλμα "Βρέθηκαν: 0"
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Triton Feedback Highlight
+                el.style.backgroundColor = "#f0f9ff";
+                setTimeout(() => el.style.backgroundColor = "", 1500);
+            }
+        });
+    }
+
+    // Ενημέρωση LABELS/TEXT (Επικεφαλίδα Invoice)
+    const labels = {
+        'customerName': cust.name,
+        'customerAFM': cust.afm,
+        'customerEmail': cust.email
+    };
+    for (let id in labels) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = labels[id] || "-";
+    }
+
+    // Μετάβαση στο πρώτο προϊόν
+    setTimeout(() => {
+        const firstRow = document.querySelector('.row-code, .row-desc, input[oninput*="searchProduct"]');
+        if (firstRow) firstRow.focus();
+    }, 200);
+};
+
+// 2. Η ΓΕΦΥΡΑ ΜΕ ΤΗΝ ΑΑΔΕ (Διορθωμένη να καλεί τη fillCustomerUI)
 var searchMyData = async function(manualAfm = null) {
-    const afmInput = document.getElementById('custAfm');
+    // Ψάχνουμε το input του ΑΦΜ σε οποιοδήποτε από τα IDs σου
+    const afmInput = document.getElementById('newCustAfm') || document.getElementById('custAfm') || document.getElementById('newCustAfmSearch');
     let afm = (manualAfm && typeof manualAfm === 'string') ? manualAfm : (afmInput ? afmInput.value.trim() : "");
 
-    // 🔥 ΚΡΙΣΙΜΟ: Κρατάμε μόνο τα νούμερα (αφαιρεί κενά, παύλες κλπ)
     afm = afm.replace(/\D/g, ''); 
 
     if (afm.length !== 9) {
@@ -1332,7 +1384,7 @@ var searchMyData = async function(manualAfm = null) {
         return;
     }
 
-    const btn = document.querySelector('button[onclick*="searchMyData"]');
+    const btn = document.getElementById('myDataBtn') || document.querySelector('button[onclick*="searchMyData"]');
     if(btn) { btn.innerText = "⏳..."; btn.disabled = true; }
 
     try {
@@ -1340,49 +1392,20 @@ var searchMyData = async function(manualAfm = null) {
         const data = await response.json();
 
         if (data.success && data.result) {
-            // Mapping στα IDs του δικού σου HTML
-            const mapping = {
-                'custName': data.result.onomasia,
-                'custJob': data.result.drastiriotita_descr || data.result.kad_descr,
-                'custDoy': data.result.doy_descr,
-                'custAddress': data.result.dieythinsi,
-                'custCity': data.result.poli,
-                'custZip': data.result.tk
-            };
-
-            for (const [id, value] of Object.entries(mapping)) {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.value = value || "";
-                    // Triton Feedback: Μπλε highlight για 2 δευτερόλεπτα
-                    el.style.backgroundColor = "#e0f2fe"; 
-                    setTimeout(() => el.style.backgroundColor = (el.readOnly ? "#f8fafc" : ""), 2000);
-                }
-            }
+            // Αντί για manual mapping, καλούμε την έτοιμη fillCustomerUI
+            // Προσθέτουμε το ΑΦΜ στο αποτέλεσμα γιατί η ΑΑΔΕ δεν το επιστρέφει πάντα στο result object
+            data.result.afm = afm; 
+            window.fillCustomerUI(data.result);
         } else {
-            alert("❌ ΑΑΔΕ: " + (data.error || "Δεν βρέθηκαν στοιχεία. Ελέγξτε αν είστε σε Production περιβάλλον."));
+            alert("❌ ΑΑΔΕ: " + (data.error || "Δεν βρέθηκαν στοιχεία."));
         }
     } catch (error) {
+        console.error(error);
         alert("❌ Σφάλμα σύνδεσης με την υπηρεσία myDATA.");
     } finally {
-        if(btn) { btn.innerText = "Αναζήτηση myDATA"; btn.disabled = false; }
+        if(btn) { btn.innerText = "🔍 myDATA"; btn.disabled = false; }
     }
 };
-// 3. ΒΟΗΘΗΤΙΚΗ: ΓΕΜΙΣΜΑ UI ΣΤΗΝ ΚΥΡΙΑ ΟΘΟΝΗ
-function fillCustomerUI(cust) {
-    const fields = {
-        'customerName': cust.name,
-        'customerAFM': cust.afm,
-        'customerEmail': cust.email
-    };
-    for (const [id, val] of Object.entries(fields)) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = val || "-";
-    }
-    // Μετάβαση στο πρώτο προϊόν
-    const firstRow = document.querySelector('.row-code, .row-desc');
-    if (firstRow) firstRow.focus();
-}
      // ==========================================
 // 🔱 TRITON ERP - SYSTEM INITIALIZATION (v3.0)
 // ==========================================
@@ -1922,6 +1945,36 @@ window.closeNewCustomerModal = function() {
 window.openNewCustomerModal = function() {
     clearCustomerForm(); // Καθαρισμός κατά το άνοιγμα
     document.getElementById('newCustomerModal').style.display = 'block';
+};
+     window.fillCustomerUI = function(cust) {
+    // 1. Ενημέρωση Labels (Κείμενο)
+    if (document.getElementById('customerName')) document.getElementById('customerName').innerText = cust.name || "";
+    if (document.getElementById('customerAFM')) document.getElementById('customerAFM').innerText = cust.afm || "";
+    if (document.getElementById('customerEmail')) document.getElementById('customerEmail').innerText = cust.email || "";
+
+    // 2. Ενημέρωση Inputs (Κουτάκια φόρμας)
+    const mapping = {
+        'newCustName': cust.name,
+        'newCustAfm': cust.afm,
+        'newCustDoy': cust.doy,
+        'newCustAddress': cust.address,
+        'newCustCity': cust.city,
+        'newCustZip': cust.zip,
+        'newCustEmail': cust.email,
+        'newCustPhone': cust.phone,
+        'newCustJob': cust.job || cust.occupation
+    };
+
+    for (let id in mapping) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = mapping[id] || '';
+            // Πυροδότηση event για να καταλάβει η σελίδα ότι το πεδίο γέμισε
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+    
+    console.log("✅ Triton: Τα στοιχεία του πελάτη φορτώθηκαν επιτυχώς.");
 };
  </script>  
    

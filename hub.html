@@ -1557,32 +1557,32 @@ document.addEventListener('DOMContentLoaded', () => {
 checkLowStock();
 
 // Προαιρετικά: Επαναλαμβανόμενος έλεγχος κάθε 5 λεπτά
-setInterval(checkLowStock, 300000);
-      async function updateLowStockBadge() {
+async function updateLowStockBadge() {
     try {
-        // Παίρνουμε τον αριθμό των προϊόντων που έχουν απόθεμα κάτω από 5
-        const { count, error } = await _supabase
+        // ΠΡΟΣΟΧΗ: Χρησιμοποιούμε το supabaseClient (όπως το ορίσαμε στην αρχή)
+        const { count, error } = await supabaseClient
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .lt('stock', 5); // lte = Less Than or Equal
+            .lte('stock', 5); // lte σημαίνει "μικρότερο ή ίσο με 5"
 
         const badge = document.getElementById('lowStockBadge');
+        if (!badge) return; // Αν δεν βρει το badge στο HTML, σταματάει εδώ χωρίς σφάλμα
         
         if (!error && count > 0) {
             badge.innerText = count;
-            badge.style.display = 'block'; // Το εμφανίζουμε μόνο αν υπάρχουν ελλείψεις
+            badge.style.display = 'block'; 
         } else {
-            badge.style.display = 'none'; // Το κρύβουμε αν όλα είναι οκ
+            badge.style.display = 'none'; 
         }
     } catch (err) {
         console.error("Badge Error:", err);
     }
 }
 
-// Εκτέλεση ελέγχου κάθε φορά που ανοίγει η σελίδα
+// Εκτέλεση αμέσως μόλις φορτώσει
 updateLowStockBadge();
 
-// Ανανέωση κάθε 2 λεπτά για να είναι πάντα ενημερωμένο
+// Ανανέωση κάθε 2 λεπτά
 setInterval(updateLowStockBadge, 120000);
 </script>
 </body>

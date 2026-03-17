@@ -1164,11 +1164,9 @@ window.onload = function() {
 };
    </script>
           
-<script>
+<script>// ==========================================
+// 🔱 1. ΑΡΧΙΚΟΠΟΙΗΣΗ & LOGIN
 // ==========================================
-// 1. ΑΡΧΙΚΟΠΟΙΗΣΗ (FIXED - NO AUTO-OPEN)
-// ==========================================
-// Βήμα 3: Οριστικό ξεκλείδωμα μετά το Email/Pass
 function completeLogin() {
     const email = document.getElementById('userEmail').value;
     const pass = document.getElementById('userPass').value;
@@ -1177,115 +1175,122 @@ function completeLogin() {
     if (email && pass) {
         if (overlay) {
             overlay.style.setProperty('display', 'none', 'important');
-            overlay.style.pointerEvents = 'none';
-            // ΚΡΙΣΙΜΟ: Στέλνουμε το overlay στο υπόγειο για να μην εμποδίζει τα κλικ
             overlay.style.zIndex = "-1"; 
         }
-        
-        // Ενεργοποιούμε το σύστημα
         localStorage.setItem('triton_is_logged_in', 'true');
-        console.log("🔱 Triton: Χειροκίνητη Είσοδος Επιτυχής");
-        
-        // Αν έχεις dashboard stats, τα ανανεώνουμε
-        if (typeof updateDashboardStats === "function") updateDashboardStats();
-        
+        location.reload(); // Reload για να ξεκινήσουν τα πάντα σωστά
     } else {
         alert("🔱 Συμπληρώστε Email και Κωδικό!");
     }
 }
-  document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', () => {
     const biz = localStorage.getItem('bizSettings');
+    const nameElem = document.getElementById('displayCompanyName');
     
     if (!biz) {
-        // 1. ΔΕΝ ανοίγουμε τη φόρμα αυτόματα (openSettings).
-        // 2. ΔΕΝ πετάμε alert.
-        // 3. Απλά δείχνουμε το διακριτικό συννεφάκι (Hint) αν υπάρχει.
-        if (typeof showTritonHint === "function") {
-            // Το δείχνουμε μετά από 3 δευτερόλεπτα για να έχεις προλάβει να μπεις
-            setTimeout(showTritonHint, 3000); 
-        }
-        
-        const nameElem = document.getElementById('displayCompanyName');
+        if (typeof showTritonHint === "function") setTimeout(showTritonHint, 3000); 
         if(nameElem) nameElem.innerText = "🔱 Triton (Εκκρεμεί Ρύθμιση)";
     } else {
         const data = JSON.parse(biz);
-        const nameElem = document.getElementById('displayCompanyName');
         if(nameElem) nameElem.innerText = data.name;
     }
 
-    // Τα στατιστικά τρέχουν κανονικά
-    refreshDashboardMetrics();
-    initMainChart();
+    if (localStorage.getItem('triton_is_logged_in') === 'true') {
+        refreshDashboardMetrics();
+        updateLowStockBadge(); // Το Badge της Αποθήκης
+        initMainChart();
+        
+        // Αυτόματη ανανέωση κάθε 2 λεπτά
+        setInterval(() => {
+            refreshDashboardMetrics();
+            updateLowStockBadge();
+        }, 120000);
+    }
 });
+
 // ==========================================
-// 2. DASHBOARD & METRICS (ΣΤΑΤΙΣΤΙΚΑ)
+// 📊 2. DASHBOARD & SUPABASE METRICS
 // ==========================================
-function refreshDashboardMetrics() {
+async function refreshDashboardMetrics() {
     const invoices = JSON.parse(localStorage.getItem('triton_invoices') || '[]');
-    const products = JSON.parse(localStorage.getItem('triton_products') || '{}');
     const today = new Date();
     const currentMonth = today.getMonth();
 
-    let vatDue = 0;
-    let unpaidTotal = 0;
-    let monthlyIncome = 0;
+    let vatDue = 0, unpaidTotal = 0, monthlyIncome = 0;
 
     invoices.forEach(inv => {
         const invDate = new Date(inv.date);
         const total = parseFloat(inv.total || 0);
         const tax = parseFloat(inv.taxAmount || inv.vatAmount || 0);
         
-        // Έσοδα & ΦΠΑ Τρέχοντος Μήνα
         if (invDate.getMonth() === currentMonth && invDate.getFullYear() === today.getFullYear()) {
             monthlyIncome += total;
             vatDue += tax;
         }
-
-        // Ανεξόφλητα (Συνολικά)
-        if (inv.status === 'Εκκρεμεί' || inv.status === 'Ανεξόφλητο') {
-            unpaidTotal += total;
-        }
+        if (inv.status === 'Εκκρεμεί' || inv.status === 'Ανεξόφλητο') unpaidTotal += total;
     });
 
-    // Ενημέρωση Καρτών με scannable μορφή
     const setCardValue = (index, value) => {
         const cards = document.querySelectorAll('.invoice-card h2');
         if(cards[index]) cards[index].innerText = value.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
     };
 
-    setCardValue(0, vatDue);       // Κάρτα 1: ΦΠΑ
-    setCardValue(1, unpaidTotal);  // Κάρτα 2: Ανεξόφλητα
-    setCardValue(2, monthlyIncome);// Κάρτα 3: Μηνιαία Έσοδα
+    setCardValue(0, vatDue);
+    setCardValue(1, unpaidTotal);
+    setCardValue(2, monthlyIncome);
 
-    // Λίστα Ελλείψεων (Stock)
+    // --- LIVE STOCK ΑΠΟ SUPABASE ---
     const lowStockList = document.getElementById('lowStockList');
     if (lowStockList) {
-        const stockItems = Object.values(products);
-        const lowItems = stockItems.filter(p => parseFloat(p.stock) <= 5).slice(0, 3);
-
-        lowStockList.innerHTML = lowItems.length 
-            ? lowItems.map(p => `
-                <li style="margin-bottom:8px; padding-left:10px; border-left:3px solid #7dd3fc; list-style:none;">
-                    <span style="font-size:14px; color:#1e293b;">${p.desc || p.name}</span> 
-                    <b style="color:#ef4444; float:right;">${p.stock}</b>
-                </li>`).join('')
-            : '<li style="color:#10b981; font-weight:600; list-style:none;">✅ Όλα επαρκή</li>';
+        // Χρησιμοποιούμε το supabaseClient για live ενημέρωση
+        const { data: products } = await supabaseClient.from('products').select('*');
+        if (products) {
+            const lowItems = products.filter(p => parseFloat(p.stock) <= 5).slice(0, 3);
+            lowStockList.innerHTML = lowItems.length 
+                ? lowItems.map(p => `
+                    <li style="margin-bottom:8px; padding-left:10px; border-left:3px solid #ef4444; list-style:none;">
+                        <span style="font-size:14px; color:#1e293b;">${p.name}</span> 
+                        <b style="color:#ef4444; float:right;">${p.stock}</b>
+                    </li>`).join('')
+                : '<li style="color:#10b981; font-weight:600; list-style:none;">✅ Όλα επαρκή</li>';
+        }
     }
 }
 
 // ==========================================
-// 3. ΓΡΑΦΗΜΑ (CHART.JS)
+// 📦 3. LOW STOCK BADGE (MENU)
+// ==========================================
+async function updateLowStockBadge() {
+    try {
+        const { count, error } = await supabaseClient
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .lte('stock', 5);
+
+        const badge = document.getElementById('lowStockBadge');
+        if (!badge) return;
+        
+        if (!error && count > 0) {
+            badge.innerText = count;
+            badge.style.display = 'block'; 
+        } else {
+            badge.style.display = 'none'; 
+        }
+    } catch (err) { console.error("Badge Error:", err); }
+}
+
+// ==========================================
+// 📈 4. ΓΡΑΦΗΜΑ (CHART.JS)
 // ==========================================
 function initMainChart() {
     const canvas = document.getElementById('mainChart') || document.getElementById('revenueChart');
     if(!canvas) return;
-
     const ctx = canvas.getContext('2d');
     const invoices = JSON.parse(localStorage.getItem('triton_invoices') || '[]');
     
-    // Υπολογισμός εσόδων ανά μήνα για το γράφημα
     const monthlyData = new Array(6).fill(0);
-    const last6MonthsLabels = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μαϊ', 'Ιουν']; // Θα μπορούσε να είναι δυναμικό
+    const last6MonthsLabels = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μαϊ', 'Ιουν'];
 
     invoices.forEach(inv => {
         const m = new Date(inv.date).getMonth();
@@ -1301,20 +1306,14 @@ function initMainChart() {
             datasets: [{
                 label: 'Πωλήσεις (€)',
                 data: monthlyData,
-                borderColor: '#0284c7', // Triton Blue
+                borderColor: '#0284c7',
                 backgroundColor: 'rgba(2, 132, 199, 0.1)',
                 borderWidth: 3,
                 tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#0f172a'
+                fill: true
             }]
         },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 }
 </script>

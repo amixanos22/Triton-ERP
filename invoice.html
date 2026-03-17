@@ -1673,6 +1673,51 @@ function getVatCategory(rate) {
     
     container.appendChild(row);
 }
+     
+ // Άνοιγμα/Κλείσιμο του Modal και φόρτωση δεδομένων
+window.toggleTritonSettings = async function() {
+    const modal = document.getElementById('tritonSettingsModal');
+    
+    if (modal.style.display === 'none' || modal.style.display === '') {
+        modal.style.display = 'flex';
+        
+        // Φόρτωση των ρυθμίσεων από το Supabase για να δούμε τι έχουμε ήδη
+        const { data, error } = await _supabase.from('settings').select('*');
+        if (data) {
+            data.forEach(item => {
+                if (item.key_name === 'mydata_user_id') document.getElementById('setting_user').value = item.key_value;
+                if (item.key_name === 'mydata_app_key') document.getElementById('setting_key').value = item.key_value;
+                if (item.key_name === 'mydata_mode') document.getElementById('setting_mode').value = item.key_value;
+            });
+        }
+    } else {
+        modal.style.display = 'none';
+    }
+};
+
+// Αποθήκευση στο Supabase
+window.saveMyDataSettings = async function() {
+    const btn = document.getElementById('saveSettingsBtn');
+    btn.innerText = "⏳..."; btn.disabled = true;
+
+    const user = document.getElementById('setting_user').value;
+    const key = document.getElementById('setting_key').value;
+    const mode = document.getElementById('setting_mode').value;
+
+    try {
+        // Ενημερώνουμε και τα 3 πεδία στον πίνακα settings
+        await _supabase.from('settings').update({ key_value: user }).eq('key_name', 'mydata_user_id');
+        await _supabase.from('settings').update({ key_value: key }).eq('key_name', 'mydata_app_key');
+        await _supabase.from('settings').update({ key_value: mode }).eq('key_name', 'mydata_mode');
+
+        alert("✅ Οι ρυθμίσεις ενημερώθηκαν επιτυχώς!");
+        toggleTritonSettings(); // Κλείσιμο modal
+    } catch (err) {
+        alert("❌ Σφάλμα: " + err.message);
+    } finally {
+        btn.innerText = "Αποθήκευση"; btn.disabled = false;
+    }
+};    
  </script>  
    
  <div id="newCustomerModal" class="triton-modal" style="display:none; position:fixed; z-index:20000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
@@ -1779,11 +1824,41 @@ function getVatCategory(rate) {
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <button onclick="saveNewProduct()" id="saveProdBtn" style="flex: 2; padding: 12px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">💾 Αποθήκευση</button>
+            <button onclick="saveNewProduct()" id="saveProdBtn" style="flex: 2; padding: 12px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">💾 Αποθήκευση</button>
             <button onclick="closeProductModal()" style="flex: 1; padding: 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; cursor: pointer;">Άκυρο</button>
         </div>
     </div>
-</div> 
+</div>
    
-   
+  <div id="tritonSettingsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; font-family: sans-serif;">
+    <div style="background:white; padding:25px; border-radius:12px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); border-top: 6px solid #0369a1;">
+        <h3 style="margin-top:0; color:#1e293b; display:flex; align-items:center; gap:10px;">
+            ⚙️ Ρυθμίσεις myDATA
+        </h3>
+        <hr style="border:0; border-top:1px solid #f1f5f9; margin:15px 0;">
+        
+        <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:0.75rem; font-weight: bold; color:#64748b; margin-bottom:5px; text-transform: uppercase;">InvoicePro</label>
+            <input type="text" id="setting_user" placeholder="π.χ. MyUser123" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:0.75rem; font-weight: bold; color:#64748b; margin-bottom:5px; text-transform: uppercase;">e7d84568bef625129cb0de9b2570567a</label>
+            <input type="password" id="setting_key" placeholder="Επικολλήστε το κλειδί εδώ" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+        </div>
+
+        <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:0.75rem; font-weight: bold; color:#64748b; margin-bottom:5px; text-transform: uppercase;">Περιβάλλον Διαβίβασης</label>
+            <select id="setting_mode" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box; background: white;">
+                <option value="sandbox">Δοκιμαστικό (Development)</option>
+                <option value="production">Κανονικό (Production)</option>
+            </select>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button onclick="saveMyDataSettings()" id="saveSettingsBtn" style="flex:1; background:#0ea5e9; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; transition: background 0.2s;">💾 Αποθήκευση</button>
+            <button onclick="toggleTritonSettings()" style="flex:1; background:#f1f5f9; color:#475569; border:none; padding:12px; border-radius:6px; cursor:pointer;">Άκυρο</button>
+        </div>
+    </div>
+</div>
    

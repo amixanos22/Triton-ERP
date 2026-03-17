@@ -253,9 +253,10 @@ const TABLE = 'products';
 // 2. ΕΜΦΑΝΙΣΗ ΠΡΟΪΟΝΤΩΝ ΣΤΗ ΛΙΣΤΑ
 async function render() {
     const search = document.getElementById('pSearch').value.toLowerCase();
+    const filterType = document.getElementById('filterType').value; // Το νέο select φίλτρου
     const tbody = document.getElementById('pBody');
     
-    // Φέρνουμε τα δεδομένα από τη βάση
+    // Φέρνουμε τα δεδομένα
     let { data: products, error } = await _supabase
         .from(TABLE)
         .select('*')
@@ -265,25 +266,38 @@ async function render() {
 
     tbody.innerHTML = '';
     let count = 0;
+    let totalValue = 0;
 
     products.forEach(p => {
-        // Αναζήτηση βάσει ονόματος ή κωδικού
-        if(p.name.toLowerCase().includes(search) || (p.code && p.code.includes(search))) {
+        const matchesSearch = p.name.toLowerCase().includes(search) || (p.code && p.code.includes(search));
+        const matchesFilter = filterType === 'ALL' || p.type === filterType;
+
+        if (matchesSearch && matchesFilter) {
             count++;
-            const isLow = (p.stock || 0) <= 5;
+            const stock = parseFloat(p.stock || 0);
+            const price = parseFloat(p.price || 0);
+            totalValue += stock * price; // Υπολογισμός αξίας αποθήκης
+            
+            const isLow = stock <= 5;
+            // Εικονίδιο ανάλογα με τον τύπο
+            const typeEmoji = p.type === 'SALE' ? '🛍️' : (p.type === 'BUY' ? '📦' : '🛠️');
+
             tbody.innerHTML += `
-                <tr onclick="edit('${p.id}', '${p.name}', '${p.code || ''}', ${p.price || 0}, ${p.stock || 0}, ${p.vat || 24})" style="cursor:pointer">
-                    <td style="color:#64748b; font-size:14px;">${p.code || '---'}</td>
-                    <td>${p.name}</td>
-                    <td class="price">${parseFloat(p.price || 0).toFixed(2)}€</td>
-                    <td><span class="stock ${isLow ? 'low' : ''}">${p.stock || 0}</span></td>
-                    <td><button onclick="event.stopPropagation(); del('${p.id}')" style="border:none; background:none; cursor:pointer;">🗑️</button></td>
+                <tr class="item-row" onclick="edit('${p.id}', '${p.name}', '${p.code || ''}', ${price}, ${stock}, ${p.vat || 24}, '${p.type}')">
+                    <td style="color:#64748b; font-size:13px; font-weight:600;">${p.code || '---'}</td>
+                    <td style="font-weight:700;">${p.name}</td>
+                    <td style="font-size:12px; color:#64748b;">${typeEmoji}</td>
+                    <td class="price-tag">${price.toFixed(2)}€</td>
+                    <td><span class="stock-pill ${isLow ? 'stock-low' : ''}">${stock}</span></td>
+                    <td><button onclick="event.stopPropagation(); del('${p.id}')" style="border:none; background:none; cursor:pointer; opacity:0.5;">🗑️</button></td>
                 </tr>`;
         }
     });
-    document.getElementById('stat').innerText = count + " ΕΙΔΗ";
-}
 
+    // Ενημέρωση των στατιστικών στο Header
+    document.getElementById('stat').innerText = count + " ΕΙΔΗ";
+    document.getElementById('totalValue').innerText = totalValue.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
+}
 // 3. ΑΠΟΘΗΚΕΥΣΗ (Νέο ή Update)
 async function save() {
     const desc = document.getElementById('pDesc').value.trim().toUpperCase();
@@ -463,17 +477,36 @@ function exportToPDF() {
     document.getElementById('totalValue').innerText = totalValue.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
 }
   async function save() {
-    const desc = document.getElementById('pDesc').value.trim().toUpperCase();
     const code = document.getElementById('pCode').value.trim();
-    const type = document.getElementById('pType').value; // Παίρνουμε τον τύπο
+    const desc = document.getElementById('pDesc').value.trim().toUpperCase();
+    const type = document.getElementById('pType').value;
     const currentId = document.getElementById('prodModal').dataset.editId;
 
-    if(!desc) { alert("⚠️ Η περιγραφή είναι υποχρεωτική!"); return; }
+    // Βασικός έλεγχος
+    if(!desc || !code) { 
+        alert("⚠️ Κωδικός και Περιγραφή είναι υποχρεωτικά!"); 
+        return; 
+    }
+
+    // --- Ο ΕΛΕΓΧΟΣ ΠΟΥ ΡΩΤΗΣΕΣ ---
+    // Ψάχνουμε στη βάση αν υπάρχει άλλος κωδικός ίδιος
+    const { data: existing } = await _supabase
+        .from(TABLE)
+        .select('id, name')
+        .eq('code', code)
+        .maybeSingle();
+
+    // Αν βρεθεί κωδικός ΚΑΙ δεν ανήκει στο προϊόν που ήδη επεξεργαζόμαστε
+    if (existing && existing.id !== currentId) {
+        alert(`🚫 Ο κωδικός "${code}" χρησιμοποιείται ήδη στο προϊόν: ${existing.name}`);
+        return;
+    }
+    // ----------------------------
 
     const payload = {
         name: desc,
         code: code,
-        type: type, // Αποθήκευση τύπου
+        type: type,
         price: parseFloat(document.getElementById('pPrice').value) || 0,
         stock: parseFloat(document.getElementById('pStock').value) || 0,
         vat: parseInt(document.getElementById('pVat').value) || 24
@@ -484,10 +517,11 @@ function exportToPDF() {
     try {
         const { error } = await _supabase.from(TABLE).upsert(payload);
         if (error) throw error;
+        
         closeModal();
-        render();
+        render(); // Φρεσκάρισμα της λίστας
     } catch (err) {
-        alert("❌ Σφάλμα: " + err.message);
+        alert("❌ Σφάλμα κατά την αποθήκευση: " + err.message);
     }
 }
 </script>

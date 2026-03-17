@@ -205,27 +205,34 @@
             </select>
         </div>
 
-        <div class="form-group">
-            <label>Κωδικός / Barcode</label>
-            <input type="text" id="pCode" placeholder="Σκανάρετε...">
-        </div>
+       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+    <div class="form-group">
+        <label>Εσωτερικός Κωδικός</label>
+        <input type="text" id="pInternalCode" readonly 
+               style="background: #f8fafc; color: #64748b; font-weight: bold; border-style: dashed;" 
+               placeholder="0001">
+    </div>
+    <div class="form-group">
+        <label>Barcode Κατασκευαστή</label>
+        <input type="text" id="pBarcode" placeholder="Σκανάρετε εδώ...">
+    </div>
+</div>
 
-        <div class="form-group">
-            <label>Περιγραφή</label>
-            <input type="text" id="pDesc" placeholder="π.χ. Λάδια Μηχανής">
-        </div>
+<div class="form-group">
+    <label>Περιγραφή</label>
+    <input type="text" id="pDesc" placeholder="π.χ. Λάδια Μηχανής">
+</div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div class="form-group">
-                <label>Τιμή (€)</label>
-                <input type="number" id="pPrice" step="0.01" placeholder="0.00">
-            </div>
-            <div class="form-group">
-                <label>Απόθεμα</label>
-                <input type="number" id="pStock" value="0">
-            </div>
-        </div>
-
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+    <div class="form-group">
+        <label>Τιμή Πώλησης (€)</label>
+        <input type="number" id="pPrice" step="0.01" placeholder="0.00">
+    </div>
+    <div class="form-group">
+        <label>Απόθεμα (Stock)</label>
+        <input type="number" id="pStock" value="0">
+    </div>
+</div>
         <div class="form-group">
             <label>ΦΠΑ %</label>
             <select id="pVat">
@@ -321,14 +328,16 @@ async function save() {
         }
     }
 
-    const payload = {
-        name: desc,
-        code: code,
-        price: parseFloat(document.getElementById('pPrice').value) || 0,
-        discount: parseFloat(document.getElementById('pDisc').value) || 0,
-        stock: parseInt(document.getElementById('pStock').value) || 0,
-        vat: parseInt(document.getElementById('pVat').value) || 24
-    };
+   const payload = {
+    name: desc,
+    code: document.getElementById('pInternalCode').value, // Ο αυτόματος κωδικός (π.χ. 0001)
+    barcode: document.getElementById('pBarcode').value.trim(), // Το σκαναρισμένο barcode
+    type: document.getElementById('pType').value, // Ο διαχωρισμός Αγορά/Πώληση
+    price: parseFloat(document.getElementById('pPrice').value) || 0,
+    discount: parseFloat(document.getElementById('pDisc').value) || 0, // Αν χρησιμοποιείς έκπτωση
+    stock: parseFloat(document.getElementById('pStock').value) || 0,
+    vat: parseInt(document.getElementById('pVat').value) || 24
+};
 
     if (currentId) payload.id = currentId;
 

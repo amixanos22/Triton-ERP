@@ -73,73 +73,141 @@
 
 <div class="popup-container">
     <div class="header">
-        <h1>✦ Αποθήκη Cloud</h1>
-        <div id="stat" style="font-weight:900; color:#0ea5e9;">0 ΕΙΔΗ</div>
-    </div>
+        <div>
+            <h1 style="margin:0;">✦ Αποθήκη Cloud</h1>
+            <div style="display: flex; gap: 15px; align-items: center; margin-top: 5px;">
+                <div id="stat" style="font-weight:900; color:#0ea5e9; font-size: 16px;">0 ΕΙΔΗ</div>
+                <div style="height: 15px; width: 2px; background: #cbd5e1;"></div>
+                <div style="font-weight:900; color:#10b981; font-size: 16px;">
+                    ΑΞΙΑ: <span id="totalValue">0,00 €</span>
+                </div>
+            </div>
+       <div style="display: flex; gap: 8px;">
+    <button class="btn-new" onclick="exportToExcel()" 
+            style="background:#10b981; padding: 10px 15px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+        <span>📊</span> EXCEL
+    </button>
+    
+    <button class="btn-new" onclick="exportToPDF()" 
+            style="background:#ef4444; padding: 10px 15px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+        <span>📄</span> PDF
+    </button>
+</div>
 
-    <div class="action-bar">
-        <input type="text" id="pSearch" class="search-input" placeholder="Αναζήτηση στην αποθήκη..." onkeyup="render()">
-        <button class="btn-new" onclick="openModal()">+ ΝΕΟ ΕΙΔΟΣ</button>
+   <div class="action-bar" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+    <input type="text" id="pSearch" class="search-input" 
+           placeholder="🔍 Αναζήτηση βάσει ονόματος ή Barcode..." 
+           onkeyup="render()" style="flex: 2; min-width: 250px;">
+
+    <button class="btn-new" onclick="openModal()" style="flex: 1; background: #0ea5e9;">
+        + ΝΕΟ ΕΙΔΟΣ
+    </button>
+
+    <button class="btn-new" onclick="showGlobalHistory()" 
+            style="flex: 1; background: #64748b; font-size: 13px;">
+        🕒 ΙΣΤΟΡΙΚΟ ΚΙΝΗΣΕΩΝ
+    </button>
+
+    <div style="display: flex; gap: 5px;">
+        <button class="btn-new" onclick="exportToExcel()" style="background: #10b981; padding: 10px;">📊 XL</button>
+        <button class="btn-new" onclick="exportToPDF()" style="background: #ef4444; padding: 10px;">📄 PDF</button>
     </div>
+</div>
 
     <div class="scroll-area">
         <table>
             <thead>
                 <tr>
+                    <th style="width: 120px;">Κωδικός</th>
                     <th>Περιγραφή</th>
-                    <th>Τιμή Πώλησης</th>
-                    <th>Απόθεμα</th>
-                    <th style="width:30px;"></th>
+                    <th style="width: 120px;">Τιμή Πώλησης</th>
+                    <th style="width: 100px;">Απόθεμα</th>
+                    <th style="width: 40px;"></th>
                 </tr>
             </thead>
-            <tbody id="pBody"></tbody>
+            <tbody id="pBody">
+                </tbody>
         </table>
     </div>
 </div>
-
 <div id="prodModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin:0 0 20px 0; color:#0f172a;">Στοιχεία Είδους</h2>
-        <label>Περιγραφή Προϊόντος</label>
-        <input type="text" id="pDesc" placeholder="π.χ. ΛΑΔΙΑ 10W40">
+        <h2 style="margin:0 0 20px 0; color:#0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+            🔱 Στοιχεία Είδους
+        </h2>
         
-        <div style="display:flex; gap:10px;">
-            <div style="flex:1;"><label>Τιμή (€)</label><input type="number" id="pPrice" step="0.01"></div>
-            <div style="flex:1;"><label>Έκπτωση %</label><input type="number" id="pDisc" value="0"></div>
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 5px; font-weight: 800; color: #0ea5e9;">ΚΩΔΙΚΟΣ / BARCODE</label>
+            <input type="text" id="pCode" 
+                   placeholder="Σκανάρετε το barcode εδώ..." 
+                   onchange="document.getElementById('pDesc').focus()"
+                   style="width: 100%; padding: 12px; border: 2px solid #0ea5e9; border-radius: 8px; font-size: 18px; background: #f0f9ff;">
         </div>
 
-        <div style="display:flex; gap:10px;">
-            <div style="flex:1;"><label>Stock</label><input type="number" id="pStock" value="0"></div>
-            <div style="flex:1;"><label>ΦΠΑ %</label>
-                <select id="pVat">
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 5px;">ΠΕΡΙΓΡΑΦΗ ΠΡΟΪΟΝΤΟΣ</label>
+            <input type="text" id="pDesc" placeholder="π.χ. ΛΑΔΙΑ ΜΗΧΑΝΗΣ 10W40"
+                   style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 17px;">
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-bottom: 15px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom: 5px;">ΤΙΜΗ (€)</label>
+                <input type="number" id="pPrice" step="0.01" placeholder="0.00"
+                       style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px;">
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom: 5px;">ΕΚΠΤΩΣΗ %</label>
+                <input type="number" id="pDisc" value="0"
+                       style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom: 25px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom: 5px;">STOCK (ΑΠΟΘΕΜΑ)</label>
+                <input type="number" id="pStock" value="0"
+                       style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-weight: bold;">
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom: 5px;">ΦΠΑ %</label>
+                <select id="pVat" style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; background: white;">
                     <option value="24">24%</option>
                     <option value="13">13%</option>
+                    <option value="6">6%</option>
                     <option value="0">0%</option>
                 </select>
             </div>
         </div>
 
-        <button class="btn-save" onclick="save()">ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD</button>
-        <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer; color:gray; font-weight:bold;">ΑΚΥΡΩΣΗ</button>
+        <button class="btn-save" onclick="save()" 
+                style="width: 100%; padding: 15px; background: #0f172a; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 800; cursor: pointer;">
+            ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD
+        </button>
+        
+        <button onclick="closeModal()" 
+                style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer; color:#64748b; font-weight:bold;">
+            ΑΚΥΡΩΣΗ
+        </button>
     </div>
 </div>
 
 <script>
-const _supabase = supabase.createClient('URL_ΣΟΥ', 'KEY_ΣΟΥ');
+// 1. ΡΥΘΜΙΣΕΙΣ (Σύνδεση με Supabase)
+const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const TABLE = 'products';
 
-// 1. ΕΜΦΑΝΙΣΗ ΠΡΟΪΟΝΤΩΝ
+// 2. ΕΜΦΑΝΙΣΗ ΠΡΟΪΟΝΤΩΝ ΣΤΗ ΛΙΣΤΑ
 async function render() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    if (!user) return;
-
     const search = document.getElementById('pSearch').value.toLowerCase();
     const tbody = document.getElementById('pBody');
     
+    // Φέρνουμε τα δεδομένα από τη βάση
     let { data: products, error } = await _supabase
         .from(TABLE)
         .select('*')
-        .eq('user_id', user.id)
         .order('name', { ascending: true });
 
     if (error) return;
@@ -148,13 +216,15 @@ async function render() {
     let count = 0;
 
     products.forEach(p => {
-        if(p.name.toLowerCase().includes(search)) {
+        // Αναζήτηση βάσει ονόματος ή κωδικού
+        if(p.name.toLowerCase().includes(search) || (p.code && p.code.includes(search))) {
             count++;
             const isLow = (p.stock || 0) <= 5;
             tbody.innerHTML += `
-                <tr onclick="edit('${p.id}', '${p.name}', ${p.unit_price}, ${p.discount || 0}, ${p.stock || 0}, ${p.vat || 24})" style="cursor:pointer">
+                <tr onclick="edit('${p.id}', '${p.name}', '${p.code || ''}', ${p.price || 0}, ${p.stock || 0}, ${p.vat || 24})" style="cursor:pointer">
+                    <td style="color:#64748b; font-size:14px;">${p.code || '---'}</td>
                     <td>${p.name}</td>
-                    <td class="price">${parseFloat(p.unit_price).toFixed(2)}€</td>
+                    <td class="price">${parseFloat(p.price || 0).toFixed(2)}€</td>
                     <td><span class="stock ${isLow ? 'low' : ''}">${p.stock || 0}</span></td>
                     <td><button onclick="event.stopPropagation(); del('${p.id}')" style="border:none; background:none; cursor:pointer;">🗑️</button></td>
                 </tr>`;
@@ -163,41 +233,63 @@ async function render() {
     document.getElementById('stat').innerText = count + " ΕΙΔΗ";
 }
 
-// 2. ΑΠΟΘΗΚΕΥΣΗ / UPDATE
+// 3. ΑΠΟΘΗΚΕΥΣΗ (Νέο ή Update)
 async function save() {
-    const { data: { user } } = await _supabase.auth.getUser();
     const desc = document.getElementById('pDesc').value.trim().toUpperCase();
-    if(!desc || !user) return;
+    const code = document.getElementById('pCode').value.trim();
+    const currentId = document.getElementById('prodModal').dataset.editId;
+
+    if(!desc) { alert("⚠️ Η περιγραφή είναι υποχρεωτική!"); return; }
+
+    // ΕΛΕΓΧΟΣ ΔΙΠΛΟΤΥΠΟΥ ΚΩΔΙΚΟΥ
+    if (code !== "") {
+        const { data: existing } = await _supabase
+            .from(TABLE)
+            .select('name, id')
+            .eq('code', code)
+            .maybeSingle();
+
+        // Αν βρεθεί άλλος κωδικός (και δεν είναι το ίδιο το προϊόν που επεξεργαζόμαστε)
+        if (existing && existing.id !== currentId) {
+            alert(`🚫 Ο κωδικός "${code}" χρησιμοποιείται ήδη στο προϊόν: ${existing.name}`);
+            return; // Σταματάει την αποθήκευση
+        }
+    }
 
     const payload = {
-        user_id: user.id,
         name: desc,
-        unit_price: document.getElementById('pPrice').value || 0,
-        discount: document.getElementById('pDisc').value || 0,
-        stock: document.getElementById('pStock').value || 0,
-        vat: document.getElementById('pVat').value
+        code: code,
+        price: parseFloat(document.getElementById('pPrice').value) || 0,
+        discount: parseFloat(document.getElementById('pDisc').value) || 0,
+        stock: parseInt(document.getElementById('pStock').value) || 0,
+        vat: parseInt(document.getElementById('pVat').value) || 24
     };
 
-    const currentId = document.getElementById('prodModal').dataset.editId;
     if (currentId) payload.id = currentId;
 
-    const { error } = await _supabase.from(TABLE).upsert(payload);
+    try {
+        const { error } = await _supabase.from(TABLE).upsert(payload);
+        if (error) throw error;
 
-    if (error) alert("Σφάλμα: " + error.message);
-    else { closeModal(); render(); }
+        console.log("✅ Αποθηκεύτηκε!");
+        closeModal();
+        render();
+    } catch (err) {
+        alert("❌ Σφάλμα: " + err.message);
+    }
 }
-
-// 3. ΕΠΕΞΕΡΓΑΣΙΑ & ΔΙΑΓΡΑΦΗ
-function edit(id, name, price, disc, stock, vat) {
+// 4. ΕΠΕΞΕΡΓΑΣΙΑ (Όταν κάνεις κλικ σε μια γραμμή)
+function edit(id, name, code, price, stock, vat) {
     document.getElementById('pDesc').value = name;
+    if(document.getElementById('pCode')) document.getElementById('pCode').value = code;
     document.getElementById('pPrice').value = price;
-    document.getElementById('pDisc').value = disc;
     document.getElementById('pStock').value = stock;
     document.getElementById('pVat').value = vat;
     document.getElementById('prodModal').dataset.editId = id;
     openModal();
 }
 
+// 5. ΔΙΑΓΡΑΦΗ
 async function del(id) {
     if(confirm("Διαγραφή είδους από την αποθήκη;")) {
         await _supabase.from(TABLE).delete().eq('id', id);
@@ -205,21 +297,69 @@ async function del(id) {
     }
 }
 
+// HELPER FUNCTIONS
 function openModal() { document.getElementById('prodModal').style.display = 'block'; }
 function closeModal() { 
     document.getElementById('prodModal').style.display = 'none'; 
     delete document.getElementById('prodModal').dataset.editId;
     document.getElementById('pDesc').value = '';
+    if(document.getElementById('pCode')) document.getElementById('pCode').value = '';
     document.getElementById('pPrice').value = '';
 }
 
 // Αρχική φόρτωση
 window.onload = render;
 
-// REAL-TIME: Αν αλλάξει κάτι στη βάση από το Billing, ανανέωσε τη λίστα
+// REAL-TIME UPDATE (Αν πουλήσεις κάτι από το τιμολόγιο, θα αλλάξει εδώ το stock μόνο του!)
 _supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => {
     render();
 }).subscribe();
+  // ΣΥΝΑΡΤΗΣΗ ΓΙΑ EXCEL (CSV Format - Ανοίγει απευθείας στο Excel)
+function exportToExcel() {
+    let csv = "Κωδικός;Περιγραφή;Τιμή;Απόθεμα;Συνολική Αξία\n";
+    
+    // Παίρνουμε τα δεδομένα από τη βάση (window.allProducts)
+    const data = window.allProducts || [];
+    
+    data.forEach(p => {
+        const totalValue = (parseFloat(p.price) || 0) * (parseInt(p.stock) || 0);
+        csv += `${p.code || '---'};${p.name};${p.price} €;${p.stock};${totalValue.toFixed(2)} €\n`;
+    });
+
+    const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-16;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Triton_Inventory_${new Date().toLocaleDateString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// ΣΥΝΑΡΤΗΣΗ ΓΙΑ PDF (Εκτύπωση Αναφοράς)
+function exportToPDF() {
+    const originalContent = document.body.innerHTML;
+    const printArea = document.querySelector('.scroll-area').innerHTML;
+    const stats = document.querySelector('.header').innerHTML;
+
+    // Δημιουργούμε ένα προσωρινό "καθαρό" περιβάλλον εκτύπωσης
+    document.body.innerHTML = `
+        <div style="padding:40px; font-family: sans-serif;">
+            <h1 style="color:#0f172a">🔱 TRITON ERP - ΑΠΟΓΡΑΦΗ ΑΠΟΘΗΚΗΣ</h1>
+            <hr>
+            ${stats}
+            <br>
+            <table border="1" style="width:100%; border-collapse:collapse; margin-top:20px;">
+                ${document.querySelector('table').innerHTML}
+            </table>
+            <p style="margin-top:30px; font-size:12px;">Ημερομηνία εξαγωγής: ${new Date().toLocaleString('el-GR')}</p>
+        </div>
+    `;
+    
+    window.print();
+    location.reload(); // Επαναφορά της σελίδας μετά την εκτύπωση
+}
 </script>
 </body>
 </html>

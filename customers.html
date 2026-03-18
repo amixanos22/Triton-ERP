@@ -105,9 +105,8 @@
 </div>
 
  
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
- 
 // --- ΡΥΘΜΙΣΕΙΣ SUPABASE ---
 const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
@@ -256,19 +255,58 @@ function filter() {
     });
 }
 
+// --- AADE SEARCH ---
 async function searchAade(btn) {
     const afm = document.getElementById('mAfm').value.trim();
-    if (afm.length !== 9) return alert("⚠️ Εισάγετε ένα έγκυρο ΑΦΜ (9 ψηφία)");
+    if (afm.length !== 9) return alert("⚠️ Εισάγετε 9 ψηφία");
 
     const originalText = btn.innerText;
     btn.innerText = "⏳";
     btn.disabled = true;
 
+    const SUBSCRIPTION_KEY = '70868f03930b42799f92305a30691e84'; 
+
     try {
-        // Εδώ θα έμπαινε η κλήση myDATA. Για τώρα παραμένει ως δομή.
-        alert("💡 Η αναζήτηση myDATA θα ενεργοποιηθεί μόλις συνδεθεί το API Key της ΑΑΔΕ.");
+        const proxyUrl = 'https://cors-anywhere.com/'; 
+        const aadeUrl = `https://api.aade.gr/registry/enterprise?afm=${afm}`;
+
+        const response = await fetch(proxyUrl + aadeUrl, {
+            method: 'GET',
+            headers: {
+                'aade-user-id': 'InvoicePro',
+                'ocp-apim-subscription-key': SUBSCRIPTION_KEY,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) throw new Error("Αποτυχία σύνδεσης");
+
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+        const errorDescr = xmlDoc.getElementsByTagName("error_descr")[0]?.textContent;
+        if (errorDescr) throw new Error(errorDescr);
+
+        const name = xmlDoc.getElementsByTagName("onomasia")[0]?.textContent;
+        const doy = xmlDoc.getElementsByTagName("doy_descr")[0]?.textContent;
+        const addr = xmlDoc.getElementsByTagName("postal_address")[0]?.textContent;
+        const city = xmlDoc.getElementsByTagName("postal_area_description")[0]?.textContent;
+        const tk = xmlDoc.getElementsByTagName("postal_zip_code")[0]?.textContent;
+
+        if (name) {
+            document.getElementById('mName').value = name;
+            document.getElementById('mDoy').value = doy || '';
+            document.getElementById('mAddr').value = addr || '';
+            document.getElementById('mCity').value = city || '';
+            document.getElementById('mTk').value = tk || '';
+            alert("✅ Επιτυχής ανάκτηση!");
+        } else {
+            alert("❌ Δεν βρέθηκαν στοιχεία.");
+        }
     } catch (err) {
-        console.error(err);
+        console.error("AADE Error:", err);
+        alert("⚠️ Σφάλμα: " + err.message);
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
@@ -278,7 +316,6 @@ async function searchAade(btn) {
 // Εκκίνηση
 document.addEventListener('DOMContentLoaded', render);
 </script>
- 
  
 </body>
 </html>

@@ -807,23 +807,76 @@ async function loadProductsFromSupabase() {
 }
 
 // 4. ΚΕΝΤΡΙΚΗ ΕΚΚΙΝΗΣΗ (INITIALIZATION)
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log("🔱 Triton ERP: System Online");
 
-    // Αρχικοποίηση χρόνου
-    updateDateTime();
+    // 1. Φόρτωση Προφίλ Εταιρείας (Δυναμικά από Supabase)
+    try {
+        const { data: profile, error } = await _supabase
+            .from('profiles')
+            .select('*')
+            .limit(1)
+            .single();
 
-    // Φόρτωση δεδομένων
-    loadProductsFromSupabase();
+        if (profile) {
+            window.myCompanyData = profile; 
+            console.log("✅ Εταιρεία Φορτώθηκε:", profile.company_name);
+        } else {
+            console.warn("⚠️ Προσοχή: Δεν βρέθηκε προφίλ εταιρείας στον πίνακα profiles.");
+        }
+    } catch (err) {
+        console.error("❌ Σφάλμα κατά τη φόρτωση προφίλ:", err.message);
+    }
 
-    // Δημιουργία πρώτης γραμμής μετά από λίγο για σιγουριά
+    // 2. Αρχικοποίηση χρόνου
+    if (typeof updateDateTime === 'function') updateDateTime();
+
+    // 3. Φόρτωση προϊόντων
+    if (typeof loadProductsFromSupabase === 'function') loadProductsFromSupabase();
+
+    // 4. Δημιουργία πρώτης γραμμής τιμολογίου (με καθυστέρηση για να προλάβουν να φορτώσουν τα προϊόντα)
     setTimeout(() => {
-        const container = document.getElementById('itemsContainer') || document.getElementById('prevTableBody') || document.getElementById('invoiceItemsBody');
+        const container = document.getElementById('itemsContainer') || 
+                          document.getElementById('prevTableBody') || 
+                          document.getElementById('invoiceItemsBody');
+        
         if (container && container.children.length === 0) {
-            if (typeof addNewLine === 'function') addNewLine();
+            if (typeof addItemRow === 'function') addItemRow();
+            else if (typeof addNewLine === 'function') addNewLine();
             else if (typeof addNewInvoiceRow === 'function') addNewInvoiceRow();
         }
     }, 500);
+
+    // 5. ΑΥΤΟΜΑΤΗ ΦΟΡΤΩΣΗ ΠΕΛΑΤΗ ΑΠΟ URL (Από το Πελατολόγιο)
+    const urlParams = new URLSearchParams(window.location.search);
+    const customerId = urlParams.get('customer_id');
+
+    if (customerId) {
+        console.log("⏳ Triton: Αναζήτηση στοιχείων πελάτη ID:", customerId);
+        try {
+            const { data: customer, error } = await _supabase
+                .from('customers') // Βεβαιώσου ότι ο πίνακας λέγεται 'customers'
+                .select('*')
+                .eq('id', customerId)
+                .maybeSingle();
+
+            if (error) throw error;
+
+            if (customer) {
+                // Συμπλήρωση των πεδίων της invoice.html
+                // ΣΗΜΑΝΤΙΚΟ: Βεβαιώσου ότι τα IDs (custName, κλπ) συμπίπτουν με τα inputs σου
+                if (document.getElementById('custName')) document.getElementById('custName').value = customer.name || '';
+                if (document.getElementById('custAfm')) document.getElementById('custAfm').value = customer.afm || '';
+                if (document.getElementById('custDoy')) document.getElementById('custDoy').value = customer.doy || '';
+                if (document.getElementById('custAddr')) document.getElementById('custAddr').value = customer.address || '';
+                if (document.getElementById('custCity')) document.getElementById('custCity').value = customer.city || '';
+                
+                console.log("✅ Triton: Ο πελάτης " + customer.name + " φορτώθηκε αυτόματα!");
+            }
+        } catch (err) {
+            console.error("❌ Σφάλμα φόρτωσης πελάτη από URL:", err.message);
+        }
+    }
 });
 
 // 5. SAFE UI UPDATER (Απαραίτητο για τα παραπάνω)
@@ -1303,6 +1356,25 @@ function updateFooterField(id, value) {
         }
     }
 }
+     // --- ΣΥΝΑΡΤΗΣΕΙΣ ΠΡΟΦΙΛ & ΡΥΘΜΙΣΕΩΝ ---
+
+async function getMyProfile() {
+    const { data, error } = await _supabase
+        .from('profiles')
+        .select('*')
+        .limit(1) // Προσθέτουμε limit για ασφάλεια
+        .single(); 
+    if (error) {
+        console.error("❌ Σφάλμα φόρτωσης προφίλ:", error.message);
+        return null;
+    }
+    return data;
+}
+
+// --- ΣΥΝΑΡΤΗΣΕΙΣ ΤΙΜΟΛΟΓΗΣΗΣ ---
+async function saveInvoice() {
+   // ... ο κώδικας που ήδη έχεις ...
+}
     async function saveInvoice() {
     const btn = document.getElementById('saveInvoiceBtn');
     if (btn) { btn.disabled = true; btn.innerText = "⏳ Αποθήκευση..."; }
@@ -1646,6 +1718,61 @@ window.openNewCustomerModal = function() {
 
     console.log("✅ Triton: Τα στοιχεία του πελάτη φορτώθηκαν επιτυχώς.");
 };
+     function generateMyDataXML(invoiceData, items) {
+    // Έλεγχος αν έχουν φορτωθεί τα στοιχεία της εταιρείας σου
+    if (!window.myCompanyData || !window.myCompanyData.tax_id) {
+        alert("❌ Σφάλμα: Δεν έχουν βρεθεί τα στοιχεία της εταιρείας σας (ΑΦΜ). Παρακαλώ ελέγξτε το προφίλ σας.");
+        return null;
+    }
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+    <InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0">
+        <invoice>
+            <issuer>
+                <vatNumber>${window.myCompanyData.tax_id}</vatNumber> 
+                <country>GR</country>
+                <branch>0</branch>
+            </issuer>
+            <counterpart>
+                <vatNumber>${invoiceData.customer_afm}</vatNumber>
+                <country>GR</country>
+                <branch>0</branch>
+            </counterpart>
+            <invoiceHeader>
+                <invoiceType>1.1</invoiceType> 
+                <invoiceSeries>Α</invoiceSeries>
+                <invoiceNumber>${invoiceData.id || '1'}</invoiceNumber>
+                <issueDate>${new Date().toISOString().split('T')[0]}</issueDate>
+                <currency>EUR</currency>
+            </invoiceHeader>
+            <invoiceDetails>`;
+
+    // Προσθήκη γραμμών προϊόντων
+    items.forEach((item, index) => {
+        const netValue = (item.price * item.quantity).toFixed(2);
+        const vatAmount = (netValue * (item.vat_rate / 100)).toFixed(2);
+
+        xml += `
+                <lineItem>
+                    <lineNumber>${index + 1}</lineNumber>
+                    <netValue>${netValue}</netValue>
+                    <vatCategory>${getVatCategory(item.vat_rate)}</vatCategory>
+                    <vatAmount>${vatAmount}</vatAmount>
+                </lineItem>`;
+    });
+
+    xml += `
+            </invoiceDetails>
+            <invoiceSummary>
+                <totalNetValue>${invoiceData.subtotal.toFixed(2)}</totalNetValue>
+                <totalVatAmount>${invoiceData.vat_amount.toFixed(2)}</totalVatAmount>
+                <totalGrossValue>${invoiceData.grand_total.toFixed(2)}</totalGrossValue>
+            </invoiceSummary>
+        </invoice>
+    </InvoicesDoc>`;
+    
+    return xml;
+}
  </script>  
    
  <div id="newCustomerModal" class="triton-modal" style="display:none; position:fixed; z-index:20000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">

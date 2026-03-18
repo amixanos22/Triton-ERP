@@ -104,8 +104,16 @@
     </div>
 </div>
 
+ 
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    let currentEditName = null;
+    // --- ΡΥΘΜΙΣΕΙΣ SUPABASE ---
+   const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const TABLE = 'products';
+
+    let currentEditId = null; 
 
     // --- BRANCHES LOGIC ---
     function addBranch(data = {}) {
@@ -131,45 +139,54 @@
 
     // --- MODAL CONTROLS ---
     function openModal() {
-        currentEditName = null;
+        currentEditId = null; // Μηδενισμός του ID για νέο πελάτη
         document.querySelectorAll('#custModal input').forEach(i => i.value = '');
         document.getElementById('branchesWrapper').innerHTML = '';
         document.getElementById('modalTitle').innerText = "Νέος Συνεργάτης";
         document.getElementById('custModal').style.display = 'block';
     }
 
-    function closeModal() { document.getElementById('custModal').style.display = 'none'; }
-
-    // --- DATABASE & RENDER ---
-    function render() {
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const body = document.getElementById('custBody');
-        body.innerHTML = '';
-        
-        Object.keys(db).sort().forEach(name => {
-            const c = db[name];
-            body.innerHTML += `
-                <tr>
-                    <td style="font-weight:bold">${name}</td>
-                    <td><code>${c.afm || '-'}</code></td>
-                    <td>${c.mark ? `<span class="status-pill status-sent">MARK: ${c.mark}</span>` : '<span class="status-pill">Εκκρεμεί</span>'}</td>
-                    <td style="text-align:right">
-                        <button class="btn-settings" style="background:#8b5cf6; padding:8px 12px;" onclick="window.location.href='invoice.html?customer=${encodeURIComponent(name)}'">📑</button>
-                        <button class="btn-settings" style="background:#0ea5e9; padding:8px 12px;" onclick="edit('${name}')">✏️</button>
-                        <button class="btn-settings" style="background:#ef4444; padding:8px 12px;" onclick="remove('${name}')">🗑️</button>
-                    </td>
-                </tr>`;
-        });
+    function closeModal() { 
+        document.getElementById('custModal').style.display = 'none'; 
     }
 
-    function saveCustomer() {
+    // --- DATABASE & RENDER ---
+    async function render() {
+        try {
+            const { data: customers, error } = await _supabase
+                .from(TABLE_CUSTOMERS)
+                .select('*')
+                .order('name', { ascending: true });
+
+            if (error) throw error;
+
+            const body = document.getElementById('custBody');
+            body.innerHTML = '';
+            
+            customers.forEach(c => {
+                body.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold">${c.name}</td>
+                        <td><code>${c.afm || '-'}</code></td>
+                        <td>${c.mark ? `<span class="status-pill status-sent">MARK: ${c.mark}</span>` : '<span class="status-pill">Εκκρεμεί</span>'}</td>
+                        <td style="text-align:right">
+                            <button class="btn-settings" style="background:#8b5cf6; padding:8px 12px;" onclick="window.location.href='invoice.html?customer_id=${c.id}'">📑</button>
+                            <button class="btn-settings" style="background:#0ea5e9; padding:8px 12px;" onclick="edit('${c.id}')">✏️</button>
+                            <button class="btn-settings" style="background:#ef4444; padding:8px 12px;" onclick="remove('${c.id}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+        } catch (err) {
+            console.error("Render Error:", err.message);
+        }
+    }
+
+    async function saveCustomer() {
         const name = document.getElementById('mName').value.trim();
-        if(!name) return alert("Όνομα απαραίτητο!");
+        const afm = document.getElementById('mAfm').value.trim();
+        
+        if(!name) return alert("⚠️ Το όνομα είναι υποχρεωτικό!");
 
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        if(currentEditName && currentEditName !== name) delete db[currentEditName];
-
-        // Συλλογή Υποκαταστημάτων ως αντικείμενα
         const branches = [];
         document.querySelectorAll('.branch-card').forEach(card => {
             branches.push({
@@ -181,46 +198,54 @@
             });
         });
 
-        db[name] = {
-            name, 
-            afm: document.getElementById('mAfm').value,
+        const payload = {
+            name,
+            afm,
             doy: document.getElementById('mDoy').value,
-            addr: document.getElementById('mAddr').value,
+            address: document.getElementById('mAddr').value,
             city: document.getElementById('mCity').value,
-            tk: document.getElementById('mTk').value,
+            zip: document.getElementById('mTk').value,
             email: document.getElementById('mEmail').value,
             phone: document.getElementById('mPhone').value,
             branches: branches
         };
 
-        localStorage.setItem('customersDB', JSON.stringify(db));
-        closeModal(); render();
+        if (currentEditId) payload.id = currentEditId;
+
+        const { error } = await _supabase.from(TABLE_CUSTOMERS).upsert(payload);
+        
+        if (error) {
+            alert("❌ Σφάλμα: " + error.message);
+        } else {
+            closeModal();
+            render();
+        }
     }
 
-    function edit(name) {
-        const db = JSON.parse(localStorage.getItem('customersDB') || '{}');
-        const c = db[name]; currentEditName = name;
-        
-        document.getElementById('mName').value = c.name;
+    async function edit(id) {
+        const { data: c, error } = await _supabase.from(TABLE_CUSTOMERS).select('*').eq('id', id).single();
+        if (error) return alert("Σφάλμα φόρτωσης");
+
+        currentEditId = id;
+        document.getElementById('mName').value = c.name || '';
         document.getElementById('mAfm').value = c.afm || '';
         document.getElementById('mDoy').value = c.doy || '';
-        document.getElementById('mAddr').value = c.addr || '';
+        document.getElementById('mAddr').value = c.address || '';
         document.getElementById('mCity').value = c.city || '';
-        document.getElementById('mTk').value = c.tk || '';
+        document.getElementById('mTk').value = c.zip || '';
         document.getElementById('mEmail').value = c.email || '';
         document.getElementById('mPhone').value = c.phone || '';
         
         document.getElementById('branchesWrapper').innerHTML = '';
         if(c.branches) c.branches.forEach(b => addBranch(b));
         
-        document.getElementById('modalTitle').innerText = "Επεξεργασία: " + name;
+        document.getElementById('modalTitle').innerText = "Επεξεργασία: " + c.name;
         document.getElementById('custModal').style.display = 'block';
     }
 
-    function remove(name) {
-        if(confirm(`Διαγραφή "${name}";`)) {
-            const db = JSON.parse(localStorage.getItem('customersDB'));
-            delete db[name]; localStorage.setItem('customersDB', JSON.stringify(db));
+    async function remove(id) {
+        if(confirm("Διαγραφή πελάτη;")) {
+            await _supabase.from(TABLE_CUSTOMERS).delete().eq('id', id);
             render();
         }
     }
@@ -233,49 +258,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', render);
-  async function searchAade(btn) {
-    const afmInput = document.getElementById('mAfm');
-    const afm = afmInput.value.trim();
-
-    if (afm.length !== 9) {
-        alert("⚠️ Το ΑΦΜ πρέπει να είναι ακριβώς 9 ψηφία.");
-        return;
-    }
-
-    const originalContent = btn.innerHTML;
-    btn.innerHTML = "⏳"; // Δείξε ότι φορτώνει
-    btn.disabled = true;
-
-    try {
-        // ΣΗΜΕΙΩΣΗ: Εδώ καλείς το API σου ή το Proxy που επικοινωνεί με την ΑΑΔΕ
-        // Για το παράδειγμα, χρησιμοποιούμε μια fetch κλήση
-        const response = await fetch(`https://your-api-gateway.com/get-aade-data?afm=${afm}`);
-        const result = await response.json();
-
-        if (result.success && result.data) {
-            const info = result.data;
-            // Αυτόματη συμπλήρωση πεδίων
-            document.getElementById('mName').value = info.onomasia || '';
-            document.getElementById('mDoy').value = info.doy_descr || '';
-            document.getElementById('mAddr').value = info.address || '';
-            document.getElementById('mCity').value = info.city || '';
-            document.getElementById('mTk').value = info.postal_code || '';
-            
-            // Προαιρετικά: Αν υπάρχει email ή τηλέφωνο στην ΑΑΔΕ
-            if(info.email) document.getElementById('mEmail').value = info.email;
-            
-            console.log("🔱 Στοιχεία ανακτήθηκαν από ΑΑΔΕ");
-        } else {
-            alert("❌ Δεν βρέθηκαν στοιχεία. Ελέγξτε το ΑΦΜ ή τις ρυθμίσεις myDATA.");
-        }
-    } catch (error) {
-        console.error("AADE Search Error:", error);
-        alert("❌ Σφάλμα σύνδεσης με την υπηρεσία ΑΑΔΕ.");
-    } finally {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    }
-}
 </script>
+ 
 </body>
 </html>

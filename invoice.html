@@ -36,6 +36,19 @@ function initTritonSupabase() {
     }
 }
 
+  // 🛑 ΣΤΑΜΑΤΑΕΙ ΤΟ ENTER ΠΟΥ ΣΒΗΝΕΙ ΣΕΙΡΕΣ
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (activeEl.closest('table') || activeEl.tagName === 'INPUT') {
+            e.preventDefault(); 
+            e.stopPropagation();
+            console.log("🔱 Triton: Enter blocked locally");
+            return false;
+        }
+    }
+}, true); // Το 'true' είναι κλειδί εδώ για να προλάβει το event
+  
 // 3. LOAD PRODUCTS (With Auto-Retry)
 async function loadProductsFromSupabase() {
     if (!_supabase) {
@@ -477,8 +490,11 @@ if (document.readyState === 'complete') {
    
    
    <script>
-   
-  /* ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ ΜΕ ΕΞΥΠΝΗ ΤΟΠΟΘΕΤΗΣΗ ΛΙΣΤΑΣ */
+   /* ==========================================================================
+   🔱 TRITON ERP: CUSTOMER LOGIC (SEARCH & STATEMENT)
+   ========================================================================== */
+
+// 1. ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ ΜΕ ΕΞΥΠΝΗ ΤΟΠΟΘΕΤΗΣΗ ΛΙΣΤΑΣ
 async function searchCustomer(input) {
     const term = input.value.trim();
     
@@ -488,6 +504,7 @@ async function searchCustomer(input) {
     if (term.length < 2) return;
 
     try {
+        // Αναζήτηση στη βάση δεδομένων
         const { data, error } = await supabase
             .from('customers')
             .select('*')
@@ -500,7 +517,7 @@ async function searchCustomer(input) {
         list.id = 'customer-dropdown';
         const rect = input.getBoundingClientRect();
         
-        // Triton UI Styling
+        // Triton UI Styling (Dropdown)
         list.style = `position: absolute; top: ${rect.bottom + window.scrollY}px; left: ${rect.left + window.scrollX}px; width: ${rect.width}px; background: white; border: 1px solid #0ea5e9; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); z-index: 20001; max-height: 200px; overflow-y: auto;`;
 
         data.forEach(cust => {
@@ -508,74 +525,37 @@ async function searchCustomer(input) {
             item.style = "padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b;";
             item.innerHTML = `<b>${cust.name}</b> <br> <span style="color:#64748b; font-size:12px;">ΑΦΜ: ${cust.afm || '---'} | ${cust.city || ''}</span>`;
             
-            // Hover effect
+            // Hover effects
             item.onmouseover = () => item.style.background = '#e0f2fe';
             item.onmouseout = () => item.style.background = 'white';
 
             item.onclick = () => {
-                // 1. Ενημέρωση των labels
-                const updateLabel = (id, text) => {
-                    const el = document.getElementById(id);
-                    if (el) el.innerText = text || "-";
-                };
-                updateLabel('customerName', cust.name);
-                updateLabel('customerEmail', cust.email);
-                updateLabel('customerAFM', cust.afm);
+                // Χρήση της κεντρικής συνάρτησης fillCustomerUI για ομοιομορφία
+                if (typeof window.fillCustomerUI === 'function') {
+                    window.fillCustomerUI(cust);
+                } else {
+                    // Fallback αν η fillCustomerUI δεν είναι διαθέσιμη
+                    document.getElementById('customerName').innerText = cust.name;
+                    document.getElementById('newCustName').value = cust.name;
+                }
 
-                // 2. Συμπλήρωση Input Πεδίων
-                const setVal = (id, val) => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.value = val || '';
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                };
-
-                setVal('newCustName', cust.name);
-                setVal('newCustJob', cust.job || cust.occupation || '');
-                setVal('newCustDoy', cust.doy);
-                setVal('newCustAddress', cust.address);
-                setVal('newCustCity', cust.city);
-                setVal('newCustZip', cust.zip);
-                setVal('newCustEmail', cust.email);
-                setVal('newCustPhone', cust.phone);
-
-                // 3. ΑΦΜ (Έξυπνη αναζήτηση σε όλα τα πεδία ΑΦΜ)
-                document.querySelectorAll('input').forEach(inp => {
-                    if (inp.id.toLowerCase().includes('afm') || inp.name.toLowerCase().includes('afm')) {
-                        inp.value = cust.afm || '';
-                        inp.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                });
-
-                // 4. ΗΜΕΡΟΜΗΝΙΑ & ΩΡΑ (Smart-Scan)
-                const τώρα = new Date();
-                const dateString = τώρα.toISOString().split('T')[0];
-                const timeString = τώρα.getHours().toString().padStart(2, '0') + ":" + 
-                                   τώρα.getMinutes().toString().padStart(2, '0');
-
+                // Αυτόματη ημερομηνία & ώρα
+                const now = new Date();
                 const dateInput = document.querySelector('input[type="date"]');
-                if (dateInput) {
-                    dateInput.value = dateString;
-                    dateInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-
                 const timeInput = document.querySelector('input[type="time"]');
-                if (timeInput) {
-                    timeInput.value = timeString;
-                    timeInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
+                if (dateInput) dateInput.value = now.toISOString().split('T')[0];
+                if (timeInput) timeInput.value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-                // 5. Καθαρισμός και Focus
+                // Καθαρισμός και Focus στο επόμενο βήμα
                 input.value = cust.name;
                 list.remove();
 
                 setTimeout(() => {
-                    const nextStep = document.querySelector('input[oninput*="searchProductByDesc"]');
+                    const nextStep = document.querySelector('input[oninput*="searchProductByDesc"], .product-input');
                     if (nextStep) nextStep.focus();
-                }, 200);
+                }, 300);
 
-                console.log("%c 🔱 Triton: Auto-Fill Completed ", "color: #0077be; font-weight: bold;");
+                console.log("🔱 Triton: Customer Selected & UI Updated");
             };
             list.appendChild(item);
         });
@@ -587,19 +567,12 @@ async function searchCustomer(input) {
     }
 }
 
-// Κλείσιμο λίστας με κλικ εκτός
-document.addEventListener('click', (e) => {
-    const list = document.getElementById('customer-dropdown');
-    if (list && !list.contains(e.target) && e.target.id !== 'customerSearchInput') {
-        list.remove();
-    }
-});
-// 2. Η ΝΕΑ ΑΝΑΛΥΤΙΚΗ ΚΑΡΤΕΛΑ (ΑΝΤΙΚΑΘΙΣΤΑ ΤΗΝ showCustomers)
+// 2. Η ΝΕΑ ΑΝΑΛΥΤΙΚΗ ΚΑΡΤΕΛΑ
 window.openCustomerStatement = async function() {
-    const customerName = document.getElementById('customerName')?.innerText;
+    const customerName = document.getElementById('customerName')?.innerText || document.getElementById('newCustName')?.value;
 
     if (!customerName || customerName === "-" || customerName === "ΛΙΑΝΙΚΗ ΠΩΛΗΣΗ") {
-        alert("⚠️ Επιλέξτε πρώτα έναν πελάτη από την αναζήτηση.");
+        alert("⚠️ Παρακαλώ επιλέξτε έναν έγκυρο πελάτη.");
         return;
     }
 
@@ -611,68 +584,67 @@ window.openCustomerStatement = async function() {
         document.body.appendChild(modal);
     }
     
-    modal.innerHTML = `<div style="color:white; font-size: 1.2rem;">🔄 Φόρτωση αναλυτικής καρτέλας...</div>`;
+    modal.innerHTML = `<div style="color:white; font-size: 1.2rem;">🔄 Φόρτωση κινήσεων...</div>`;
     modal.style.display = 'flex';
 
     try {
         const [salesRes, paymentsRes] = await Promise.all([
-            supabase.from('sales').select('*').eq('customer_name', customerName).order('created_at', { ascending: false }),
-            supabase.from('eispraxeis').select('*').eq('customer_name', customerName).order('created_at', { ascending: false })
+            supabase.from('sales').select('*').eq('customer_name', customerName).order('created_at', { ascending: true }),
+            supabase.from('eispraxeis').select('*').eq('customer_name', customerName).order('created_at', { ascending: true })
         ]);
 
         let allMovements = [
-            ...(salesRes.data || []).map(s => ({ date: s.created_at, desc: `Τιμολόγιο (${s.items || 'Προϊόντα'})`, debit: s.amount, credit: 0 })),
+            ...(salesRes.data || []).map(s => ({ date: s.created_at, desc: `Τιμολόγιο`, debit: s.amount, credit: 0 })),
             ...(paymentsRes.data || []).map(p => ({ date: p.created_at, desc: `Είσπραξη (${p.payment_method})`, debit: 0, credit: p.amount }))
         ];
 
-        allMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Ταξινόμηση βάσει ημερομηνίας
+        allMovements.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        let currentBalance = 0;
+        let runningBalance = 0;
         let rowsHtml = allMovements.map(m => {
-            currentBalance += (m.debit - m.credit);
+            runningBalance += (m.debit - m.credit);
             return `
                 <tr style="border-bottom: 1px solid #edf2f7;">
-                    <td style="padding: 12px; font-size: 0.85rem;">${new Date(m.date).toLocaleDateString('el-GR')}</td>
-                    <td style="padding: 12px; font-size: 0.85rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${m.desc}</td>
-                    <td style="padding: 12px; color: #e53e3e; text-align: right; font-weight: bold;">${m.debit > 0 ? m.debit.toFixed(2) + ' €' : '-'}</td>
-                    <td style="padding: 12px; color: #38a169; text-align: right; font-weight: bold;">${m.credit > 0 ? m.credit.toFixed(2) + ' €' : '-'}</td>
-                </tr>
-            `;
-        }).join('');
+                    <td style="padding: 12px;">${new Date(m.date).toLocaleDateString('el-GR')}</td>
+                    <td style="padding: 12px;">${m.desc}</td>
+                    <td style="padding: 12px; color: #e53e3e; text-align: right;">${m.debit > 0 ? m.debit.toFixed(2) + ' €' : '-'}</td>
+                    <td style="padding: 12px; color: #38a169; text-align: right;">${m.credit > 0 ? m.credit.toFixed(2) + ' €' : '-'}</td>
+                    <td style="padding: 12px; font-weight: bold; text-align: right;">${runningBalance.toFixed(2)} €</td>
+                </tr>`;
+        }).reverse().join(''); // Τα πιο πρόσφατα πάνω
 
         modal.innerHTML = `
-            <div style="background: white; width: 90%; max-width: 900px; max-height: 85vh; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div style="background: white; width: 90%; max-width: 900px; max-height: 85vh; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column;">
                 <div style="background: #0ea5e9; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin:0; font-size: 1.2rem;">📊 Καρτέλα Πελάτη: ${customerName}</h2>
-                    <button onclick="document.getElementById('statementModal').style.display='none'" style="background:none; border:none; color:white; font-size:30px; cursor:pointer;">&times;</button>
+                    <h2 style="margin:0; font-size: 1.2rem;">📊 Καρτέλα: ${customerName}</h2>
+                    <button onclick="document.getElementById('statementModal').style.display='none'" style="background:none; border:none; color:white; font-size:25px; cursor:pointer;">&times;</button>
                 </div>
-                <div style="padding: 20px; background: #f1f5f9; display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9;">
+                <div style="padding: 20px; background: #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="font-size: 0.7rem; color: #64748b; font-weight: bold;">ΤΡΕΧΟΝ ΥΠΟΛΟΙΠΟ</div>
-                        <div style="font-size: 2rem; font-weight: bold; color: ${currentBalance >= 0 ? '#e53e3e' : '#38a169'};">${currentBalance.toFixed(2)} €</div>
+                        <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Τρέχον Υπόλοιπο</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: ${runningBalance >= 0 ? '#e53e3e' : '#38a169'};">${runningBalance.toFixed(2)} €</div>
                     </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <button onclick="window.print()" style="padding: 10px 15px; background: #1e293b; color: white; border: none; border-radius: 8px; cursor: pointer;">🖨️ Εκτύπωση</button>
-                    </div>
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #1e293b; color: white; border: none; border-radius: 8px; cursor: pointer;">Εκτύπωση</button>
                 </div>
-                <div style="flex: 1; overflow-y: auto; padding: 10px 20px;">
+                <div style="flex: 1; overflow-y: auto; padding: 0 20px;">
                     <table style="width: 100%; border-collapse: collapse;">
-                        <thead style="position: sticky; top: 0; background: white; z-index: 10;">
-                            <tr style="text-align: left; color: #475569; font-size: 0.8rem; border-bottom: 2px solid #cbd5e1;">
+                        <thead style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 2px solid #cbd5e1;">
+                            <tr style="text-align: left; font-size: 0.8rem; color: #475569;">
                                 <th style="padding: 12px;">ΗΜΕΡΟΜΗΝΙΑ</th>
                                 <th style="padding: 12px;">ΠΕΡΙΓΡΑΦΗ</th>
                                 <th style="padding: 12px; text-align: right;">ΧΡΕΩΣΗ (+)</th>
                                 <th style="padding: 12px; text-align: right;">ΠΙΣΤΩΣΗ (-)</th>
+                                <th style="padding: 12px; text-align: right;">ΥΠΟΛΟΙΠΟ</th>
                             </tr>
                         </thead>
-                        <tbody>${rowsHtml || '<tr><td colspan="4" style="padding:20px; text-align:center;">Δεν υπάρχουν κινήσεις.</td></tr>'}</tbody>
+                        <tbody>${rowsHtml || '<tr><td colspan="5" style="padding:20px; text-align:center;">Δεν βρέθηκαν κινήσεις.</td></tr>'}</tbody>
                     </table>
                 </div>
-            </div>
-        `;
+            </div>`;
     } catch (err) {
         console.error(err);
-        alert("Σφάλμα φόρτωσης. Βεβαιωθείτε ότι υπάρχουν οι πίνακες 'sales' και 'eispraxeis'.");
+        alert("Σφάλμα κατά τη φόρτωση της καρτέλας.");
         modal.style.display = 'none';
     }
 };
@@ -1806,6 +1778,27 @@ document.addEventListener('keydown', function(e) {
             const currentIndex = inputs.indexOf(e.target);
             if (currentIndex > -1 && inputs[currentIndex + 1]) {
                 inputs[currentIndex + 1].focus();
+            }
+        }
+    }
+});
+     // 🛑 ΣΤΑΜΑΤΑΕΙ ΤΟ ENTER ΑΠΟ ΤΟ ΝΑ ΣΒΗΝΕΙ ΤΗ ΣΕΙΡΑ
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        // Αν είμαστε μέσα στον πίνακα των προϊόντων
+        if (target.closest('.item-row') || target.closest('table')) {
+            e.preventDefault(); // Εμποδίζει το refresh/delete
+            
+            // Προαιρετικά: Κάνε τον υπολογισμό χειροκίνητα αν χρειάζεται
+            if (typeof calculateTotal === 'function') calculateTotal();
+            
+            // Μετακίνηση στο επόμενο input της σειράς
+            const row = target.closest('tr') || target.closest('.item-row');
+            const inputs = Array.from(row.querySelectorAll('input:not([disabled])'));
+            const index = inputs.indexOf(target);
+            if (index > -1 && inputs[index + 1]) {
+                inputs[index + 1].focus();
             }
         }
     }

@@ -996,66 +996,69 @@ async function searchCustomer(input) {
         console.error("🔱 Search Error:", err.message);
     }
 }
-     // Αυτή η συνάρτηση θα γεμίζει αυτόματα όλα τα πεδία
-// 1. Η ΜΟΝΑΔΙΚΗ ΚΑΙ ΣΩΣΤΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΓΕΜΙΣΜΑ ΠΕΔΙΩΝ
+    // 🔱 Triton: Η ΜΟΝΑΔΙΚΗ ΚΑΙ ΣΩΣΤΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΓΕΜΙΣΜΑ ΠΕΔΙΩΝ
 window.fillCustomerUI = function(cust) {
-    console.log("🔱 Triton: Συμπλήρωση στοιχείων για:", cust);
+    if (!cust) return;
+    console.log("🔱 Triton: Αυτόματη συμπλήρωση στοιχείων...", cust);
 
-    // Λίστα με όλα τα πιθανά IDs που μπορεί να έχεις στην HTML σου
-    const fieldMapping = {
-        'name': cust.name || cust.onomasia,
-        'afm': cust.afm || cust.vat_number,
-        'doy': cust.doy || cust.doy_descr,
-        'address': cust.address || cust.dieythinsi,
-        'city': cust.city || cust.poli,
-        'zip': cust.zip || cust.tk,
-        'email': cust.email,
-        'phone': cust.phone,
-        'job': cust.job || cust.drastiriotita_descr || cust.occupation
+    // 1. Συγκέντρωση δεδομένων από όλες τις πιθανές πηγές (Supabase ή ΑΑΔΕ)
+    const data = {
+        'name':    cust.name    || cust.onomasia,
+        'afm':     cust.afm     || cust.vat_number,
+        'doy':     cust.doy     || cust.doy_descr,
+        'address': cust.address || cust.dieythinsi || cust.addr,
+        'city':    cust.city    || cust.poli,
+        'zip':     cust.zip     || cust.tk || cust.postal_code,
+        'email':   cust.email,
+        'phone':   cust.phone,
+        'job':     cust.job     || cust.drastiriotita_descr || cust.occupation
     };
 
-    // Ενημέρωση INPUT fields (Κουτάκια)
-    for (let key in fieldMapping) {
-        // Δοκιμάζουμε όλους τους συνδυασμούς ID που είδαμε στον κώδικά σου
+    // 2. Ενιαίος βρόχος ενημέρωσης για Inputs και Labels
+    for (let key in data) {
+        const value = data[key] || '';
+        
+        // Λίστα με όλα τα IDs που έχεις χρησιμοποιήσει κατά καιρούς
         const possibleIds = [
-            'newCust' + key.charAt(0).toUpperCase() + key.slice(1), // π.χ. newCustAfm
+            key,                                               // π.χ. afm
             'cust' + key.charAt(0).toUpperCase() + key.slice(1),    // π.χ. custAfm
-            key                                                     // π.χ. afm
+            'customer' + key.charAt(0).toUpperCase() + key.slice(1),// π.χ. customerAFM
+            'newCust' + key.charAt(0).toUpperCase() + key.slice(1), // π.χ. newCustAfm
+            'm' + key.charAt(0).toUpperCase() + key.slice(1)        // π.χ. mAfm
         ];
 
         possibleIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                el.value = fieldMapping[key] || '';
-                // Πυροδότηση event για να σταματήσει το σφάλμα "Βρέθηκαν: 0"
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-                
-                // Triton Feedback Highlight
-                el.style.backgroundColor = "#f0f9ff";
-                setTimeout(() => el.style.backgroundColor = "", 1500);
+                // Α) Αν είναι INPUT ή TEXTAREA
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.value = value;
+                    // Πυροδότηση events για να ενημερωθεί το myDATA/Logic της σελίδας
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    // Triton Highlight Effect
+                    el.style.transition = "background-color 0.5s";
+                    el.style.backgroundColor = "#f0f9ff";
+                    setTimeout(() => el.style.backgroundColor = "", 1500);
+                } 
+                // Β) Αν είναι SPAN, DIV, TD (Labels επικεφαλίδας)
+                else {
+                    el.innerText = value || "-";
+                }
             }
         });
     }
 
-    // Ενημέρωση LABELS/TEXT (Επικεφαλίδα Invoice)
-    const labels = {
-        'customerName': cust.name,
-        'customerAFM': cust.afm,
-        'customerEmail': cust.email
-    };
-    for (let id in labels) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = labels[id] || "-";
-    }
-
-    // Μετάβαση στο πρώτο προϊόν
+    // 3. Μετάβαση στο πρώτο προϊόν (Smart Focus)
     setTimeout(() => {
-        const firstRow = document.querySelector('.row-code, .row-desc, input[oninput*="searchProduct"]');
-        if (firstRow) firstRow.focus();
-    }, 200);
+        const firstProd = document.querySelector('input[oninput*="search"], .product-input, .row-desc');
+        if (firstProd) {
+            firstProd.focus();
+            console.log("🎯 Triton: Focus στο πρώτο προϊόν.");
+        }
+    }, 400);
 };
-
 // 2. Η ΓΕΦΥΡΑ ΜΕ ΤΗΝ ΑΑΔΕ (Διορθωμένη να καλεί τη fillCustomerUI)
 var searchMyData = async function(manualAfm = null) {
     // Ψάχνουμε το input του ΑΦΜ σε οποιοδήποτε από τα IDs σου
@@ -1773,6 +1776,40 @@ window.openNewCustomerModal = function() {
     
     return xml;
 }
+     // Αποτροπή εξαφάνισης της σειράς με το Enter
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        // Αν είμαστε σε πεδίο περιγραφής προϊόντος
+        if (e.target.closest('td') && e.target.tagName === 'INPUT') {
+            e.preventDefault(); // ΣΤΑΜΑΤΑΕΙ ΤΗ ΔΙΑΓΡΑΦΗ/SUBMIT
+            console.log("⌨️ Triton: Enter blocked to prevent row loss");
+            
+            // Αν υπάρχει ανοιχτή λίστα αποτελεσμάτων, επίλεξε το πρώτο
+            const row = e.target.closest('tr');
+            const firstResult = row.querySelector('.search-results div'); 
+            if (firstResult) {
+                firstResult.click();
+            }
+        }
+    }
+});
+     // Σταματάει το "κακό" Enter που εξαφανίζει τη σειρά
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        // Αν το Enter πατηθεί μέσα σε πίνακα (στα προϊόντα)
+        if (e.target.closest('table')) {
+            e.preventDefault(); // Εμποδίζει το refresh/delete
+            
+            // Αν θέλεις, πήγαινε το focus στο επόμενο πεδίο (π.χ. Ποσότητα)
+            const row = e.target.closest('tr');
+            const inputs = Array.from(row.querySelectorAll('input'));
+            const currentIndex = inputs.indexOf(e.target);
+            if (currentIndex > -1 && inputs[currentIndex + 1]) {
+                inputs[currentIndex + 1].focus();
+            }
+        }
+    }
+});
  </script>  
    
  <div id="newCustomerModal" class="triton-modal" style="display:none; position:fixed; z-index:20000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
@@ -1916,4 +1953,46 @@ window.openNewCustomerModal = function() {
         </div>
     </div>
 </div>
-   
+   <script>
+// 🛡️ Triton Smart Enter: Διαχείριση κίνησης μέσα στον πίνακα προϊόντων
+document.addEventListener('keydown', function(e) {
+    // Ελέγχουμε αν πατήθηκε το Enter
+    if (e.key === 'Enter') {
+        
+        // 1. Βρίσκουμε αν ο χρήστης είναι μέσα σε κάποιο input του πίνακα
+        const target = e.target;
+        const isTableInput = target.closest('table') && (target.tagName === 'INPUT' || target.tagName === 'SELECT');
+
+        if (isTableInput) {
+            // ΣΤΑΜΑΤΑΜΕ το default Enter (για να μη σβήσει η σειρά ή κάνει submit)
+            e.preventDefault();
+            
+            // 2. Βρίσκουμε όλα τα διαθέσιμα inputs της ίδιας σειράς
+            const row = target.closest('tr');
+            const rowInputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])'));
+            const currentIndex = rowInputs.indexOf(target);
+
+            // 3. Αν υπάρχει επόμενο input στην ίδια σειρά, πήγαινε εκεί
+            if (currentIndex > -1 && currentIndex < rowInputs.length - 1) {
+                rowInputs[currentIndex + 1].focus();
+                // Αν είναι κείμενο, κάνε το select για γρήγορη αλλαγή
+                if (rowInputs[currentIndex + 1].select) rowInputs[currentIndex + 1].select();
+            } 
+            // 4. Αν είμαστε στο τελευταίο input (π.χ. ΦΠΑ ή Σύνολο), δημιούργησε νέα γραμμή
+            else if (currentIndex === rowInputs.length - 1) {
+                console.log("🔱 Triton: Δημιουργία νέας γραμμής...");
+                if (typeof addItemRow === 'function') addItemRow();
+                else if (typeof addNewLine === 'function') addNewLine();
+                
+                // Focus στην αρχή της νέας γραμμής μετά από λίγο
+                setTimeout(() => {
+                    const allRows = target.closest('tbody').querySelectorAll('tr');
+                    const lastRow = allRows[allRows.length - 1];
+                    const firstInput = lastRow.querySelector('input');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }
+        }
+    }
+});
+</script>

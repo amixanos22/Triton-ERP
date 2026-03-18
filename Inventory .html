@@ -312,6 +312,9 @@ async function render() {
 // 3. ΑΠΟΘΗΚΕΥΣΗ (SAVE)
 async function save() {
     try {
+        const btn = document.querySelector('button[onclick="save()"]');
+        if (btn) { btn.disabled = true; btn.innerText = "⏳ ΑΠΟΘΗΚΕΥΣΗ..."; }
+
         const internalCode = document.getElementById('pInternalCode').value;
         const barcode = document.getElementById('pBarcode').value.trim();
         const desc = document.getElementById('pDesc').value.trim().toUpperCase();
@@ -323,10 +326,11 @@ async function save() {
 
         if (!desc) { 
             alert("⚠️ Η περιγραφή είναι υποχρεωτική!"); 
+            if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
             return; 
         }
 
-        // Έλεγχος για διπλότυπο Barcode (προαιρετικό αλλά χρήσιμο)
+        // 1. Έλεγχος για διπλότυπο Barcode
         if (barcode !== "") {
             const { data: existing } = await _supabase
                 .from(TABLE)
@@ -336,12 +340,15 @@ async function save() {
 
             if (existing && existing.id !== currentId) {
                 alert(`🚫 Το Barcode χρησιμοποιείται ήδη στο: ${existing.name}`);
+                if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
                 return;
             }
         }
 
+        // 2. Δημιουργία Payload (Προσθήκη και του description για το τιμολόγιο)
         const payload = {
             name: desc,
+            description: desc, // <--- ΑΥΤΟ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ ΓΙΑ ΤΗΝ INVOICE.HTML
             code: internalCode,
             barcode: barcode,
             type: type,
@@ -350,34 +357,48 @@ async function save() {
             vat: vat
         };
 
-        if (currentId) payload.id = currentId;
+        // Αν κάνουμε edit, περνάμε το υπάρχον ID για να κάνει update και όχι insert
+        if (currentId) {
+            payload.id = currentId;
+        }
 
+        // 3. Αποθήκευση
         const { error } = await _supabase.from(TABLE).upsert(payload);
         if (error) throw error;
 
+        console.log("✅ Triton: Το προϊόν αποθηκεύτηκε επιτυχώς!");
         closeModal();
-        render();
+        render(); // Ανανέωση της λίστας
     } catch (err) {
         alert("❌ Σφάλμα αποθήκευσης: " + err.message);
+    } finally {
+        const btn = document.querySelector('button[onclick="save()"]');
+        if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
     }
 }
-
 // 4. ΔΙΑΧΕΙΡΙΣΗ MODAL
 async function openModal() {
     document.getElementById('prodModal').style.display = 'block';
     
-    // Μόνο αν είναι ΝΕΟ είδος υπολογίζουμε επόμενο κωδικό
+    // Αν είναι ΝΕΟ είδος (δεν υπάρχει editId)
     if (!document.getElementById('prodModal').dataset.editId) {
+        // Καθαρίζουμε τα πεδία
         document.getElementById('pBarcode').value = '';
         document.getElementById('pDesc').value = '';
         document.getElementById('pPrice').value = '';
         document.getElementById('pStock').value = '0';
         document.getElementById('pType').value = 'SALE';
-        document.getElementById('pVat').value = '24';
 
-        const { count } = await _supabase.from(TABLE).select('*', { count: 'exact', head: true });
-        const nextNum = (count || 0) + 1;
-        document.getElementById('pInternalCode').value = nextNum.toString().padStart(4, '0');
+        try {
+            // Υπολογισμός επόμενου κωδικού
+            const { count } = await _supabase.from(TABLE).select('*', { count: 'exact', head: true });
+            const nextNum = (count || 0) + 1;
+            
+            // Το βάζουμε ως προτεινόμενο, αλλά τώρα μπορείς να το σβήσεις και να γράψεις
+            document.getElementById('pInternalCode').value = nextNum.toString().padStart(4, '0');
+        } catch (err) {
+            console.error(err);
+        }
     }
 }
 

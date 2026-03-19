@@ -725,24 +725,24 @@ document.addEventListener('DOMContentLoaded', () => {
             ☄️ <span class="translate" data-el="Συνοπτική Κατάσταση" data-en="Summary">Συνοπτική Κατάσταση</span>
         </a>
 
-     <div class="quick-actions-wrapper">
-    <a href="javascript:void(0)" 
-       onclick="toggleDropdown('docsDropdown')" 
-       class="nav-item">
+    <div class="nav-item-container">
+    <a href="javascript:void(0)" class="nav-item">
         📑 <span class="translate" data-el="Παραστατικά" data-en="Invoices">Παραστατικά</span>
     </a>
-
-    <div id="docsDropdown" class="actions-dropdown">
-        <a href="javascript:void(0)" onclick="createNewWindow('history.html', '📑 Ιστορικό Παραστατικών', 1100, 800)">
-            📂 Ιστορικό Παραστατικών
+    <div class="submenu">
+        <a href="javascript:void(0)" 
+           onclick="createNewWindow('history.html', '📑 Ιστορικό Παραστατικών', 1100, 800)" 
+           class="submenu-item translate" data-el="Ιστορικό" data-en="History">
+           📂 Ιστορικό Παραστατικών
         </a>
         
-        <a href="javascript:void(0)" onclick="createNewWindow('drafts.html', '📝 Προσχέδια προς Εκτύπωση', 1000, 700)" style="border-top: 1px solid #f1f5f9;">
-            📝 Προσχέδια (Drafts)
+        <a href="javascript:void(0)" 
+           onclick="createNewWindow('drafts.html', '📝 Προσχέδια', 1000, 700)" 
+           class="submenu-item translate" data-el="Προσχέδια" data-en="Drafts">
+           📝 Προσχέδια (Drafts)
         </a>
     </div>
 </div>
-          
 
         <div class="nav-item-container">
     <a href="#" class="nav-item">

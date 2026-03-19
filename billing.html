@@ -217,7 +217,21 @@ window.onload = async () => {
   window.onafterprint = () => {
     localStorage.removeItem('currentInvoice');
 };
-  
+ async function updateInventory(productId, quantitySold) {
+    // 1. Τραβάμε το τρέχον απόθεμα
+    const { data: prod } = await DB.from('products')
+        .select('stock_qty')
+        .eq('id', productId)
+        .single();
+
+    // 2. Αφαιρούμε την ποσότητα που πουλήθηκε
+    const newStock = (prod.stock_qty || 0) - quantitySold;
+
+    // 3. Ενημερώνουμε τη βάση - ΑΥΤΟΜΑΤΑ
+    await DB.from('products')
+        .update({ stock_qty: newStock })
+        .eq('id', productId);
+} 
   
   
 </script>

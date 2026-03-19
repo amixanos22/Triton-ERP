@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Triton ERP - Προσχέδια</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
+        h2 { color: #0369a1; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        
+        .search-box { margin-bottom: 20px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; }
+        input:focus { border-color: #0ea5e9; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f1f5f9; text-align: left; padding: 12px; color: #64748b; font-size: 0.85rem; text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-size: 0.95rem; }
+        
+        .status-badge { background: #fffbeb; color: #b45309; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; border: 1px solid #fde68a; }
+        
+        .btn-select { background: #0369a1; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-select:hover { background: #0ea5e9; }
+        
+        tr:hover { background: #f0f9ff; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2><span>📝</span> Εκκρεμή Προσχέδια Τιμολογίων</h2>
+    
+    <div class="search-box">
+        <input type="text" id="draftSearch" onkeyup="filterDrafts()" placeholder="🔍 Αναζήτηση ανά πελάτη ή ημερομηνία...">
+    </div>
+
+    <table id="draftsTable">
+        <thead>
+            <tr>
+                <th>Ημερομηνία</th>
+                <th>Πελάτης</th>
+                <th>Ποσό</th>
+                <th>Κατάσταση</th>
+                <th>Ενέργεια</th>
+            </tr>
+        </thead>
+        <tbody id="draftsBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // 1. Φόρτωση Προσχεδίων από τη Supabase
+    async function loadDrafts() {
+        const { data, error } = await DB
+            .from('invoices')
+            .select('*, customers(name)') // Τραβάμε και το όνομα του πελάτη
+            .eq('status', 'draft')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error("Error:", error);
+            return;
+        }
+
+        const tbody = document.getElementById('draftsBody');
+        tbody.innerHTML = data.map(draft => `
+            <tr onclick="selectDraft('${draft.id}')">
+                <td>${new Date(draft.created_at).toLocaleDateString('el-GR')}</td>
+                <td><strong>${draft.customers?.name || 'Ανώνυμος'}</strong></td>
+                <td style="font-weight: bold; color: #0369a1;">${draft.total_amount.toFixed(2)} €</td>
+                <td><span class="status-badge">ΠΡΟΣΧΕΔΙΟ</span></td>
+                <td><button class="btn-select">ΕΠΙΛΟΓΗ</button></td>
+            </tr>
+        `).join('');
+    }
+
+    // 2. Επιλογή Προσχεδίου και επιστροφή στο Billing
+    function selectDraft(id) {
+        // Στέλνουμε τον χρήστη πίσω στη σελίδα billing με το ID του προσχεδίου στο URL
+        window.location.href = `billing.html?load_draft=${id}`;
+    }
+
+    // Φόρτωση κατά το άνοιγμα
+    window.onload = loadDrafts;
+</script>
+
+</body>
+</html>

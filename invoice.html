@@ -7,471 +7,59 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
-<script>  
-// ==========================================
-// 🔱 TRITON ERP - UNIFIED CORE ENGINE (v3.5)
-// ==========================================
-
-// 1. GLOBAL VARIABLES
-var supabase; 
-window.allProducts = [];
-
-// 2. INITIALIZATION FUNCTION
-function initTritonSupabase() {
-    const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
-
-    try {
-        if (typeof window.supabase !== 'undefined') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("✅ Triton: Supabase Connected.");
-            
-            if (typeof loadProductsFromSupabase === 'function') {
-                loadProductsFromSupabase();
-            }
-        } else {
-            console.error("❌ Triton: Supabase SDK missing.");
-        }
-    } catch (e) {
-        console.error("❌ Triton: Init Error:", e);
+<script>
+ 
+// Κλείσιμο modal με κλικ έξω (Παραμένει ως έχει)
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('newCustomerModal');
+    if (event.target === modal && typeof closeNewCustomerModal === 'function') {
+        closeNewCustomerModal();
     }
-}
-
-// 3. ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ (Customer Search)
-async function searchCustomer(input) {
-    const term = input.value.trim();
-    let existingList = document.getElementById('customer-dropdown');
-    if (existingList) existingList.remove();
-
-    if (term.length < 2) return;
-
-    try {
-        const { data, error } = await supabase
-            .from('customers')
-            .select('*')
-            .or(`name.ilike.%${term}%,afm.eq.${term}`)
-            .limit(10);
-
-        if (error || !data || data.length === 0) return;
-
-        const list = document.createElement('div');
-        list.id = 'customer-dropdown';
-        list.style = `position: absolute; top: 100%; left: 0; width: 100%; background: white; 
-                      border: 1px solid #0ea5e9; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); 
-                      z-index: 20001; max-height: 200px; overflow-y: auto;`;
-
-        data.forEach(cust => {
-            const item = document.createElement('div');
-            item.style = "padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b;";
-            item.innerHTML = `<b>${cust.name}</b> <br> 
-                              <span style="color:#64748b; font-size:12px;">ΑΦΜ: ${cust.afm || '---'} | ${cust.city || ''}</span>`;
-            
-            item.onmouseover = () => item.style.background = '#e0f2fe';
-            item.onmouseout = () => item.style.background = 'white';
-
-            item.onclick = () => {
-                window.fillCustomerUI(cust);
-                input.value = cust.name;
-                list.remove();
-
-                setTimeout(() => {
-                    const nextField = document.querySelector('.row-desc');
-                    if (nextField) nextField.focus();
-                }, 200);
-            };
-            list.appendChild(item);
-        });
-
-        if (term.length === 9 && !isNaN(term)) {
-            const aadeItem = document.createElement('div');
-            aadeItem.style = "padding: 12px; cursor: pointer; background: #0ea5e9; color: white; font-weight: bold; text-align: center; font-size: 13px;";
-            aadeItem.innerHTML = `🔍 Αναζήτηση ΑΦΜ "${term}" στην ΑΑΔΕ`;
-            aadeItem.onclick = () => {
-                list.remove();
-                if (typeof openNewCustomerModal === 'function') openNewCustomerModal();
-                if (typeof searchMyData === 'function') searchMyData(term);
-            };
-            list.appendChild(aadeItem);
-        }
-
-        input.parentElement.appendChild(list);
-    } catch (err) { console.error("❌ Triton Search error:", err); }
-}
-
-// 4. Η ΝΕΑ ΑΝΑΛΥΤΙΚΗ ΚΑΡΤΕΛΑ (Βελτιωμένη)
-window.openCustomerStatement = async function() {
-    // Προσπάθεια λήψης ονόματος από διάφορα πιθανά σημεία
-    const customerName = document.getElementById('customerName')?.innerText || 
-                         document.getElementById('custName')?.value || 
-                         document.getElementById('newCustName')?.value;
-
-    if (!customerName || customerName === "-" || customerName === "ΛΙΑΝΙΚΗ ΠΩΛΗΣΗ") {
-        alert("⚠️ Παρακαλώ επιλέξτε έναν έγκυρο πελάτη.");
-        return;
-    }
-
-    let modal = document.getElementById('statementModal') || document.createElement('div');
-    modal.id = 'statementModal';
-    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10005; backdrop-filter: blur(5px);";
-    if (!document.getElementById('statementModal')) document.body.appendChild(modal);
-    
-    modal.innerHTML = `<div style="color:white; font-size: 1.2rem; font-family:sans-serif;">🔄 Φόρτωση κινήσεων για ${customerName}...</div>`;
-    modal.style.display = 'flex';
-
-    try {
-        // Παίρνουμε πωλήσεις και εισπράξεις
-        const [salesRes, paymentsRes] = await Promise.all([
-            supabase.from('sales').select('*').eq('customer_name', customerName).order('created_at', { ascending: true }),
-            supabase.from('eispraxeis').select('*').eq('customer_name', customerName).order('created_at', { ascending: true })
-        ]);
-
-        if (salesRes.error) throw salesRes.error;
-        if (paymentsRes.error) throw paymentsRes.error;
-
-        // Ενοποίηση και ταξινόμηση κινήσεων
-        let allMovements = [
-            ...(salesRes.data || []).map(s => ({ date: s.created_at, desc: `Τιμολόγιο #${s.id || ''}`, debit: parseFloat(s.amount || 0), credit: 0 })),
-            ...(paymentsRes.data || []).map(p => ({ date: p.created_at, desc: `Είσπραξη (${p.payment_method})`, debit: 0, credit: parseFloat(p.amount || 0) }))
-        ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        let runningBalance = 0;
-        // Δημιουργία των rows και υπολογισμός υπολοίπου
-        let rowsHtml = allMovements.map(m => {
-            runningBalance += (m.debit - m.credit);
-            return `<tr style="border-bottom: 1px solid #edf2f7;">
-                <td style="padding: 12px;">${new Date(m.date).toLocaleDateString('el-GR')}</td>
-                <td style="padding: 12px;">${m.desc}</td>
-                <td style="padding: 12px; color: #e53e3e; text-align: right;">${m.debit > 0 ? m.debit.toLocaleString('el-GR', {minimumFractionDigits: 2}) + ' €' : '-'}</td>
-                <td style="padding: 12px; color: #38a169; text-align: right;">${m.credit > 0 ? m.credit.toLocaleString('el-GR', {minimumFractionDigits: 2}) + ' €' : '-'}</td>
-                <td style="padding: 12px; font-weight: bold; text-align: right; background: #f8fafc;">${runningBalance.toLocaleString('el-GR', {minimumFractionDigits: 2})} €</td>
-            </tr>`;
-        }).reverse().join(''); // Αντιστροφή για να φαίνονται τα πρόσφατα πάνω
-
-        modal.innerHTML = `
-            <div style="background: white; width: 95%; max-width: 900px; max-height: 90vh; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; font-family: sans-serif;">
-                <div style="background: #0ea5e9; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin:0; font-size: 1.2rem;">📊 Αναλυτική Καρτέλα Πελάτη</h2>
-                    <button onclick="document.getElementById('statementModal').style.display='none'" style="background:none; border:none; color:white; font-size:30px; cursor:pointer;">&times;</button>
-                </div>
-                <div style="padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 0.8rem; color: #64748b; font-weight: bold;">ΠΕΛΑΤΗΣ: ${customerName}</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: ${runningBalance > 0 ? '#e53e3e' : '#38a169'};">
-                            ${runningBalance.toLocaleString('el-GR', {minimumFractionDigits: 2})} €
-                        </div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">Τρέχον Υπόλοιπο</div>
-                    </div>
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #1e293b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight:bold;">🖨️ Εκτύπωση PDF</button>
-                </div>
-                <div style="flex: 1; overflow-y: auto; padding: 0 20px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                        <thead style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 2px solid #0ea5e9;">
-                            <tr style="text-align: left; color: #475569;">
-                                <th style="padding: 12px;">ΗΜΕΡΟΜΗΝΙΑ</th>
-                                <th style="padding: 12px;">ΠΕΡΙΓΡΑΦΗ</th>
-                                <th style="padding: 12px; text-align: right;">ΧΡΕΩΣΗ (+)</th>
-                                <th style="padding: 12px; text-align: right;">ΠΙΣΤΩΣΗ (-)</th>
-                                <th style="padding: 12px; text-align: right;">ΥΠΟΛΟΙΠΟ</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rowsHtml || '<tr><td colspan="5" style="padding:20px; text-align:center;">Δεν βρέθηκαν κινήσεις.</td></tr>'}</tbody>
-                    </table>
-                </div>
-            </div>`;
-    } catch (err) { 
-        console.error(err); 
-        alert("Σφάλμα κατά τη φόρτωση της καρτέλας.");
-        modal.style.display = 'none'; 
-    }
-};
-
-// 5. ΥΠΟΚΑΤΑΣΤΗΜΑΤΑ (Με προσθήκη ελέγχου ID)
-window.saveBranchToDb = async function() {
-    const customerName = document.getElementById('customerName')?.innerText || document.getElementById('custName')?.value;
-    const branchName = document.getElementById('branchNameInput')?.value; // Πρόσθεσε ένα όνομα υποκαταστήματος (π.χ. "Κατάστημα 1")
-    const address = document.getElementById('branchAddressInput')?.value;
-    const city = document.getElementById('branchCityInput')?.value;
-
-    if (!customerName || !address) {
-        alert("⚠️ Παρακαλώ επιλέξτε πελάτη και συμπληρώστε διεύθυνση.");
-        return;
-    }
-
-    try {
-        const { error } = await supabase.from('branches').insert([{ 
-            customer_name: customerName, 
-            branch_name: branchName || 'Υποκατάστημα',
-            address: address,
-            city: city || ''
-        }]);
-
-        if (error) throw error;
-        alert("✅ Το υποκατάστημα αποθηκεύτηκε με επιτυχία!");
-        if(document.getElementById('branchModal')) document.getElementById('branchModal').style.display = 'none';
-    } catch (err) { 
-        console.error(err); 
-        alert("Σφάλμα κατά την αποθήκευση του υποκαταστήματος.");
-    }
-};
-
-// 6. CORE UTILS
-function updateDateTime() {
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString('en-CA'); 
-    const formattedTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    
-    ['docDate', 'invoiceDate', 'newCustDate', 'docTime', 'invoiceTime', 'newCustTime'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = id.toLowerCase().includes('time') ? formattedTime : formattedDate;
-    });
-}
-
-function manageEnter(event, element) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        const row = element.closest('.invoice-row') || element.closest('.item-row') || element.closest('tr');
-        if (!row) return;
-
-        const focusOrder = ['.row-code', '.row-desc', '.row-qty', '.row-price', '.row-disc'];
-        const currentIndex = focusOrder.findIndex(cls => element.classList.contains(cls.replace('.', '')));
-        const nextInput = row.querySelector(focusOrder[currentIndex + 1]);
-
-        if (nextInput) {
-            nextInput.focus();
-            if (nextInput.select) nextInput.select();
-        } else if (typeof addNewInvoiceRow === 'function') {
-            addNewInvoiceRow();
-            setTimeout(() => {
-                const allCodes = document.querySelectorAll('.row-code');
-                if (allCodes.length > 0) allCodes[allCodes.length - 1].focus();
-            }, 50);
-        }
-    }
-}
-
-// 7. INITIALIZATION & DATA LOADING
-// 1. ΔΙΟΡΘΩΜΕΝΗ LOAD PRODUCTS (Με Retry)
-async function loadProductsFromSupabase() {
-    if (typeof supabase === 'undefined' || !supabase) {
-        console.warn("⚠️ Triton: Waiting for Supabase connection...");
-        setTimeout(loadProductsFromSupabase, 500);
-        return; 
-    }
-    try {
-        const { data, error } = await supabase.from('products').select('*');
-        if (error) throw error;
-        window.allProducts = data || [];
-        console.log("📦 Triton: " + window.allProducts.length + " προϊόντα φορτώθηκαν.");
-    } catch (e) { 
-        console.error("❌ Product Load Error:", e.message); 
-    }
-}
-
-// 2. ΔΙΟΡΘΩΜΕΝΟ DOM CONTENT LOADED
-document.addEventListener('DOMContentLoaded', async function() {
-    // 1. Ξεκινάμε τη σύνδεση και την ώρα
-    initTritonSupabase();
-    updateDateTime();
-
-    // 2. Περιμένουμε 1 δευτερόλεπτο για να σιγουρέψουμε τη σύνδεση
-    setTimeout(async () => {
-        
-        // --- ΕΛΕΓΧΟΣ ΥΓΕΙΑΣ ΣΥΝΔΕΣΗΣ ---
-        if (typeof checkSupabaseHealth === 'function') {
-            await checkSupabaseHealth(); 
-        }
-
-        // --- ΦΟΡΤΩΣΗ ΠΡΟΪΟΝΤΩΝ ---
-        await loadProductsFromSupabase();
-
-        // --- ΑΥΤΟΜΑΤΗ ΦΟΡΤΩΣΗ ΠΕΛΑΤΗ (Από URL) ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const customerId = urlParams.get('customer_id');
-        
-        if (customerId && typeof supabase !== 'undefined' && supabase) {
-            const { data: customer, error } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('id', customerId)
-                .maybeSingle();
-            
-            if (customer) {
-                window.fillCustomerUI(customer);
-                console.log("✅ Triton: Customer UI filled from URL.");
-            }
-        }
-    }, 1000); // 1000ms για απόλυτη σιγουριά
 });
-  
-  
-  
-  
-
-// 🔱 THE DEFINITIVE TRITON ROUTING ENGINE (V5 - FINAL)
-ΑΥΤΟ?   window.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const target = e.target;
-        
-        // 1. ΕΞΑΙΡΕΣΕΙΣ
-        if (['BUTTON', 'TEXTAREA'].includes(target.tagName) || target.readOnly) return;
-
-        // 2. ΕΛΕΓΧΟΣ ΑΝ ΕΙΜΑΣΤΕ ΜΕΣΑ ΣΤΟ MODAL ΠΕΛΑΤΗ
-        const isInsideModal = target.closest('#newCustomerModal');
-
-        if (isInsideModal) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // 🗺️ ΑΥΣΤΗΡΟ ROUTING ΧΩΡΙΣ FALLBACK (Μόνο για το Modal)
-            const modalFlow = {
-                'searchAfmInput': 'newCustName',
-                'newCustName':    'newCustJob',
-                'newCustJob':     'newCustAfm',
-                'newCustAfm':     'newCustDoy',
-                'newCustDoy':     'newCustZip',     // Από ΔΟΥ πάει ΤΚ
-                'newCustZip':     'newCustAddress', // ΑΠΟ ΤΚ ΠΑΕΙ ΔΙΕΥΘΥΝΣΗ (Η Διόρθωση)
-                'newCustAddress': 'newCustCity',
-                'newCustCity':    'newCustPhone',
-                'newCustPhone':   'newCustEmail'
-            };
-
-            const nextId = modalFlow[target.id];
-            
-            if (nextId) {
-                const nextField = document.getElementById(nextId);
-                if (nextField) {
-                    nextField.focus();
-                    if (nextField.tagName === 'INPUT') nextField.select();
-                    return; // ΕΔΩ ΣΤΑΜΑΤΑΕΙ Η ΕΚΤΕΛΕΣΗ ΓΙΑ ΤΟ MODAL
-                }
-            }
-
-            // Ειδική περίπτωση για το Email (Τέλος διαδρομής)
-            if (target.id === 'newCustEmail') {
-                saveNewCustomer();
-                return;
-            }
-        }
-
-        // 3. ΛΟΓΙΚΗ ΓΙΑ ΤΗΝ ΥΠΟΛΟΙΠΗ ΣΕΛΙΔΑ (Τιμολόγηση)
-        // Αν δεν είμαστε στο modal, συνεχίζουμε με την κανονική ροή
-        if (target.tagName === 'INPUT' || target.tagName === 'SELECT') {
-            e.preventDefault();
-            
-            // Γραμμές προϊόντων (προσθήκη νέας σειράς)
-            if (target.classList.contains('row-disc')) {
-                if (typeof window.addItemRow === 'function') {
-                    window.addItemRow();
-                    return; 
-                }
-            }
-
-            // Κίνηση στο επόμενο στοιχείο στη σελίδα
-            const allElements = Array.from(document.querySelectorAll('input:not([disabled]):not([readonly]), select:not([disabled])'))
-                .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.closest('#newCustomerModal'));
-
-            const currentIndex = allElements.indexOf(target);
-            if (currentIndex > -1 && currentIndex < allElements.length - 1) {
-                const nextEl = allElements[currentIndex + 1];
-                nextEl.focus();
-                if (nextEl.tagName === 'INPUT') nextEl.select();
-            }
-        }
-    }
-}, true);
-  
-
-// 2. LOAD PRODUCTS (With Auto-Retry & Correct variable)
-async function loadProductsFromSupabase() {
-    if (!supabase) { // Χρήση της global μεταβλητής supabase
-        setTimeout(loadProductsFromSupabase, 200);
-        return; 
-    }
-    try {
-        const { data, error } = await supabase.from('products').select('*');
-        if (error) throw error;
-        window.allProducts = data || [];
-        console.log("📦 Triton: " + window.allProducts.length + " προϊόντα φορτώθηκαν.");
-    } catch (e) {
-        console.error("❌ Load Error:", e.message);
-    }
-}
-
-// 3. SMART CALCULATE ENGINE
+// 5. CALCULATE ENGINE
 window.calculateTotal = function() {
-    let subtotal = 0; 
-    let totalVat = 0; 
-
+    let subtotal = 0; let totalVat = 0;
     const rows = document.querySelectorAll('.item-row, .invoice-row');
-
     rows.forEach(row => {
-        const getVal = (selector) => {
-            const el = row.querySelector(selector);
-            const val = el ? el.value : "0";
-            return parseFloat(val.replace(',', '.')) || 0;
+        const getVal = (sel) => {
+            const el = row.querySelector(sel);
+            return parseFloat(el?.value.replace(',', '.') || "0") || 0;
         };
-
-        const qty   = getVal('.row-qty');
+        const qty = getVal('.row-qty');
         const price = getVal('.row-price');
-        const disc  = getVal('.row-disc') || 0;
-        const vatRate = parseFloat(row.getAttribute('data-vat')) || getVal('.row-vat') || 24;
+        const disc = getVal('.row-disc');
+        const vatRate = parseFloat(row.getAttribute('data-vat')) || 24;
 
         const lineNet = Math.round(((qty * price) * (1 - disc / 100)) * 100) / 100;
         const lineVat = Math.round((lineNet * (vatRate / 100)) * 100) / 100;
         
         const lineTotalField = row.querySelector('.row-total');
         if (lineTotalField) {
-            const totalLineAmount = (lineNet + lineVat).toFixed(2);
-            if (lineTotalField.tagName === 'INPUT') {
-                lineTotalField.value = totalLineAmount;
-            } else {
-                lineTotalField.innerText = totalLineAmount.replace('.', ',') + " €";
-            }
+            const val = (lineNet + lineVat).toFixed(2).replace('.', ',');
+            lineTotalField.tagName === 'INPUT' ? lineTotalField.value = val : lineTotalField.innerText = val + " €";
         }
-
-        subtotal += lineNet;
-        totalVat += lineVat;
+        subtotal += lineNet; totalVat += lineVat;
     });
-
     updateFooterField('footerSubtotal', subtotal);
     updateFooterField('footerVat', totalVat);
     updateFooterField('footerGrandTotal', subtotal + totalVat);
 };
 
-// 4. FETCH PRODUCT BY CODE
-async function fetchProductData(inputElement) {
-    const code = inputElement.value.trim();
-    if (!code || !supabase) return;
-    const row = inputElement.closest('.item-row');
-    
-    try {
-        const { data, error } = await supabase.from('products').select('*').eq('code', code).maybeSingle();
-        if (data) {
-            row.querySelector('.row-desc').value = data.name;
-            row.querySelector('.row-price').value = data.price;
-            row.setAttribute('data-vat', data.vat_rate || 24); 
-            window.calculateTotal();
-            row.querySelector('.row-qty').focus();
-        } else {
-            if (confirm(`📦 Ο κωδικός "${code}" δεν υπάρχει. Δημιουργία νέου;`)) {
-                if (typeof openProductModal === 'function') openProductModal(code);
-            }
-        }
-    } catch (err) {
-        console.error("🔱 Fetch Error:", err.message);
-    }
+function updateFooterField(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const formatted = val.toLocaleString('el-GR', {minimumFractionDigits: 2}) + " €";
+    el.tagName === 'INPUT' ? el.value = val.toFixed(2) : el.innerText = formatted;
 }
 
-// 5. STARTUP LOGIC
-if (document.readyState === 'complete') {
-    if (typeof initTritonSupabase === 'function') initTritonSupabase();
-} else {
-    window.addEventListener('load', () => {
-        if (typeof initTritonSupabase === 'function') initTritonSupabase();
-    });
-}
-</script> 
+// 6. STARTUP
+document.addEventListener('DOMContentLoaded', () => {
+    initTritonSupabase();
+    if (typeof updateDateTime === 'function') updateDateTime();
+    // Start Health Monitor if exists
+    if (typeof startHealthMonitor === 'function') startHealthMonitor();
+});
+</script>
 
 <style type="text/css">
     /* 🔱 TRITON VISUAL IDENTITY */
@@ -545,6 +133,62 @@ if (document.readyState === 'complete') {
     }
     #customer-dropdown div { padding: 10px; cursor: pointer; }
     #customer-dropdown div:hover { background-color: #f0f9ff !important; color: #0369a1 !important; }
+  
+  #connection-status {
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.9); /* Σκούρο Triton Blue */
+    color: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none; /* Να μην εμποδίζει τα κλικ */
+    transition: all 0.3s ease;
+}
+
+#supabase-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    /* Αρχικό χρώμα Πορτοκαλί (Initial) */
+    background-color: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
+}
+
+/* Animation για το "χτύπο" της σύνδεσης */
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+  .search-results-dropdown {
+    position: absolute;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 300px;
+}
+.search-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+}
+.search-item:hover { background: #f8fafc; color: #0369a1; }
+  
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -781,132 +425,42 @@ if (document.readyState === 'complete') {
         0,00 €
     </div>
 </div>
-   
-  <script>
-    
-   /* =============================================================
-   🔱 TRITON ERP: UNIFIED ENGINE (v4.6 - Fixed Order & Enter) 
+ 
+      
+      
+   <script>
+/* =============================================================
+   🔱 TRITON ERP: CLEAN ENGINE (V20.0) - CUSTOMER SEARCH ONLY
    ============================================================= */
 
-// 1. GLOBAL VARIABLES
 window.allProducts = [];
-const DB = typeof _supabase !== 'undefined' ? _supabase : (typeof supabase !== 'undefined' ? supabase : null);
+let isProcessingEnter = false;
 
-// 2. ΟΡΙΣΜΟΣ ΣΥΝΑΡΤΗΣΕΩΝ (Πρέπει να προηγούνται της κλήσης τους)
+const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 
-/* --- 4. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ (Fixed Focus) --- */
-window.addItemRow = function(itemData = null) {
-    const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
-    if (!container) return;
-    
-    const row = document.createElement('div');
-    row.className = 'item-row';
-    row.style = "display:grid; grid-template-columns: 40px 120px 1fr 80px 100px 70px 100px 40px; gap:12px; padding:10px; border-bottom:1px solid #f1f5f9; align-items:center;";
-
-    // Προσθέτουμε το onkeydown απευθείας στα inputs
-    const enterLogic = `onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.handleTritonEnter(this); }"`;
-
-    row.innerHTML = `
-        <div style="text-align:center; font-size:12px; color:#64748b;">${container.children.length + 1}</div>
-        <input type="text" class="row-code" ${enterLogic} value="${itemData ? itemData.code : ''}" placeholder="ΚΩΔ" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="text" class="row-desc" ${enterLogic} value="${itemData ? itemData.name || itemData.description : ''}" placeholder="Περιγραφή..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-qty" ${enterLogic} value="${itemData ? itemData.qty : '1'}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-price" ${enterLogic} value="${itemData ? itemData.price : ''}" placeholder="0.00" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-disc" ${enterLogic} value="${itemData ? itemData.discount || 0 : '0'}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <div class="row-total" style="text-align:right; font-weight:bold; color:#0369a1;">0,00 €</div>
-        <button type="button" onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer;">✕</button>
-    `;
-
-    container.appendChild(row);
-    
-    // Focus στον κωδικό της νέας γραμμής
-    setTimeout(() => {
-        const firstInp = row.querySelector('.row-code');
-        if (firstInp) firstInp.focus();
-    }, 50);
-
-    window.calculateTotal();
-};
-// 3. ENTER KEY LISTENER (ΛΥΝΕΙ ΤΟ ΠΡΟΒΛΗΜΑ ΣΟΥ)
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const target = e.target;
-        if (target.tagName === 'BUTTON' || target.tagName === 'TEXTAREA') return;
-
-        e.preventDefault();
-
-        // Αν είμαστε σε πεδίο γραμμής, πήγαινε στο επόμενο ή φτιάξε νέα γραμμή
-        if (target.classList.contains('row-code') || target.classList.contains('row-desc') || 
-            target.classList.contains('row-qty') || target.classList.contains('row-price') || 
-            target.classList.contains('row-disc')) {
-            
-            const row = target.closest('.item-row');
-            const inputs = Array.from(row.querySelectorAll('input'));
-            const index = inputs.indexOf(target);
-
-            if (index < inputs.length - 1) {
-                inputs[index + 1].focus();
-            } else {
-                window.addItemRow(); // Τελευταίο πεδίο; Νέα γραμμή!
-            }
-        } else {
-            // Γενικό focus επόμενου πεδίου για την υπόλοιπη φόρμα
-            const formInputs = Array.from(document.querySelectorAll('input, select'));
-            const index = formInputs.indexOf(target);
-            if (index > -1 && index < formInputs.length - 1) {
-                formInputs[index + 1].focus();
-            }
-        }
+// 1. INITIALIZATION
+async function initTriton() {
+    if (typeof window.supabase !== 'undefined') {
+        window.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("✅ Triton Engine Ready.");
+        updateDateTime();
+        if (document.querySelectorAll('.item-row').length === 0) window.addItemRow();
     }
-});
+}
 
-// 4. ΕΚΚΙΝΗΣΗ ΣΥΣΤΗΜΑΤΟΣ (DOM CONTENT LOADED)
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🔱 Triton ERP: System Online");
-    
-    if (DB) {
-        // Φόρτωση Προϊόντων
-        try {
-            const { data } = await DB.from('products').select('*');
-            if (data) window.allProducts = data;
-        } catch(e) { console.error(e); }
-
-        // Έλεγχος Draft από URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const draftId = urlParams.get('load_draft');
-
-        if (draftId) {
-            const { data: draft } = await DB.from('invoices').select('*').eq('id', draftId).single();
-            if (draft) {
-                window.loadDraftToForm(draft);
-                return;
-            }
-        }
-    }
-
-    // Αν δεν φορτωθεί draft, βάλε την πρώτη γραμμή μετά από λίγο
-    setTimeout(() => {
-        const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
-        if (container && container.children.length === 0) {
-            window.addItemRow();
-        }
-    }, 500);
-});
-
-/* --- ΛΟΙΠΕΣ ΣΥΝΑΡΤΗΣΕΙΣ (Modals κτλ) --- */
-window.toggleTritonSettings = function() {
-    const m = document.getElementById('tritonSettingsModal');
-    if (m) m.style.display = (m.style.display === 'none' || m.style.display === '') ? 'flex' : 'none';
-};
-/* --- 3. ΑΝΑΖΗΤΗΣΗ & UI ΠΕΛΑΤΗ --- */
+// 2. LIVE ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ (ΓΕΜΙΖΕΙ ΤΑ ΠΑΝΤΑ)
 window.searchCustomer = async function(input) {
+    if (!window.client) return;
     const term = input.value.trim();
+    
     let existingList = document.getElementById('customer-dropdown');
     if (existingList) existingList.remove();
+    
     if (term.length < 2) return;
 
     try {
-        const { data } = await DB.from('customers')
+        const { data } = await window.client.from('customers')
             .select('*')
             .or(`name.ilike.%${term}%,afm.ilike.%${term}%`)
             .limit(5);
@@ -914,15 +468,14 @@ window.searchCustomer = async function(input) {
         if (data && data.length > 0) {
             const list = document.createElement('div');
             list.id = 'customer-dropdown';
-            list.className = 'autocomplete-items';
-            list.style = "position:absolute; top:100%; left:0; width:100%; background:white; border:1px solid #0ea5e9; border-radius:8px; z-index:20001; box-shadow:0 10px 15px rgba(0,0,0,0.1);";
+            list.style = "position:absolute; top:100%; left:0; width:100%; background:white; border:2px solid #0ea5e9; border-radius:8px; z-index:99999; box-shadow:0 10px 15px rgba(0,0,0,0.1); cursor:pointer;";
             
             data.forEach(cust => {
                 const item = document.createElement('div');
-                item.style = "padding:12px; cursor:pointer; border-bottom:1px solid #f1f5f9; color: #1e293b;";
-                item.innerHTML = `<b>${cust.name}</b> <br> <small>ΑΦΜ: ${cust.afm}</small>`;
+                item.style = "padding:12px; border-bottom:1px solid #f1f5f9; color:#1e293b;";
+                item.innerHTML = `<b>${cust.name}</b> <br> <small>ΑΦΜ: ${cust.afm} | ${cust.city || ''}</small>`;
                 item.onclick = () => { 
-                    fillCustomerUI(cust); 
+                    window.fillCustomerUI(cust); 
                     list.remove(); 
                 };
                 list.appendChild(item);
@@ -930,166 +483,113 @@ window.searchCustomer = async function(input) {
             input.parentElement.style.position = 'relative';
             input.parentElement.appendChild(list);
         }
-    } catch (err) { console.error(err); }
+    } catch (e) { console.error("Search Error", e); }
 };
 
 window.fillCustomerUI = function(cust) {
-    if (!cust) return;
     const mapping = {
-        'customerSelect': cust.id, // Για το dropdown επιλογής
-        'customerName': cust.name, 
-        'customerAFM': cust.afm,
-        'newCustName': cust.name, 
-        'newCustAfm': cust.afm,
-        'newCustDoy': cust.doy, 
-        'newCustAddress': cust.address,
-        'newCustCity': cust.city, 
-        'newCustJob': cust.job
+        'newCustName': cust.name, 'newCustJob': cust.job, 'newCustAfm': cust.afm,
+        'newCustDoy': cust.doy, 'newCustAddress': cust.address, 'newCustCity': cust.city,
+        'newCustZip': cust.zip, 'newCustPhone': cust.phone, 'newCustEmail': cust.email
     };
     for (let id in mapping) {
         const el = document.getElementById(id);
         if (el) {
-            if (el.tagName === 'INPUT' || el.tagName === 'SELECT') el.value = mapping[id] || '';
-            else el.innerText = mapping[id] || '-';
+            el.value = mapping[id] || '';
+            el.style.backgroundColor = "#f0fdf4";
+            setTimeout(() => { el.style.backgroundColor = "white"; }, 500);
         }
     }
 };
 
-/* --- 4. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ --- */
+// 3. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ (ΧΩΡΙΣ POPUP ΠΡΟΪΟΝΤΩΝ)
 window.addItemRow = function(itemData = null) {
     const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
     if (!container) return;
-    
+
     const row = document.createElement('div');
     row.className = 'item-row';
-    row.style = "display:grid; grid-template-columns: 40px 120px 1fr 80px 100px 70px 100px 40px; gap:12px; padding:10px; border-bottom:1px solid #f1f5f9; align-items:center;";
-    row.setAttribute('data-vat', itemData ? itemData.vat_rate : '24');
+    row.style = "display:grid; grid-template-columns: 40px 120px 1fr 80px 100px 70px 100px 40px; gap:12px; padding:10px; border-bottom:1px solid #e2e8f0; align-items:center; background:white;";
 
     row.innerHTML = `
         <div style="text-align:center; font-size:12px; color:#64748b;">${container.children.length + 1}</div>
-        <input type="text" class="row-code" value="${itemData ? itemData.code : ''}" placeholder="ΚΩΔ" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="text" class="row-desc" value="${itemData ? itemData.name || itemData.description : ''}" placeholder="Περιγραφή..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-qty" value="${itemData ? itemData.qty : '1'}" step="any" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-price" value="${itemData ? itemData.price : ''}" placeholder="0.00" step="0.01" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-disc" value="${itemData ? itemData.discount || 0 : '0'}" step="0.1" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="text" class="row-code" placeholder="ΚΩΔ">
+        <input type="text" class="row-desc" placeholder="Περιγραφή...">
+        <input type="number" class="row-qty" value="1">
+        <input type="number" class="row-price" placeholder="0.00" step="0.01">
+        <input type="number" class="row-disc" value="0">
         <div class="row-total" style="text-align:right; font-weight:bold; color:#0369a1;">0,00 €</div>
-        <button onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size:18px;">✕</button>
+        <button type="button" onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer;">✕</button>
     `;
 
-    row.querySelectorAll('input').forEach(inp => {
-        inp.addEventListener('input', () => window.calculateTotal());
-    });
-
     container.appendChild(row);
-    window.calculateTotal();
+    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', window.calculateTotal));
+    setTimeout(() => row.querySelector('.row-code').focus(), 50);
 };
 
-/* --- 5. ΔΙΑΧΕΙΡΙΣΗ ΠΡΟΣΧΕΔΙΩΝ (DRAFTS) --- */
-/* --- 5. ΔΙΑΧΕΙΡΙΣΗ ΠΡΟΣΧΕΔΙΩΝ (DRAFTS) - ΔΙΟΡΘΩΜΕΝΟ --- */
-window.loadDraftToForm = async function(data) {
-    console.log("🔱 Triton: Loading Draft Data...", data);
+window.calculateTotal = function() {
+    let subtotal = 0, totalVat = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const q = parseFloat(row.querySelector('.row-qty').value) || 0;
+        const p = parseFloat(row.querySelector('.row-price').value) || 0;
+        const d = parseFloat(row.querySelector('.row-disc').value) || 0;
+        const net = (q * p) * (1 - d/100);
+        const vat = net * 0.24;
+        row.querySelector('.row-total').innerText = (net + vat).toFixed(2).replace('.', ',') + " €";
+        subtotal += net; totalVat += vat;
+    });
+    const upd = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val.toFixed(2).replace('.', ',') + " €"; };
+    upd('footerSubtotal', subtotal); upd('footerVat', totalVat); upd('footerGrandTotal', subtotal + totalVat);
+};
 
-    // 1. Ενημέρωση Πελάτη
-    const customerSelect = document.getElementById('customerSelect');
-    if (customerSelect && data.customer_id) {
-        customerSelect.value = data.customer_id;
-    }
-    
-    // Κλήση της συνάρτησης για να γεμίσουν τα UI πεδία (ΑΦΜ, Διεύθυνση κτλ)
-    if (typeof loadCustomerById === 'function' && data.customer_id) {
-        await loadCustomerById(data.customer_id);
-    }
+// 4. ENTER NAVIGATION (TK -> ΔΙΕΥΘΥΝΣΗ)
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        if (target.tagName === 'BUTTON' || target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        
+        if (isProcessingEnter) return;
+        isProcessingEnter = true; setTimeout(() => isProcessingEnter = false, 150);
 
-    // 2. Καθαρισμός και Προετοιμασία Container
-    const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
-    if (!container) {
-        console.error("❌ Triton Error: Items container not found!");
-        return;
-    }
-    container.innerHTML = '';
-
-    // 3. Φόρτωση Προϊόντων
-    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-        // Χρησιμοποιούμε for...of για να είμαστε σίγουροι για τη σειρά
-        for (const item of data.items) {
-            window.addItemRow(item);
+        const modal = target.closest('#newCustomerModal');
+        if (modal) {
+            const flow = {
+                'newCustName': 'newCustJob', 'newCustJob': 'newCustAfm',
+                'newCustAfm': 'newCustDoy', 'newCustDoy': 'newCustCity',
+                'newCustCity': 'newCustZip', 'newCustZip': 'newCustAddress',
+                'newCustAddress': 'newCustPhone', 'newCustPhone': 'newCustEmail'
+            };
+            const next = document.getElementById(flow[target.id]);
+            if (next) { next.focus(); if(next.select) next.select(); }
+            return;
         }
-    } else {
-        // Αν το draft δεν έχει προϊόντα, βάλε μια κενή γραμμή για ευκολία
-        window.addItemRow();
-    }
-    
-    // 4. Υπολογισμός Συνόλων
-    // Αντί για setTimeout, το καλούμε άμεσα αφού τελειώσει το loop
-    // αλλά δίνουμε ένα μικρό "ανάσα" 100ms για το rendering
-    setTimeout(() => {
-        if (typeof window.calculateTotal === 'function') {
-            window.calculateTotal();
-            console.log("✅ Triton: Totals Calculated.");
+
+        const row = target.closest('.item-row');
+        if (row) {
+            const inps = Array.from(row.querySelectorAll('input'));
+            const idx = inps.indexOf(target);
+            if (idx < inps.length - 1) inps[idx+1].focus();
+            else window.addItemRow();
+            return;
         }
-    }, 150);
-};
-/* --- 6. ΑΠΟΣΤΟΛΗ PDF / EMAIL --- */
-window.handleCustomerStatement = async function() {
-    const customerId = document.getElementById('customerSelect')?.value;
-    if (!customerId) return alert("⚠️ Επιλέξτε πελάτη.");
+        
+        const all = Array.from(document.querySelectorAll('input:not([readonly])')).filter(el => el.offsetWidth > 0);
+        const gIdx = all.indexOf(target);
+        if (gIdx < all.length - 1) all[gIdx+1].focus();
+    }
+}, true);
 
-    const { data: customer } = await DB.from('customers').select('*').eq('id', customerId).single();
-    if (!customer || !customer.email) return alert("❌ Δεν βρέθηκε email.");
-
-    const emails = customer.email.split(/[,; ]+/).filter(e => e.length > 5);
-    showEmailPicker(emails, customer);
-};
-
-function showEmailPicker(emails, customer) {
-    const modal = document.createElement('div');
-    modal.id = "emailPickerModal";
-    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999;";
-    
-    let emailButtons = emails.map(email => `
-        <button onclick="sendStatement('${email}', '${customer.id}')" 
-                style="display:block; width:100%; padding:12px; margin:5px 0; border:1px solid #0369a1; border-radius:8px; cursor:pointer; background:white; font-weight:bold; color:#0369a1;">
-            📧 ${email}
-        </button>
-    `).join('');
-
-    modal.innerHTML = `
-        <div style="background:white; padding:25px; border-radius:15px; width:350px; text-align:center;">
-            <h3 style="color:#1e293b;">Επιλογή Email</h3>
-            ${emailButtons}
-            <button onclick="document.getElementById('emailPickerModal').remove()" style="margin-top:10px; color:red; border:none; background:none; cursor:pointer;">Ακύρωση</button>
-        </div>`;
-    document.body.appendChild(modal);
-}
-
-// Βοηθητικές συναρτήσεις
 function updateDateTime() {
     const d = new Date().toISOString().split('T')[0];
     document.querySelectorAll('input[type="date"]').forEach(i => i.value = d);
 }
 
-async function loadProductsFromSupabase() {
-    const { data } = await DB.from('products').select('*');
-    if (data) window.allProducts = data;
-}
-    window.handleTritonEnter = function(currentInput) {
-    const row = currentInput.closest('.item-row');
-    const inputs = Array.from(row.querySelectorAll('input:not([disabled])'));
-    const index = inputs.indexOf(currentInput);
-
-    if (index < inputs.length - 1) {
-        // Αν υπάρχει επόμενο κουτάκι στη γραμμή, πήγαινε εκεί
-        inputs[index + 1].focus();
-        if (inputs[index + 1].select) inputs[index + 1].select();
-    } else {
-        // Αν είμαστε στο τελευταίο (Έκπτωση), φτιάξε νέα γραμμή
-        window.addItemRow();
-    }
-};
+document.addEventListener('DOMContentLoaded', initTriton);
+window.openNewCustomerModal = () => { document.getElementById('newCustomerModal').style.display = 'flex'; document.getElementById('newCustName').focus(); };
+window.closeNewCustomerModal = () => document.getElementById('newCustomerModal').style.display = 'none';
 </script>
-  
-  
-   
+     
   
   
  
@@ -1115,7 +615,7 @@ async function loadProductsFromSupabase() {
         <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap: 20px; padding: 10px;">
             <div>
                 <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Επωνυμία / Ονοματεπώνυμο</label>
-                <input type="text" id="newCustName" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+              <input type="text" id="newCustName" oninput="window.searchCustomer(this)" placeholder="Ξεκινήστε την πληκτρολόγηση (Όνομα ή ΑΦΜ)..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
             </div>
             
             <div>
@@ -1132,13 +632,8 @@ async function loadProductsFromSupabase() {
                 <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Δ.Ο.Υ.</label>
                 <input type="text" id="newCustDoy" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
             </div>
-
-            <div>
-                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση</label>
-                <input type="text" id="newCustAddress" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
-            </div>
-
-            <div>
+          
+           <div>
                 <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Πόλη</label>
                 <input type="text" id="newCustCity" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
             </div>
@@ -1148,6 +643,13 @@ async function loadProductsFromSupabase() {
                 <input type="text" id="newCustZip" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
             </div>
 
+
+            <div>
+                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση</label>
+                <input type="text" id="newCustAddress" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+            </div>
+
+            
             <div>
                 <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Τηλέφωνο</label>
                 <input type="text" id="newCustPhone" placeholder="Προαιρετικό" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
@@ -1240,81 +742,9 @@ async function loadProductsFromSupabase() {
   
   
   
-  <script>
+ <script>
  
-
- 
-// 🔱 THE UNIFIED TRITON "FORCE-ENTER" ENGINE (V3 - Final Routing)
-window.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const target = e.target;
-        
-        // 1. ΕΞΑΙΡΕΣΕΙΣ
-        if (['BUTTON', 'TEXTAREA'].includes(target.tagName) || target.readOnly) return;
-
-        // Σταματάμε το default behavior
-        e.preventDefault();
-        e.stopPropagation();
-
-        const tid = target.id;
-
-        // 2. 🚩 CUSTOM ROUTING ΓΙΑ ΤΟ MODAL (Εδώ λύνεται το πρόβλημα)
-        
-        // Από ΑΦΜ -> Αναζήτηση
-        if (tid === 'searchAfmInput') {
-            document.getElementById('myDataBtn')?.click();
-            return;
-        }
-
-        // ΑΠΟ Τ.Κ. -> ΠΑΕΙ ΠΙΣΩ ΣΤΗ ΔΙΕΥΘΥΝΣΗ
-        if (tid === 'newCustZip') {
-            const addrField = document.getElementById('newCustAddress');
-            if (addrField) {
-                addrField.focus();
-                addrField.select();
-                return; 
-            }
-        }
-
-        // ΑΠΟ ΠΟΛΗ -> ΠΑΕΙ ΣΤΟ ΤΗΛΕΦΩΝΟ (πηδώντας το Zip)
-        if (tid === 'newCustCity') {
-            const phoneField = document.getElementById('newCustPhone');
-            if (phoneField) {
-                phoneField.focus();
-                phoneField.select();
-                return;
-            }
-        }
-
-        // ΑΠΟ EMAIL -> ΑΠΟΘΗΚΕΥΣΗ
-        if (tid === 'newCustEmail') {
-            saveNewCustomer();
-            return;
-        }
-
-        // 3. ΓΕΝΙΚΗ ΚΙΝΗΣΗ (Για όλα τα υπόλοιπα πεδία)
-        const allElements = Array.from(document.querySelectorAll('input:not([disabled]):not([readonly]), select:not([disabled])'))
-            .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
-
-        const currentIndex = allElements.indexOf(target);
-
-        // 4. ΕΙΔΙΚΗ ΛΟΓΙΚΗ ΓΙΑ ΓΡΑΜΜΕΣ ΤΙΜΟΛΟΓΗΣΗΣ
-        if (target.classList.contains('row-disc')) {
-            if (typeof window.addItemRow === 'function') {
-                window.addItemRow();
-                return; 
-            }
-        }
-
-        // 5. FOCUS ΣΤΟ ΕΠΟΜΕΝΟ ΣΤΟΙΧΕΙΟ
-        if (currentIndex > -1 && currentIndex < allElements.length - 1) {
-            const nextEl = allElements[currentIndex + 1];
-            nextEl.focus();
-            if (nextEl.tagName === 'INPUT') nextEl.select();
-        }
-    }
-}, true);
-// 2. 🧮 UNIFIED CALCULATE ENGINE
+// 2. 🧮 CALCULATE ENGINE (Precision Focus)
 window.calculateTotal = function() {
     let subtotal = 0; 
     let totalVat = 0; 
@@ -1331,17 +761,15 @@ window.calculateTotal = function() {
         const qty   = getVal('.row-qty');
         const price = getVal('.row-price');
         const disc  = getVal('.row-disc');
-        const vatRate = parseFloat(row.getAttribute('data-vat')) || getVal('.row-vat') || 24;
+        const vatRate = parseFloat(row.getAttribute('data-vat')) || 24;
 
         const lineNet = Math.round(((qty * price) * (1 - disc / 100)) * 100) / 100;
         const lineVat = Math.round((lineNet * (vatRate / 100)) * 100) / 100;
         
         const lineTotalField = row.querySelector('.row-total');
         if (lineTotalField) {
-            const totalLineAmount = (lineNet + lineVat).toFixed(2);
-            lineTotalField.tagName === 'INPUT' ? 
-                lineTotalField.value = totalLineAmount : 
-                lineTotalField.innerText = totalLineAmount.replace('.', ',') + " €";
+            const totalVal = (lineNet + lineVat).toFixed(2);
+            lineTotalField.innerText = totalVal.replace('.', ',') + " €";
         }
 
         subtotal += lineNet;
@@ -1351,175 +779,197 @@ window.calculateTotal = function() {
     updateFooterField('footerSubtotal', subtotal);
     updateFooterField('footerVat', totalVat);
     updateFooterField('footerGrandTotal', subtotal + totalVat);
-    // Sync με τα κρυφά πεδία αν υπάρχουν
-    updateFooterField('netAmount', subtotal);
-    updateFooterField('vatAmount', totalVat);
-    updateFooterField('totalAmount', subtotal + totalVat);
 };
 
 function updateFooterField(id, value) {
     const el = document.getElementById(id);
     if (!el) return;
-    // Χρήση Math.round για ακρίβεια στα λεπτά
     const roundedValue = Math.round(value * 100) / 100;
-    const formatted = roundedValue.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+    const formatted = roundedValue.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
     
-    if (el.tagName === 'INPUT') {
-        el.value = roundedValue.toFixed(2);
-    } else {
-        el.innerText = formatted;
-    }
+    if (el.tagName === 'INPUT') el.value = roundedValue.toFixed(2);
+    else el.innerText = formatted;
 }
-// 3. 💾 CUSTOMER & myDATA LOGIC
-async function searchMyData(afm) {
-    if (!afm || afm.length !== 9 || isNaN(afm)) return alert("⚠️ Έγκυρο ΑΦΜ (9 ψηφία).");
-    const btn = document.getElementById('myDataBtn');
-    btn.innerHTML = "⏳..."; btn.disabled = true;
 
-    try {
-        const response = await fetch(`ΣΥΝΔΕΣΜΟΣ_API_ΣΟΥ?afm=${afm}`); 
-        const data = await response.json();
+  
+        // 4. ΛΟΓΙΚΗ ΤΙΜΟΛΟΓΗΣΗΣ (Προϊόντα & Πελάτης Τιμολογίου)
+        // Εδώ προσθέτουμε e.preventDefault() για να μη σε πετάει στον Κωδ. Προϊόντος
+        e.preventDefault(); 
+        e.stopImmediatePropagation();
 
-        if (data && data.success) {
-            const info = data.result;
-            document.getElementById('newCustName').value = info.onomasia || '';
-            document.getElementById('newCustJob').value = info.drastiriotita || '';
-            document.getElementById('newCustAddress').value = info.dieuthinsi || '';
-            document.getElementById('newCustCity').value = info.poli || '';
-            document.getElementById('newCustDoy').value = info.doy || '';
-            
-            setTimeout(() => document.getElementById('newCustPhone').focus(), 300);
-        } else {
-            alert("❌ Δεν βρέθηκε.");
+        isProcessingEnter = true;
+        setTimeout(() => { isProcessingEnter = false; }, 200);
+
+        // ΠΡΟΣΘΗΚΗ ΓΡΑΜΜΗΣ (Μόνο στο πεδίο row-disc)
+        if (target.classList.contains('row-disc')) {
+            if (typeof window.addItemRow === 'function') {
+                window.addItemRow();
+            } else if (typeof window.addNewInvoiceRow === 'function') {
+                window.addNewInvoiceRow();
+            }
+            return;
         }
-    } catch (err) { alert("Σφάλμα myDATA"); }
-    finally { btn.innerHTML = "🔍 ΑΝΑΖΗΤΗΣΗ"; btn.disabled = false; }
-}
 
-async function saveNewCustomer() {
-    const btn = document.getElementById('saveCustBtn');
-    if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+        // ΓΕΝΙΚΗ ΠΛΟΗΓΗΣΗ (Εκτός Modal)
+        // Φιλτράρουμε ώστε να ΜΗΝ περιλαμβάνει τα πεδία του Modal
+        const allElements = Array.from(document.querySelectorAll('input:not([disabled]):not([readonly]), select:not([disabled])'))
+            .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.closest('#newCustomerModal'));
 
-    const cData = {
-        name: document.getElementById('newCustName').value.trim(),
-        afm: document.getElementById('searchAfmInput').value.trim(),
-        doy: document.getElementById('newCustDoy').value,
-        address: document.getElementById('newCustAddress').value,
-        city: document.getElementById('newCustCity').value,
-        job: document.getElementById('newCustJob').value,
-        email: document.getElementById('newCustEmail').value,
-        phone: document.getElementById('newCustPhone').value
-    };
-
-    if (!cData.name || !cData.afm) {
-        alert("⚠️ Όνομα και ΑΦΜ απαιτούνται!");
-        if (btn) { btn.innerHTML = "💾 Αποθήκευση"; btn.disabled = false; }
-        return;
+        const currentIndex = allElements.indexOf(target);
+        if (currentIndex > -1 && currentIndex < allElements.length - 1) {
+            const nextEl = allElements[currentIndex + 1];
+            nextEl.focus();
+            if (nextEl.tagName === 'INPUT') nextEl.select();
+        }
     }
+}, true);
 
-    try {
-        const { data, error } = await supabase.from('customers').insert([cData]).select();
-        if (error) throw error;
-        
-        alert("✅ Επιτυχής Αποθήκευση!");
-        if (data && data[0] && typeof fillCustomerUI === 'function') fillCustomerUI(data[0]); 
+// 5. ΚΛΕΙΣΙΜΟ MODAL
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('newCustomerModal');
+    if (event.target === modal && typeof closeNewCustomerModal === 'function') {
         closeNewCustomerModal();
-        setTimeout(() => document.getElementById('prodSearch').focus(), 500);
-    } catch (err) { alert("❌ Σφάλμα: " + err.message); }
-    finally { if (btn) { btn.innerHTML = "💾 Αποθήκευση"; btn.disabled = false; } }
-}
-
-// 4. 📦 PRODUCT LOGIC
-async function handleProductSelection() {
-    const input = document.getElementById('prodSearch');
-    const productName = input.value;
-    if (!productName) return;
-
-    try {
-        const { data: product } = await supabase.from('products').select('*').eq('name', productName).single();
-        if (product) {
-            const newRowId = addNewRow(product); 
-            input.value = '';
-            setTimeout(() => {
-                const qtyInput = document.getElementById(`qty_${newRowId}`);
-                if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
-            }, 100);
-        }
-    } catch (err) { console.error("Product Error:", err); }
-}
-
-async function saveNewProduct() {
-    const btn = document.getElementById('saveProdBtn');
-    const pData = {
-        code: document.getElementById('newProdCode').value.trim(),
-        name: document.getElementById('newProdName').value.trim(),
-        price: parseFloat(document.getElementById('newProdPrice').value) || 0,
-        vat_rate: document.getElementById('newProdVat').value
-    };
-
-    if (!pData.name) return alert("⚠️ Συμπληρώστε Περιγραφή.");
-    if (btn) btn.disabled = true;
-
-    try {
-        const { error } = await supabase.from('products').insert([pData]);
-        if (error) throw error;
-        closeProductModal();
-        alert("✅ Προϊόν Αποθηκεύτηκε!");
-    } catch (err) { alert("❌ Σφάλμα: " + err.message); }
-    finally { if (btn) btn.disabled = false; }
-}
-
-// 5. 🛠️ MODAL HANDLERS
-window.closeNewCustomerModal = () => document.getElementById('newCustomerModal').style.display = 'none';
-window.closeProductModal = () => document.getElementById('newProductModal').style.display = 'none';
-
-async function checkForBranches(customerName) {
-    const { data: branches } = await supabase.from('branches').select('*').eq('customer_name', customerName);
-    const branchDiv = document.getElementById('branchSelectionGroup');
-    const branchSelect = document.getElementById('selectedBranch');
-
-    if (branches && branches.length > 0) {
-        if (branchDiv) branchDiv.style.display = 'block';
-        if (branchSelect) {
-            branchSelect.innerHTML = '<option value="">-- Επιλογή Υποκαταστήματος --</option>';
-            branches.forEach(b => {
-                branchSelect.innerHTML += `<option value="${b.address}">${b.branch_name} (${b.address})</option>`;
-            });
-        }
-    } else {
-        if (branchDiv) branchDiv.style.display = 'none';
     }
-}
-    // 🚦 SUPABASE HEALTH CHECKER
+});  
+   
+// 3. 🚦 HEALTH MONITOR (V2)
 async function checkSupabaseHealth() {
     const statusDot = document.getElementById('supabase-status-dot');
     const statusText = document.getElementById('supabase-status-text');
+    const client = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
 
-    if (typeof supabase === 'undefined' || !supabase) {
-        updateStatus(false);
+    if (!client) {
+        updateUIStatus(false);
         return;
     }
 
     try {
-        // Κάνουμε μια πολύ ελαφριά κλήση στη βάση
-        const { error } = await supabase.from('products').select('id').limit(1);
-        updateStatus(!error);
+        const { error } = await client.from('products').select('id').limit(1);
+        updateUIStatus(!error);
     } catch (e) {
-        updateStatus(false);
+        updateUIStatus(false);
     }
 
-    function updateStatus(isOnline) {
-        if (!statusDot) return;
-        statusDot.style.backgroundColor = isOnline ? "#22c55e" : "#ef4444"; // Πράσινο ή Κόκκινο
-        statusText.innerText = isOnline ? "Συνδεδεμένος" : "Αποσυνδεδεμένος";
+    function updateUIStatus(isOnline) {
+        if (!statusDot || !statusText) return;
+        statusDot.style.backgroundColor = isOnline ? "#22c55e" : "#ef4444";
+        statusDot.style.boxShadow = isOnline ? "0 0 10px #22c55e" : "0 0 10px #ef4444";
+        statusText.innerText = isOnline ? "TRITON ONLINE" : "TRITON OFFLINE";
     }
 }
 
-// Εκτέλεση ελέγχου κάθε 30 δευτερόλεπτα
-setInterval(checkSupabaseHealth, 30000);
+// Smart Reconnect Implementation
+(function startMonitor() {
+    checkSupabaseHealth().then(() => {
+        const isOffline = document.getElementById('supabase-status-text')?.innerText.includes("OFFLINE");
+        setTimeout(startMonitor, isOffline ? 5000 : 30000);
+    });
+})();
+
+// Εκκίνηση αρχικών τιμών
+document.addEventListener('DOMContentLoaded', () => {
+    const d = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('input[type="date"]').forEach(i => i.value = d);
+});
+   
+  // 🔍 TRITON LIVE SEARCH ENGINE
+// 1. GLOBAL VARIABLES
+var client; // Η κύρια μεταβλητή για τη Supabase
+window.allProducts = [];
+
+// 2. INITIALIZATION (Το καλείς στο window.onload)
+function initTritonSupabase() {
+    const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
+
+    try {
+        if (typeof window.supabase !== 'undefined') {
+            // Ορίζουμε το client στο window για να είναι προσβάσιμο παντού
+            window.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            client = window.client; 
+            console.log("✅ Triton: Supabase Connected as 'client'.");
+            
+            loadProductsFromSupabase();
+        } else {
+            console.error("❌ Triton: Supabase Library missing!");
+        }
+    } catch (e) { 
+        console.error("❌ Triton: Init Error:", e); 
+    }
+}
+
+// 3. PRODUCT LOGIC (Φόρτωση Προϊόντων)
+async function loadProductsFromSupabase() {
+    // Σιγουρευόμαστε ότι το client υπάρχει
+    const sb = window.client || client;
+    if (!sb) { 
+        console.warn("⏳ Waiting for Supabase client...");
+        setTimeout(loadProductsFromSupabase, 500); 
+        return; 
+    }
+
+    try {
+        const { data, error } = await sb.from('products').select('*');
+        if (error) throw error;
+        window.allProducts = data || [];
+        console.log("📦 Triton: " + window.allProducts.length + " προϊόντα φορτώθηκαν.");
+    } catch (e) { 
+        console.error("❌ Products Load Error:", e.message); 
+    }
+}
+
+// 4. CUSTOMER SEARCH (Αναζήτηση Πελάτη)
+window.searchCustomer = async function(input) {
+    const sb = window.client || client;
+    if (!sb) return;
+
+    const term = input.value.trim();
+    let existingList = document.getElementById('customer-dropdown');
+    if (existingList) existingList.remove();
+    if (term.length < 2) return;
+
+    try {
+        const { data, error } = await sb.from('customers')
+            .select('*')
+            .or(`name.ilike.%${term}%,afm.ilike.%${term}%`)
+            .limit(5);
+            
+        if (data && data.length > 0) {
+            const list = document.createElement('div');
+            list.id = 'customer-dropdown';
+            list.style = "position:absolute; top:100%; left:0; width:100%; background:white; border:1px solid #0ea5e9; border-radius:8px; z-index:20001; box-shadow:0 10px 15px rgba(0,0,0,0.1);";
+            
+            data.forEach(cust => {
+                const item = document.createElement('div');
+                item.style = "padding:12px; cursor:pointer; border-bottom:1px solid #f1f5f9; color: #1e293b;";
+                item.innerHTML = `<b>${cust.name}</b> <br> <small>ΑΦΜ: ${cust.afm}</small>`;
+                item.onclick = () => { 
+                    window.fillCustomerUI(cust); 
+                    list.remove(); 
+                };
+                list.appendChild(item);
+            });
+            input.parentElement.style.position = 'relative';
+            input.parentElement.appendChild(list);
+        }
+    } catch (err) { console.error("❌ Search Error:", err); }
+};
+
+// 5. FILL UI (Συμπλήρωση Πεδίων)
+window.fillCustomerUI = function(cust) {
+    if (!cust) return;
+    const mapping = {
+        'customerName': cust.name, 'customerAFM': cust.afm,
+        'newCustName': cust.name, 'newCustAfm': cust.afm,
+        'newCustDoy': cust.doy, 'newCustAddress': cust.address,
+        'newCustCity': cust.city, 'newCustJob': cust.job
+    };
+    for (let id in mapping) {
+        const el = document.getElementById(id);
+        if (el) el.value = mapping[id] || '';
+    }
+};
 </script>
-  
-  
   
   <div id="newCustomerModal" class="triton-modal" style="display:none; position:fixed; z-index:20000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
     
@@ -1573,13 +1023,7 @@ setInterval(checkSupabaseHealth, 30000);
         <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Δ.Ο.Υ.</label>
         <input type="text" id="newCustDoy" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
     </div>
-
-    <div>
-        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση</label>
-        <input type="text" id="newCustAddress" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
-    </div>
-
-    <div>
+          <div>
         <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Πόλη</label>
         <input type="text" id="newCustCity" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
     </div>
@@ -1588,6 +1032,13 @@ setInterval(checkSupabaseHealth, 30000);
         <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Τ.Κ.</label>
         <input type="text" id="newCustZip" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
     </div>
+
+    <div>
+        <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Διεύθυνση</label>
+        <input type="text" id="newCustAddress" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing: border-box;">
+    </div>
+
+   
 
     <div>
         <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">Τηλέφωνο</label>
@@ -1680,16 +1131,30 @@ setInterval(checkSupabaseHealth, 30000);
       
       
  <script>
-/* --- ΔΙΑΧΕΙΡΙΣΗ ΠΕΛΑΤΩΝ (MODAL) --- */
+/* =============================================================
+   🔱 TRITON CUSTOMER MODAL & NAVIGATION
+   ============================================================= */
+
 function openNewCustomerModal() {
     const modal = document.getElementById('newCustomerModal');
     if (modal) {
-        modal.style.display = 'flex'; // Χρησιμοποιούμε flex αν το CSS σου είναι για κεντράρισμα
-        document.getElementById('searchAfmInput').value = '';
-        document.getElementById('newCustName').value = '';
+        modal.style.display = 'flex'; 
         
-        // Focus αυτόματα στο πρώτο πεδίο (ΑΦΜ)
-        setTimeout(() => document.getElementById('searchAfmInput').focus(), 100);
+        // Καθαρισμός πεδίων για νέα εισαγωγή
+        const fields = ['searchAfmInput', 'newCustName', 'newCustDoy', 'newCustAddress', 'newCustCity', 'newCustJob', 'newCustEmail', 'newCustPhone'];
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+
+        // Focus στο ΑΦΜ με μικρή καθυστέρηση για το animation
+        setTimeout(() => {
+            const afmInput = document.getElementById('searchAfmInput');
+            if (afmInput) {
+                afmInput.focus();
+                afmInput.select();
+            }
+        }, 200);
     }
 }
 
@@ -1698,36 +1163,8 @@ function closeNewCustomerModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// 🛡️ ENTER FIX ΓΙΑ ΤΟ MODAL
-document.getElementById('newCustomerModal')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const target = e.target;
-        
-        // Αν πατήσει Enter στο ΑΦΜ, κάλεσε την αναζήτηση MyData
-        if (target.id === 'searchAfmInput') {
-            e.preventDefault();
-            if (typeof fetchMyData === 'function') fetchMyData(); 
-            // Ή αν έχεις κουμπί: document.getElementById('myDataBtn')?.click();
-        } 
-        // Αν πατήσει Enter στα υπόλοιπα πεδία, πήγαινε στο επόμενο
-        else if (target.tagName === 'INPUT') {
-            e.preventDefault();
-            const inputs = Array.from(this.querySelectorAll('input'));
-            const idx = inputs.indexOf(target);
-            if (idx > -1 && idx < inputs.length - 1) {
-                inputs[idx + 1].focus();
-            }
-        }
-    }
-});
-
-// Κλείσιμο με κλικ έξω
-window.onclick = function(event) {
-    const modal = document.getElementById('newCustomerModal');
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-};
+ 
+ 
 </script>
       
 </body>

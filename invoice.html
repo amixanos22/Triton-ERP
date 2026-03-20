@@ -251,88 +251,136 @@ function manageEnter(event, element) {
 }
 
 // 7. INITIALIZATION & DATA LOADING
+// 1. ΔΙΟΡΘΩΜΕΝΗ LOAD PRODUCTS (Με Retry)
 async function loadProductsFromSupabase() {
+    if (typeof supabase === 'undefined' || !supabase) {
+        console.warn("⚠️ Triton: Waiting for Supabase connection...");
+        setTimeout(loadProductsFromSupabase, 500);
+        return; 
+    }
     try {
         const { data, error } = await supabase.from('products').select('*');
-        if (data) window.allProducts = data;
-    } catch (e) { console.error(e); }
+        if (error) throw error;
+        window.allProducts = data || [];
+        console.log("📦 Triton: " + window.allProducts.length + " προϊόντα φορτώθηκαν.");
+    } catch (e) { 
+        console.error("❌ Product Load Error:", e.message); 
+    }
 }
 
+// 2. ΔΙΟΡΘΩΜΕΝΟ DOM CONTENT LOADED
 document.addEventListener('DOMContentLoaded', async function() {
+    // 1. Ξεκινάμε τη σύνδεση και την ώρα
     initTritonSupabase();
     updateDateTime();
-    await loadProductsFromSupabase();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const customerId = urlParams.get('customer_id');
-    if (customerId) {
-        const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).maybeSingle();
-        if (customer) window.fillCustomerUI(customer);
-    }
-});
-
-// 8. THE HOLY TRINITY: FILL UI
-window.fillCustomerUI = function(cust) {
-    if (!cust) return;
-    const data = {
-        'name': cust.name || cust.onomasia,
-        'afm': cust.afm || cust.vat_number,
-        'doy': cust.doy || cust.doy_descr,
-        'address': cust.address || cust.dieythinsi || cust.addr,
-        'city': cust.city || cust.poli,
-        'zip': cust.zip || cust.tk || cust.postal_code,
-        'email': cust.email,
-        'phone': cust.phone,
-        'job': cust.job || cust.drastiriotita_descr || cust.occupation
-    };
-
-    for (let key in data) {
-        const value = data[key] || '';
-        const possibleIds = [key, 'cust' + key.charAt(0).toUpperCase() + key.slice(1), 'newCust' + key.charAt(0).toUpperCase() + key.slice(1)];
-        possibleIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                    el.value = value;
-                    el.style.backgroundColor = "#f0f9ff";
-                    setTimeout(() => el.style.backgroundColor = "", 1000);
-                } else {
-                    el.innerText = value || "-";
-                }
-            }
-        });
-    }
-
-    setTimeout(() => {
-        const firstProd = document.querySelector('.row-desc, .row-code');
-        if (firstProd) firstProd.focus();
-    }, 400);
-};
-  
-  
-  
-  
-  
-  
-  
-
-// =============================================================
-// 🔱 TRITON ERP: CORE ENGINE (Calculations & Products)
-// =============================================================
-
-// 1. 🛑 ΣΤΑΜΑΤΑΕΙ ΤΟ ENTER ΠΟΥ ΣΒΗΝΕΙ ΣΕΙΡΕΣ
-window.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const activeEl = document.activeElement;
-        // Αν είμαστε μέσα σε πίνακα ή σε input, εμποδίζουμε το default behavior (π.χ. submit)
-        if (activeEl.closest('table') || activeEl.tagName === 'INPUT') {
-            e.preventDefault(); 
-            e.stopPropagation();
-            console.log("🔱 Triton: Enter blocked locally");
-            return false;
+    // 2. Περιμένουμε 1 δευτερόλεπτο για να σιγουρέψουμε τη σύνδεση
+    setTimeout(async () => {
+        
+        // --- ΕΛΕΓΧΟΣ ΥΓΕΙΑΣ ΣΥΝΔΕΣΗΣ ---
+        if (typeof checkSupabaseHealth === 'function') {
+            await checkSupabaseHealth(); 
         }
-    }
-}, true); 
+
+        // --- ΦΟΡΤΩΣΗ ΠΡΟΪΟΝΤΩΝ ---
+        await loadProductsFromSupabase();
+
+        // --- ΑΥΤΟΜΑΤΗ ΦΟΡΤΩΣΗ ΠΕΛΑΤΗ (Από URL) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const customerId = urlParams.get('customer_id');
+        
+        if (customerId && typeof supabase !== 'undefined' && supabase) {
+            const { data: customer, error } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('id', customerId)
+                .maybeSingle();
+            
+            if (customer) {
+                window.fillCustomerUI(customer);
+                console.log("✅ Triton: Customer UI filled from URL.");
+            }
+        }
+    }, 1000); // 1000ms για απόλυτη σιγουριά
+});
+  
+  
+  
+  
+
+// 🔱 THE DEFINITIVE TRITON ROUTING ENGINE (V5 - FINAL)
+ΑΥΤΟ?   window.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        
+        // 1. ΕΞΑΙΡΕΣΕΙΣ
+        if (['BUTTON', 'TEXTAREA'].includes(target.tagName) || target.readOnly) return;
+
+        // 2. ΕΛΕΓΧΟΣ ΑΝ ΕΙΜΑΣΤΕ ΜΕΣΑ ΣΤΟ MODAL ΠΕΛΑΤΗ
+        const isInsideModal = target.closest('#newCustomerModal');
+
+        if (isInsideModal) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // 🗺️ ΑΥΣΤΗΡΟ ROUTING ΧΩΡΙΣ FALLBACK (Μόνο για το Modal)
+            const modalFlow = {
+                'searchAfmInput': 'newCustName',
+                'newCustName':    'newCustJob',
+                'newCustJob':     'newCustAfm',
+                'newCustAfm':     'newCustDoy',
+                'newCustDoy':     'newCustZip',     // Από ΔΟΥ πάει ΤΚ
+                'newCustZip':     'newCustAddress', // ΑΠΟ ΤΚ ΠΑΕΙ ΔΙΕΥΘΥΝΣΗ (Η Διόρθωση)
+                'newCustAddress': 'newCustCity',
+                'newCustCity':    'newCustPhone',
+                'newCustPhone':   'newCustEmail'
+            };
+
+            const nextId = modalFlow[target.id];
+            
+            if (nextId) {
+                const nextField = document.getElementById(nextId);
+                if (nextField) {
+                    nextField.focus();
+                    if (nextField.tagName === 'INPUT') nextField.select();
+                    return; // ΕΔΩ ΣΤΑΜΑΤΑΕΙ Η ΕΚΤΕΛΕΣΗ ΓΙΑ ΤΟ MODAL
+                }
+            }
+
+            // Ειδική περίπτωση για το Email (Τέλος διαδρομής)
+            if (target.id === 'newCustEmail') {
+                saveNewCustomer();
+                return;
+            }
+        }
+
+        // 3. ΛΟΓΙΚΗ ΓΙΑ ΤΗΝ ΥΠΟΛΟΙΠΗ ΣΕΛΙΔΑ (Τιμολόγηση)
+        // Αν δεν είμαστε στο modal, συνεχίζουμε με την κανονική ροή
+        if (target.tagName === 'INPUT' || target.tagName === 'SELECT') {
+            e.preventDefault();
+            
+            // Γραμμές προϊόντων (προσθήκη νέας σειράς)
+            if (target.classList.contains('row-disc')) {
+                if (typeof window.addItemRow === 'function') {
+                    window.addItemRow();
+                    return; 
+                }
+            }
+
+            // Κίνηση στο επόμενο στοιχείο στη σελίδα
+            const allElements = Array.from(document.querySelectorAll('input:not([disabled]):not([readonly]), select:not([disabled])'))
+                .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.closest('#newCustomerModal'));
+
+            const currentIndex = allElements.indexOf(target);
+            if (currentIndex > -1 && currentIndex < allElements.length - 1) {
+                const nextEl = allElements[currentIndex + 1];
+                nextEl.focus();
+                if (nextEl.tagName === 'INPUT') nextEl.select();
+            }
+        }
+    }
+}, true);
+  
 
 // 2. LOAD PRODUCTS (With Auto-Retry & Correct variable)
 async function loadProductsFromSupabase() {
@@ -355,49 +403,40 @@ window.calculateTotal = function() {
     let subtotal = 0; 
     let totalVat = 0; 
 
-    const rows = document.querySelectorAll('.item-row');
-    rows.forEach(row => {
-        const qty = parseFloat(row.querySelector('.row-qty')?.value) || 0;
-        const price = parseFloat(row.querySelector('.row-price')?.value) || 0;
-        const disc = parseFloat(row.querySelector('.row-disc')?.value) || 0;
-        const vatRate = parseFloat(row.getAttribute('data-vat')) || 24;
+    const rows = document.querySelectorAll('.item-row, .invoice-row');
 
-        // Υπολογισμός με ακρίβεια cents
+    rows.forEach(row => {
+        const getVal = (selector) => {
+            const el = row.querySelector(selector);
+            const val = el ? el.value : "0";
+            return parseFloat(val.replace(',', '.')) || 0;
+        };
+
+        const qty   = getVal('.row-qty');
+        const price = getVal('.row-price');
+        const disc  = getVal('.row-disc') || 0;
+        const vatRate = parseFloat(row.getAttribute('data-vat')) || getVal('.row-vat') || 24;
+
         const lineNet = Math.round(((qty * price) * (1 - disc / 100)) * 100) / 100;
         const lineVat = Math.round((lineNet * (vatRate / 100)) * 100) / 100;
         
         const lineTotalField = row.querySelector('.row-total');
         if (lineTotalField) {
-            const displayTotal = (lineNet + lineVat).toFixed(2);
-            if (lineTotalField.tagName === 'INPUT') lineTotalField.value = displayTotal;
-            else lineTotalField.innerText = displayTotal + " €";
+            const totalLineAmount = (lineNet + lineVat).toFixed(2);
+            if (lineTotalField.tagName === 'INPUT') {
+                lineTotalField.value = totalLineAmount;
+            } else {
+                lineTotalField.innerText = totalLineAmount.replace('.', ',') + " €";
+            }
         }
 
         subtotal += lineNet;
         totalVat += lineVat;
     });
 
-    // Formatting & UI Update
-    const format = (val) => {
-        return (val || 0).toLocaleString('el-GR', { 
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2 
-        }) + " €";
-    };
-
-    const update = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = format(val);
-    };
-
-    const grandTotal = subtotal + totalVat;
-
-    update('footerSubtotal', subtotal);
-    update('netAmount', subtotal);
-    update('footerVat', totalVat);
-    update('vatAmount', totalVat);
-    update('footerGrandTotal', grandTotal);
-    update('totalAmount', grandTotal);
+    updateFooterField('footerSubtotal', subtotal);
+    updateFooterField('footerVat', totalVat);
+    updateFooterField('footerGrandTotal', subtotal + totalVat);
 };
 
 // 4. FETCH PRODUCT BY CODE
@@ -744,103 +783,121 @@ if (document.readyState === 'complete') {
 </div>
    
   <script>
-/* =============================================================
-   🔱 TRITON ERP: UNIFIED ENGINE (v4.2) 
+    
+   /* =============================================================
+   🔱 TRITON ERP: UNIFIED ENGINE (v4.6 - Fixed Order & Enter) 
    ============================================================= */
 
-// Global Variables
+// 1. GLOBAL VARIABLES
 window.allProducts = [];
 const DB = typeof _supabase !== 'undefined' ? _supabase : (typeof supabase !== 'undefined' ? supabase : null);
 
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🔱 Triton ERP: System Online");
-    updateDateTime();
+// 2. ΟΡΙΣΜΟΣ ΣΥΝΑΡΤΗΣΕΩΝ (Πρέπει να προηγούνται της κλήσης τους)
+
+/* --- 4. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ (Fixed Focus) --- */
+window.addItemRow = function(itemData = null) {
+    const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
+    if (!container) return;
     
-    if (DB) {
-        await loadProductsFromSupabase();
-        
-        // --- ΕΔΩ ΕΙΝΑΙ Η ΠΡΟΣΘΗΚΗ ΓΙΑ ΤΟ ΠΡΟΣΧΕΔΙΟ ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const draftId = urlParams.get('load_draft');
-        const cid = urlParams.get('customer_id');
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.style = "display:grid; grid-template-columns: 40px 120px 1fr 80px 100px 70px 100px 40px; gap:12px; padding:10px; border-bottom:1px solid #f1f5f9; align-items:center;";
 
-        // 1. Αν ερχόμαστε από τη λίστα προσχεδίων
-        if (draftId) {
-            const { data: draft, error } = await DB
-                .from('invoices')
-                .select('*')
-                .eq('id', draftId)
-                .single();
+    // Προσθέτουμε το onkeydown απευθείας στα inputs
+    const enterLogic = `onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.handleTritonEnter(this); }"`;
 
-            if (draft && !error) {
-                loadDraftToForm(draft);
-                return; // Σταματάμε εδώ για να μη βάλει κενή γραμμή
+    row.innerHTML = `
+        <div style="text-align:center; font-size:12px; color:#64748b;">${container.children.length + 1}</div>
+        <input type="text" class="row-code" ${enterLogic} value="${itemData ? itemData.code : ''}" placeholder="ΚΩΔ" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="text" class="row-desc" ${enterLogic} value="${itemData ? itemData.name || itemData.description : ''}" placeholder="Περιγραφή..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="number" class="row-qty" ${enterLogic} value="${itemData ? itemData.qty : '1'}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="number" class="row-price" ${enterLogic} value="${itemData ? itemData.price : ''}" placeholder="0.00" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="number" class="row-disc" ${enterLogic} value="${itemData ? itemData.discount || 0 : '0'}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <div class="row-total" style="text-align:right; font-weight:bold; color:#0369a1;">0,00 €</div>
+        <button type="button" onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer;">✕</button>
+    `;
+
+    container.appendChild(row);
+    
+    // Focus στον κωδικό της νέας γραμμής
+    setTimeout(() => {
+        const firstInp = row.querySelector('.row-code');
+        if (firstInp) firstInp.focus();
+    }, 50);
+
+    window.calculateTotal();
+};
+// 3. ENTER KEY LISTENER (ΛΥΝΕΙ ΤΟ ΠΡΟΒΛΗΜΑ ΣΟΥ)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        if (target.tagName === 'BUTTON' || target.tagName === 'TEXTAREA') return;
+
+        e.preventDefault();
+
+        // Αν είμαστε σε πεδίο γραμμής, πήγαινε στο επόμενο ή φτιάξε νέα γραμμή
+        if (target.classList.contains('row-code') || target.classList.contains('row-desc') || 
+            target.classList.contains('row-qty') || target.classList.contains('row-price') || 
+            target.classList.contains('row-disc')) {
+            
+            const row = target.closest('.item-row');
+            const inputs = Array.from(row.querySelectorAll('input'));
+            const index = inputs.indexOf(target);
+
+            if (index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            } else {
+                window.addItemRow(); // Τελευταίο πεδίο; Νέα γραμμή!
+            }
+        } else {
+            // Γενικό focus επόμενου πεδίου για την υπόλοιπη φόρμα
+            const formInputs = Array.from(document.querySelectorAll('input, select'));
+            const index = formInputs.indexOf(target);
+            if (index > -1 && index < formInputs.length - 1) {
+                formInputs[index + 1].focus();
             }
         }
+    }
+});
 
-        // 2. Αν έχουμε μόνο ID Πελάτη (όπως το είχες)
-        if (cid && typeof loadCustomerById === 'function') {
-            loadCustomerById(cid);
+// 4. ΕΚΚΙΝΗΣΗ ΣΥΣΤΗΜΑΤΟΣ (DOM CONTENT LOADED)
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("🔱 Triton ERP: System Online");
+    
+    if (DB) {
+        // Φόρτωση Προϊόντων
+        try {
+            const { data } = await DB.from('products').select('*');
+            if (data) window.allProducts = data;
+        } catch(e) { console.error(e); }
+
+        // Έλεγχος Draft από URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const draftId = urlParams.get('load_draft');
+
+        if (draftId) {
+            const { data: draft } = await DB.from('invoices').select('*').eq('id', draftId).single();
+            if (draft) {
+                window.loadDraftToForm(draft);
+                return;
+            }
         }
     }
 
-    // Αρχική γραμμή αν δεν φορτώθηκε προσχέδιο
+    // Αν δεν φορτωθεί draft, βάλε την πρώτη γραμμή μετά από λίγο
     setTimeout(() => {
         const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
         if (container && container.children.length === 0) {
-            addItemRow();
+            window.addItemRow();
         }
-    }, 600);
+    }, 500);
 });
-/* --- 1. ΔΙΑΧΕΙΡΙΣΗ MODALS --- */
+
+/* --- ΛΟΙΠΕΣ ΣΥΝΑΡΤΗΣΕΙΣ (Modals κτλ) --- */
 window.toggleTritonSettings = function() {
     const m = document.getElementById('tritonSettingsModal');
     if (m) m.style.display = (m.style.display === 'none' || m.style.display === '') ? 'flex' : 'none';
 };
-
-window.openProductModal = function(prefillCode = "") {
-    const m = document.getElementById('newProductModal');
-    if (m) {
-        m.style.display = 'flex';
-        const codeInput = document.getElementById('newProdCode');
-        if (codeInput) {
-            codeInput.value = prefillCode;
-            setTimeout(() => codeInput.focus(), 100);
-        }
-    }
-};
-
-window.closeProductModal = function() {
-    const m = document.getElementById('newProductModal');
-    if (m) m.style.display = 'none';
-};
-
-/* --- 2. ΑΠΟΘΗΚΕΥΣΗ ΠΡΟΪΟΝΤΟΣ & ΡΥΘΜΙΣΕΩΝ --- */
-window.saveNewProduct = async function() {
-    const btn = document.getElementById('saveProdBtn');
-    const pData = {
-        code: document.getElementById('newProdCode').value.trim(),
-        name: document.getElementById('newProdName').value.trim(),
-        price: parseFloat(document.getElementById('newProdPrice').value) || 0,
-        vat_rate: parseInt(document.getElementById('newProdVat').value) || 24
-    };
-
-    if (!pData.code || !pData.name) return alert("⚠️ Συμπληρώστε Κωδικό και Περιγραφή!");
-    if (btn) { btn.disabled = true; btn.innerText = "⏳..."; }
-
-    try {
-        const { error } = await DB.from('products').insert([pData]);
-        if (error) throw error;
-        alert("✅ Το προϊόν αποθηκεύτηκε!");
-        window.allProducts.push(pData);
-        closeProductModal();
-    } catch (err) { 
-        alert("Σφάλμα: " + err.message); 
-    } finally { 
-        if (btn) { btn.disabled = false; btn.innerText = "💾 Αποθήκευση"; } 
-    }
-};
-
 /* --- 3. ΑΝΑΖΗΤΗΣΗ & UI ΠΕΛΑΤΗ --- */
 window.searchCustomer = async function(input) {
     const term = input.value.trim();
@@ -849,7 +906,7 @@ window.searchCustomer = async function(input) {
     if (term.length < 2) return;
 
     try {
-        const { data, error } = await DB.from('customers')
+        const { data } = await DB.from('customers')
             .select('*')
             .or(`name.ilike.%${term}%,afm.ilike.%${term}%`)
             .limit(5);
@@ -857,7 +914,7 @@ window.searchCustomer = async function(input) {
         if (data && data.length > 0) {
             const list = document.createElement('div');
             list.id = 'customer-dropdown';
-            list.className = 'autocomplete-items'; // Χρήση του CSS κλάσης αν υπάρχει
+            list.className = 'autocomplete-items';
             list.style = "position:absolute; top:100%; left:0; width:100%; background:white; border:1px solid #0ea5e9; border-radius:8px; z-index:20001; box-shadow:0 10px 15px rgba(0,0,0,0.1);";
             
             data.forEach(cust => {
@@ -879,176 +936,112 @@ window.searchCustomer = async function(input) {
 window.fillCustomerUI = function(cust) {
     if (!cust) return;
     const mapping = {
-        'customerName': cust.name, 'customerAFM': cust.afm,
-        'newCustName': cust.name, 'newCustAfm': cust.afm,
-        'newCustDoy': cust.doy, 'newCustAddress': cust.address,
-        'newCustCity': cust.city, 'newCustZip': cust.zip, 'newCustJob': cust.job
+        'customerSelect': cust.id, // Για το dropdown επιλογής
+        'customerName': cust.name, 
+        'customerAFM': cust.afm,
+        'newCustName': cust.name, 
+        'newCustAfm': cust.afm,
+        'newCustDoy': cust.doy, 
+        'newCustAddress': cust.address,
+        'newCustCity': cust.city, 
+        'newCustJob': cust.job
     };
     for (let id in mapping) {
         const el = document.getElementById(id);
         if (el) {
-            if (el.tagName === 'INPUT') el.value = mapping[id] || '';
+            if (el.tagName === 'INPUT' || el.tagName === 'SELECT') el.value = mapping[id] || '';
             else el.innerText = mapping[id] || '-';
         }
     }
 };
 
-/* --- 4. ΛΟΙΠΕΣ ΛΕΙΤΟΥΡΓΙΕΣ (ΗΜΕΡΟΜΗΝΙΑ, ΠΡΟΪΟΝΤΑ, ROWS) --- */
-function updateDateTime() {
-    const now = new Date();
-    const d = now.toISOString().split('T')[0];
-    document.querySelectorAll('input[type="date"]').forEach(i => i.value = d);
-}
-
-async function loadProductsFromSupabase() {
-    try {
-        const { data } = await DB.from('products').select('*');
-        if (data) window.allProducts = data;
-    } catch (e) { console.error("Error loading products:", e); }
-}
-
-window.addItemRow = function() {
+/* --- 4. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ --- */
+window.addItemRow = function(itemData = null) {
     const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
     if (!container) return;
     
     const row = document.createElement('div');
     row.className = 'item-row';
     row.style = "display:grid; grid-template-columns: 40px 120px 1fr 80px 100px 70px 100px 40px; gap:12px; padding:10px; border-bottom:1px solid #f1f5f9; align-items:center;";
-    row.setAttribute('data-vat', '24'); // Default VAT
+    row.setAttribute('data-vat', itemData ? itemData.vat_rate : '24');
 
     row.innerHTML = `
         <div style="text-align:center; font-size:12px; color:#64748b;">${container.children.length + 1}</div>
-        <input type="text" class="row-code" placeholder="ΚΩΔ" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="text" class="row-desc" placeholder="Περιγραφή..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-qty" value="1" step="any" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-price" placeholder="0.00" step="0.01" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-        <input type="number" class="row-disc" value="0" step="0.1" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="text" class="row-code" value="${itemData ? itemData.code : ''}" placeholder="ΚΩΔ" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="text" class="row-desc" value="${itemData ? itemData.name || itemData.description : ''}" placeholder="Περιγραφή..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="number" class="row-qty" value="${itemData ? itemData.qty : '1'}" step="any" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="number" class="row-price" value="${itemData ? itemData.price : ''}" placeholder="0.00" step="0.01" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+        <input type="number" class="row-disc" value="${itemData ? itemData.discount || 0 : '0'}" step="0.1" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
         <div class="row-total" style="text-align:right; font-weight:bold; color:#0369a1;">0,00 €</div>
-        <button onclick="this.closest('.item-row').remove(); if(window.calculateTotal) window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size:18px;">✕</button>
+        <button onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size:18px;">✕</button>
     `;
 
-    // Listeners για αυτόματο υπολογισμό και αναζήτηση
-    const codeInp = row.querySelector('.row-code');
-    codeInp.addEventListener('change', () => {
-        if (typeof fetchProductData === 'function') fetchProductData(codeInp);
-    });
-
     row.querySelectorAll('input').forEach(inp => {
-        inp.addEventListener('input', () => {
-            if (window.calculateTotal) window.calculateTotal();
-        });
+        inp.addEventListener('input', () => window.calculateTotal());
     });
 
     container.appendChild(row);
-};
-    async function saveAsDraft() {
-    // 1. Μαζεύουμε τα δεδομένα της φόρμας
-    const customerId = document.getElementById('customerSelect').value;
-    const items = getInvoiceItems(); // Η συνάρτηση που διαβάζει τις γραμμές των προϊόντων
-    const total = parseFloat(document.getElementById('totalAmount').innerText.replace(' €', ''));
-
-    const draftData = {
-        customer_id: customerId,
-        items: items, // Αποθηκεύουμε τα προϊόντα σε μορφή JSON στον πίνακα
-        total_amount: total,
-        status: 'draft', // <--- Αυτό το κάνει Προσχέδιο
-        created_at: new Date()
-    };
-
-    // 2. Αποθήκευση στη Supabase
-    const { data, error } = await DB
-        .from('invoices')
-        .insert([draftData])
-        .select();
-
-    if (error) {
-        alert("Σφάλμα κατά την αποθήκευση του προσχεδίου.");
-        console.error(error);
-    } else {
-        alert("✅ Το Προσχέδιο αποθηκεύτηκε με επιτυχία!");
-        // Προαιρετικά: window.location.href = 'drafts.html';
-    }
-}
-    // Στο billing.html ή invoice.html (στη φόρμα καταχώρησης)
-window.onload = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const draftId = urlParams.get('load_draft');
-
-    if (draftId) {
-        // Τραβάμε το προσχέδιο από τη βάση
-        const { data: draft, error } = await DB
-            .from('invoices')
-            .select('*')
-            .eq('id', draftId)
-            .single();
-
-        if (draft) {
-            // Γεμίζουμε αυτόματα τα πεδία της φόρμας
-            loadDraftToForm(draft);
-        }
-    }
+    window.calculateTotal();
 };
 
-function loadDraftToForm(data) {
-    // 1. Επιλογή πελάτη
-    document.getElementById('customerSelect').value = data.customer_id;
-    
-    // 2. Προσθήκη προϊόντων στις γραμμές
-    data.items.forEach(item => {
-        addNewRow(item); // Η συνάρτηση που προσθέτει γραμμή στο table σου
-    });
-    
-    // 3. Επανυπολογισμός συνόλων
-    updateTotals();
-}
-    function loadDraftToForm(data) {
+/* --- 5. ΔΙΑΧΕΙΡΙΣΗ ΠΡΟΣΧΕΔΙΩΝ (DRAFTS) --- */
+/* --- 5. ΔΙΑΧΕΙΡΙΣΗ ΠΡΟΣΧΕΔΙΩΝ (DRAFTS) - ΔΙΟΡΘΩΜΕΝΟ --- */
+window.loadDraftToForm = async function(data) {
+    console.log("🔱 Triton: Loading Draft Data...", data);
+
+    // 1. Ενημέρωση Πελάτη
     const customerSelect = document.getElementById('customerSelect');
-    if (customerSelect) customerSelect.value = data.customer_id;
+    if (customerSelect && data.customer_id) {
+        customerSelect.value = data.customer_id;
+    }
     
+    // Κλήση της συνάρτησης για να γεμίσουν τα UI πεδία (ΑΦΜ, Διεύθυνση κτλ)
+    if (typeof loadCustomerById === 'function' && data.customer_id) {
+        await loadCustomerById(data.customer_id);
+    }
+
+    // 2. Καθαρισμός και Προετοιμασία Container
     const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
-    if (container) container.innerHTML = '';
+    if (!container) {
+        console.error("❌ Triton Error: Items container not found!");
+        return;
+    }
+    container.innerHTML = '';
 
-    if (data.items && Array.isArray(data.items)) {
-        data.items.forEach(item => {
-            addItemRow(item); // Προσθέτει τη γραμμή με τα δεδομένα του προσχεδίου
-        });
+    // 3. Φόρτωση Προϊόντων
+    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+        // Χρησιμοποιούμε for...of για να είμαστε σίγουροι για τη σειρά
+        for (const item of data.items) {
+            window.addItemRow(item);
+        }
+    } else {
+        // Αν το draft δεν έχει προϊόντα, βάλε μια κενή γραμμή για ευκολία
+        window.addItemRow();
     }
     
-    if (typeof updateTotals === 'function') updateTotals();
-}
-    async function handleCustomerStatement() {
+    // 4. Υπολογισμός Συνόλων
+    // Αντί για setTimeout, το καλούμε άμεσα αφού τελειώσει το loop
+    // αλλά δίνουμε ένα μικρό "ανάσα" 100ms για το rendering
+    setTimeout(() => {
+        if (typeof window.calculateTotal === 'function') {
+            window.calculateTotal();
+            console.log("✅ Triton: Totals Calculated.");
+        }
+    }, 150);
+};
+/* --- 6. ΑΠΟΣΤΟΛΗ PDF / EMAIL --- */
+window.handleCustomerStatement = async function() {
     const customerId = document.getElementById('customerSelect')?.value;
-    if (!customerId) {
-        alert("⚠️ Παρακαλώ επιλέξτε πρώτα έναν πελάτη.");
-        return;
-    }
+    if (!customerId) return alert("⚠️ Επιλέξτε πελάτη.");
 
-    // 1. Τραβάμε τα πλήρη στοιχεία του πελάτη από τη Supabase
-    const { data: customer, error } = await DB
-        .from('customers')
-        .select('*')
-        .eq('id', customerId)
-        .single();
+    const { data: customer } = await DB.from('customers').select('*').eq('id', customerId).single();
+    if (!customer || !customer.email) return alert("❌ Δεν βρέθηκε email.");
 
-    if (error || !customer) {
-        alert("Σφάλμα κατά την ανάκτηση στοιχείων πελάτη.");
-        return;
-    }
-
-    // 2. Διαχωρισμός email (αν υπάρχουν πολλά χωρισμένα με κόμμα ή ερωτηματικό)
-    const emails = customer.email ? customer.email.split(/[,; ]+/).filter(e => e.length > 5) : [];
-
-    if (emails.length === 0) {
-        alert("❌ Δεν βρέθηκε αποθηκευμένο email για αυτόν τον πελάτη.");
-        return;
-    }
-
-    // 3. Εμφάνιση Banner Επιλογής Email
+    const emails = customer.email.split(/[,; ]+/).filter(e => e.length > 5);
     showEmailPicker(emails, customer);
-}
+};
 
 function showEmailPicker(emails, customer) {
-    // Δημιουργία ενός απλού Modal/Banner στο φτερό
     const modal = document.createElement('div');
     modal.id = "emailPickerModal";
     modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999;";
@@ -1061,42 +1054,38 @@ function showEmailPicker(emails, customer) {
     `).join('');
 
     modal.innerHTML = `
-        <div style="background:white; padding:25px; border-radius:15px; width:350px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-            <h3 style="margin-top:0; color:#1e293b;">Επιλογή Email</h3>
-            <p style="font-size:0.85rem; color:#64748b;">Πού θέλετε να σταλεί η καρτέλα του πελάτη <strong>${customer.name}</strong>;</p>
+        <div style="background:white; padding:25px; border-radius:15px; width:350px; text-align:center;">
+            <h3 style="color:#1e293b;">Επιλογή Email</h3>
             ${emailButtons}
-            <button onclick="document.getElementById('emailPickerModal').remove()" style="margin-top:10px; background:none; border:none; color:red; cursor:pointer; font-size:0.8rem;">Ακύρωση</button>
-        </div>
-    `;
+            <button onclick="document.getElementById('emailPickerModal').remove()" style="margin-top:10px; color:red; border:none; background:none; cursor:pointer;">Ακύρωση</button>
+        </div>`;
     document.body.appendChild(modal);
 }
-    async function sendStatement(selectedEmail, customerId) {
-    const modal = document.getElementById('emailPickerModal');
-    if(modal) modal.innerHTML = "<h3>⏳ Παρακαλώ περιμένετε...</h3><p>Δημιουργία PDF & Αποστολή...</p>";
 
-    // 1. Δημιουργία PDF από το στοιχείο που θέλεις (π.χ. όλο το invoice table)
-    const element = document.getElementById('printableArea'); // Το ID του τμήματος που θέλεις να γίνει PDF
-    const opt = {
-        margin: 1,
-        filename: 'KARTELA_PELATI.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-
-    // Μετατροπή σε Blob για να σταλεί
-    html2pdf().set(opt).from(element).output('blob').then(async (pdfBlob) => {
-        
-        // 2. ΕΔΩ ΣΤΕΛΝΕΙΣ ΤΟ EMAIL
-        // Μπορείς να χρησιμοποιήσεις το API της Supabase (Edge Functions) ή ένα Email API
-        // Παράδειγμα λογικής:
-        console.log("Αποστολή PDF στο:", selectedEmail);
-        
-        // Μετά την επιτυχία:
-        alert("✅ Η καρτέλα στάλθηκε επιτυχώς στο " + selectedEmail);
-        if(modal) modal.remove();
-    });
+// Βοηθητικές συναρτήσεις
+function updateDateTime() {
+    const d = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('input[type="date"]').forEach(i => i.value = d);
 }
+
+async function loadProductsFromSupabase() {
+    const { data } = await DB.from('products').select('*');
+    if (data) window.allProducts = data;
+}
+    window.handleTritonEnter = function(currentInput) {
+    const row = currentInput.closest('.item-row');
+    const inputs = Array.from(row.querySelectorAll('input:not([disabled])'));
+    const index = inputs.indexOf(currentInput);
+
+    if (index < inputs.length - 1) {
+        // Αν υπάρχει επόμενο κουτάκι στη γραμμή, πήγαινε εκεί
+        inputs[index + 1].focus();
+        if (inputs[index + 1].select) inputs[index + 1].select();
+    } else {
+        // Αν είμαστε στο τελευταίο (Έκπτωση), φτιάξε νέα γραμμή
+        window.addItemRow();
+    }
+};
 </script>
   
   
@@ -1252,47 +1241,80 @@ function showEmailPicker(emails, customer) {
   
   
   <script>
-/* =============================================================
-   🔱 TRITON ERP: CORE ENGINE (v4.3) 
-   ============================================================= */
+ 
 
-// 1. 🛡️ SMART ENTER: Διαχείριση κίνησης & αυτόματη νέα γραμμή
-document.addEventListener('keydown', function(e) {
+ 
+// 🔱 THE UNIFIED TRITON "FORCE-ENTER" ENGINE (V3 - Final Routing)
+window.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         const target = e.target;
-        // Έλεγχος αν είμαστε σε input μέσα σε γραμμή (item-row ή invoice-row)
-        const row = target.closest('.item-row, .invoice-row');
         
-        if (row && (target.tagName === 'INPUT' || target.tagName === 'SELECT')) {
-            e.preventDefault();
-            
-            const rowInputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])'));
-            const currentIndex = rowInputs.indexOf(target);
+        // 1. ΕΞΑΙΡΕΣΕΙΣ
+        if (['BUTTON', 'TEXTAREA'].includes(target.tagName) || target.readOnly) return;
 
-            // Αν υπάρχει επόμενο input στην ίδια σειρά, πήγαινε εκεί
-            if (currentIndex > -1 && currentIndex < rowInputs.length - 1) {
-                rowInputs[currentIndex + 1].focus();
-                if (rowInputs[currentIndex + 1].select) rowInputs[currentIndex + 1].select();
-            } 
-            // Αν είμαστε στο τελευταίο input της σειράς, δημιούργησε νέα γραμμή
-            else if (currentIndex === rowInputs.length - 1) {
-                console.log("🔱 Triton: New line requested");
-                if (typeof addItemRow === 'function') {
-                    addItemRow();
-                    // Focus στο πρώτο input της νέας γραμμής
-                    setTimeout(() => {
-                        const allRows = document.querySelectorAll('.item-row, .invoice-row');
-                        const lastRow = allRows[allRows.length - 1];
-                        const firstInput = lastRow.querySelector('input');
-                        if (firstInput) firstInput.focus();
-                    }, 100);
-                }
+        // Σταματάμε το default behavior
+        e.preventDefault();
+        e.stopPropagation();
+
+        const tid = target.id;
+
+        // 2. 🚩 CUSTOM ROUTING ΓΙΑ ΤΟ MODAL (Εδώ λύνεται το πρόβλημα)
+        
+        // Από ΑΦΜ -> Αναζήτηση
+        if (tid === 'searchAfmInput') {
+            document.getElementById('myDataBtn')?.click();
+            return;
+        }
+
+        // ΑΠΟ Τ.Κ. -> ΠΑΕΙ ΠΙΣΩ ΣΤΗ ΔΙΕΥΘΥΝΣΗ
+        if (tid === 'newCustZip') {
+            const addrField = document.getElementById('newCustAddress');
+            if (addrField) {
+                addrField.focus();
+                addrField.select();
+                return; 
             }
         }
-    }
-});
 
-// 2. 🧮 UNIFIED CALCULATE ENGINE: Υπολογισμοί με ακρίβεια
+        // ΑΠΟ ΠΟΛΗ -> ΠΑΕΙ ΣΤΟ ΤΗΛΕΦΩΝΟ (πηδώντας το Zip)
+        if (tid === 'newCustCity') {
+            const phoneField = document.getElementById('newCustPhone');
+            if (phoneField) {
+                phoneField.focus();
+                phoneField.select();
+                return;
+            }
+        }
+
+        // ΑΠΟ EMAIL -> ΑΠΟΘΗΚΕΥΣΗ
+        if (tid === 'newCustEmail') {
+            saveNewCustomer();
+            return;
+        }
+
+        // 3. ΓΕΝΙΚΗ ΚΙΝΗΣΗ (Για όλα τα υπόλοιπα πεδία)
+        const allElements = Array.from(document.querySelectorAll('input:not([disabled]):not([readonly]), select:not([disabled])'))
+            .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
+
+        const currentIndex = allElements.indexOf(target);
+
+        // 4. ΕΙΔΙΚΗ ΛΟΓΙΚΗ ΓΙΑ ΓΡΑΜΜΕΣ ΤΙΜΟΛΟΓΗΣΗΣ
+        if (target.classList.contains('row-disc')) {
+            if (typeof window.addItemRow === 'function') {
+                window.addItemRow();
+                return; 
+            }
+        }
+
+        // 5. FOCUS ΣΤΟ ΕΠΟΜΕΝΟ ΣΤΟΙΧΕΙΟ
+        if (currentIndex > -1 && currentIndex < allElements.length - 1) {
+            const nextEl = allElements[currentIndex + 1];
+            nextEl.focus();
+            if (nextEl.tagName === 'INPUT') nextEl.select();
+        }
+    }
+}, true);
+// 2. 🧮 UNIFIED CALCULATE ENGINE
 window.calculateTotal = function() {
     let subtotal = 0; 
     let totalVat = 0; 
@@ -1308,64 +1330,79 @@ window.calculateTotal = function() {
 
         const qty   = getVal('.row-qty');
         const price = getVal('.row-price');
-        const disc  = getVal('.row-disc') || 0;
-        
-        // Λήψη ΦΠΑ (είτε από attribute είπε από input .row-vat)
+        const disc  = getVal('.row-disc');
         const vatRate = parseFloat(row.getAttribute('data-vat')) || getVal('.row-vat') || 24;
 
-        // Υπολογισμός Καθαρής Αξίας (Net)
         const lineNet = Math.round(((qty * price) * (1 - disc / 100)) * 100) / 100;
         const lineVat = Math.round((lineNet * (vatRate / 100)) * 100) / 100;
         
-        // Ενημέρωση UI γραμμής
         const lineTotalField = row.querySelector('.row-total');
         if (lineTotalField) {
             const totalLineAmount = (lineNet + lineVat).toFixed(2);
-            if (lineTotalField.tagName === 'INPUT') {
-                lineTotalField.value = totalLineAmount;
-            } else {
+            lineTotalField.tagName === 'INPUT' ? 
+                lineTotalField.value = totalLineAmount : 
                 lineTotalField.innerText = totalLineAmount.replace('.', ',') + " €";
-            }
         }
 
         subtotal += lineNet;
         totalVat += lineVat;
     });
 
-    // Ενημέρωση Footer
     updateFooterField('footerSubtotal', subtotal);
-    updateFooterField('netAmount', subtotal);
     updateFooterField('footerVat', totalVat);
-    updateFooterField('vatAmount', totalVat);
     updateFooterField('footerGrandTotal', subtotal + totalVat);
+    // Sync με τα κρυφά πεδία αν υπάρχουν
+    updateFooterField('netAmount', subtotal);
+    updateFooterField('vatAmount', totalVat);
     updateFooterField('totalAmount', subtotal + totalVat);
 };
 
-// Βοηθητική συνάρτηση μορφοποίησης
 function updateFooterField(id, value) {
     const el = document.getElementById(id);
     if (!el) return;
-
-    const formatted = value.toLocaleString('el-GR', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    }) + " €";
-
+    // Χρήση Math.round για ακρίβεια στα λεπτά
+    const roundedValue = Math.round(value * 100) / 100;
+    const formatted = roundedValue.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+    
     if (el.tagName === 'INPUT') {
-        el.value = value.toFixed(2);
+        el.value = roundedValue.toFixed(2);
     } else {
         el.innerText = formatted;
     }
 }
+// 3. 💾 CUSTOMER & myDATA LOGIC
+async function searchMyData(afm) {
+    if (!afm || afm.length !== 9 || isNaN(afm)) return alert("⚠️ Έγκυρο ΑΦΜ (9 ψηφία).");
+    const btn = document.getElementById('myDataBtn');
+    btn.innerHTML = "⏳..."; btn.disabled = true;
 
-// 3. 💾 CUSTOMER SAVE
+    try {
+        const response = await fetch(`ΣΥΝΔΕΣΜΟΣ_API_ΣΟΥ?afm=${afm}`); 
+        const data = await response.json();
+
+        if (data && data.success) {
+            const info = data.result;
+            document.getElementById('newCustName').value = info.onomasia || '';
+            document.getElementById('newCustJob').value = info.drastiriotita || '';
+            document.getElementById('newCustAddress').value = info.dieuthinsi || '';
+            document.getElementById('newCustCity').value = info.poli || '';
+            document.getElementById('newCustDoy').value = info.doy || '';
+            
+            setTimeout(() => document.getElementById('newCustPhone').focus(), 300);
+        } else {
+            alert("❌ Δεν βρέθηκε.");
+        }
+    } catch (err) { alert("Σφάλμα myDATA"); }
+    finally { btn.innerHTML = "🔍 ΑΝΑΖΗΤΗΣΗ"; btn.disabled = false; }
+}
+
 async function saveNewCustomer() {
     const btn = document.getElementById('saveCustBtn');
     if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
 
-    const customerData = {
+    const cData = {
         name: document.getElementById('newCustName').value.trim(),
-        afm: document.getElementById('newCustAfm').value.trim(),
+        afm: document.getElementById('searchAfmInput').value.trim(),
         doy: document.getElementById('newCustDoy').value,
         address: document.getElementById('newCustAddress').value,
         city: document.getElementById('newCustCity').value,
@@ -1374,107 +1411,112 @@ async function saveNewCustomer() {
         phone: document.getElementById('newCustPhone').value
     };
 
-    try {
-        const { data, error } = await DB.from('customers').insert([customerData]).select();
-        if (error) throw error;
-        
-        alert("✅ Ο πελάτης αποθηκεύτηκε στο Triton!");
-        if (data && data[0]) fillCustomerUI(data[0]); 
-        if (typeof closeNewCustomerModal === 'function') closeNewCustomerModal();
-    } catch (err) {
-        alert("❌ Σφάλμα: " + err.message);
-    } finally {
-        if (btn) { btn.innerHTML = "💾 Αποθήκευση"; btn.disabled = false; }
-    }
-}
-
-// 4. 📦 PRODUCT SAVE (Ενοποιημένη & Διορθωμένη)
-async function saveNewProduct() {
-    const btn = document.getElementById('saveProdBtn');
-    const code = document.getElementById('newProdCode').value.trim();
-    const name = document.getElementById('newProdName').value.trim();
-    const price = parseFloat(document.getElementById('newProdPrice').value) || 0;
-    const vat = document.getElementById('newProdVat').value;
-
-    if (!name) return alert("⚠️ Παρακαλώ συμπληρώστε την Περιγραφή.");
-    if (btn) btn.disabled = true;
-
-    try {
-        const { error } = await DB.from('products').insert([
-            { code: code, name: name, price: price, vat_rate: vat }
-        ]);
-
-        if (error) throw error;
-
-        console.log("🔱 Triton ERP: Product Saved!");
-        if (typeof closeProductModal === 'function') closeProductModal();
-        
-        // Καθαρισμός
-        document.getElementById('newProdCode').value = '';
-        document.getElementById('newProdName').value = '';
-        document.getElementById('newProdPrice').value = '0.00';
-        
-    } catch (err) {
-        console.error("Σφάλμα:", err.message);
-        alert("❌ Αποτυχία αποθήκευσης: " + err.message);
-    } finally {
-        if (btn) btn.disabled = false;
-    }
-}
-    // --- Modal Handlers ---
-window.closeNewCustomerModal = function() {
-    document.getElementById('newCustomerModal').style.display = 'none';
-};
-
-window.closeProductModal = function() {
-    document.getElementById('newProductModal').style.display = 'none';
-};
-
-// --- Save Functions ---
-async function saveNewCustomer() {
-    const btn = document.getElementById('saveCustBtn');
-    btn.disabled = true;
-    btn.innerHTML = "⏳...";
-
-    const cData = {
-        name: document.getElementById('newCustName').value.trim(),
-        afm: document.getElementById('newCustAfm').value.trim(),
-        doy: document.getElementById('newCustDoy').value.trim(),
-        address: document.getElementById('newCustAddress').value.trim(),
-        city: document.getElementById('newCustCity').value.trim(),
-        job: document.getElementById('newCustJob').value.trim()
-    };
-
     if (!cData.name || !cData.afm) {
-        alert("⚠️ Επωνυμία και ΑΦΜ είναι υποχρεωτικά!");
-        btn.disabled = false;
-        btn.innerHTML = "💾 Αποθήκευση";
+        alert("⚠️ Όνομα και ΑΦΜ απαιτούνται!");
+        if (btn) { btn.innerHTML = "💾 Αποθήκευση"; btn.disabled = false; }
         return;
     }
 
     try {
-        const { error } = await DB.from('customers').insert([cData]);
+        const { data, error } = await supabase.from('customers').insert([cData]).select();
         if (error) throw error;
-        alert("✅ Ο πελάτης αποθηκεύτηκε!");
+        
+        alert("✅ Επιτυχής Αποθήκευση!");
+        if (data && data[0] && typeof fillCustomerUI === 'function') fillCustomerUI(data[0]); 
         closeNewCustomerModal();
-    } catch (err) {
-        alert("Σφάλμα: " + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = "💾 Αποθήκευση";
+        setTimeout(() => document.getElementById('prodSearch').focus(), 500);
+    } catch (err) { alert("❌ Σφάλμα: " + err.message); }
+    finally { if (btn) { btn.innerHTML = "💾 Αποθήκευση"; btn.disabled = false; } }
+}
+
+// 4. 📦 PRODUCT LOGIC
+async function handleProductSelection() {
+    const input = document.getElementById('prodSearch');
+    const productName = input.value;
+    if (!productName) return;
+
+    try {
+        const { data: product } = await supabase.from('products').select('*').eq('name', productName).single();
+        if (product) {
+            const newRowId = addNewRow(product); 
+            input.value = '';
+            setTimeout(() => {
+                const qtyInput = document.getElementById(`qty_${newRowId}`);
+                if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+            }, 100);
+        }
+    } catch (err) { console.error("Product Error:", err); }
+}
+
+async function saveNewProduct() {
+    const btn = document.getElementById('saveProdBtn');
+    const pData = {
+        code: document.getElementById('newProdCode').value.trim(),
+        name: document.getElementById('newProdName').value.trim(),
+        price: parseFloat(document.getElementById('newProdPrice').value) || 0,
+        vat_rate: document.getElementById('newProdVat').value
+    };
+
+    if (!pData.name) return alert("⚠️ Συμπληρώστε Περιγραφή.");
+    if (btn) btn.disabled = true;
+
+    try {
+        const { error } = await supabase.from('products').insert([pData]);
+        if (error) throw error;
+        closeProductModal();
+        alert("✅ Προϊόν Αποθηκεύτηκε!");
+    } catch (err) { alert("❌ Σφάλμα: " + err.message); }
+    finally { if (btn) btn.disabled = false; }
+}
+
+// 5. 🛠️ MODAL HANDLERS
+window.closeNewCustomerModal = () => document.getElementById('newCustomerModal').style.display = 'none';
+window.closeProductModal = () => document.getElementById('newProductModal').style.display = 'none';
+
+async function checkForBranches(customerName) {
+    const { data: branches } = await supabase.from('branches').select('*').eq('customer_name', customerName);
+    const branchDiv = document.getElementById('branchSelectionGroup');
+    const branchSelect = document.getElementById('selectedBranch');
+
+    if (branches && branches.length > 0) {
+        if (branchDiv) branchDiv.style.display = 'block';
+        if (branchSelect) {
+            branchSelect.innerHTML = '<option value="">-- Επιλογή Υποκαταστήματος --</option>';
+            branches.forEach(b => {
+                branchSelect.innerHTML += `<option value="${b.address}">${b.branch_name} (${b.address})</option>`;
+            });
+        }
+    } else {
+        if (branchDiv) branchDiv.style.display = 'none';
+    }
+}
+    // 🚦 SUPABASE HEALTH CHECKER
+async function checkSupabaseHealth() {
+    const statusDot = document.getElementById('supabase-status-dot');
+    const statusText = document.getElementById('supabase-status-text');
+
+    if (typeof supabase === 'undefined' || !supabase) {
+        updateStatus(false);
+        return;
+    }
+
+    try {
+        // Κάνουμε μια πολύ ελαφριά κλήση στη βάση
+        const { error } = await supabase.from('products').select('id').limit(1);
+        updateStatus(!error);
+    } catch (e) {
+        updateStatus(false);
+    }
+
+    function updateStatus(isOnline) {
+        if (!statusDot) return;
+        statusDot.style.backgroundColor = isOnline ? "#22c55e" : "#ef4444"; // Πράσινο ή Κόκκινο
+        statusText.innerText = isOnline ? "Συνδεδεμένος" : "Αποσυνδεδεμένος";
     }
 }
 
-// --- myDATA Search Mockup (Προσάρμοσέ το στο API σου) ---
-async function searchMyData(afm) {
-    if (afm.length !== 9) return alert("⚠️ Το ΑΦΜ πρέπει να έχει 9 ψηφία");
-    const btn = document.getElementById('myDataBtn');
-    btn.innerHTML = "⏳...";
-    
-    console.log("🔱 Triton: Searching myDATA for AFM:", afm);
-    // Εδώ προσθέτεις το δικό σου fetch logic για την ΑΑΔΕ
-    setTimeout(() => { btn.innerHTML = "🔍 myDATA"; }, 1000);
-}
+// Εκτέλεση ελέγχου κάθε 30 δευτερόλεπτα
+setInterval(checkSupabaseHealth, 30000);
 </script>
   
   
@@ -1488,18 +1530,27 @@ async function searchMyData(afm) {
             <span onclick="closeNewCustomerModal()" style="cursor:pointer; font-size:24px; color:#64748b;">&times;</span>
         </div>
 
-        <div style="background:#f0f9ff; padding:15px; border-radius:8px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-end;">
-            <div style="flex-grow:1;">
-                <label style="display:block; font-size:12px; color:#0369a1; font-weight:bold; margin-bottom:5px;">ΑΦΜ για Αναζήτηση</label>
-                <input type="text" id="newCustAfm" placeholder="π.χ. 123456789" style="width:100%; padding:10px; border:1px solid #0ea5e9; border-radius:6px;">
-            </div>
-           <input type="text" id="searchAfmInput" placeholder="π.χ. 123456789" style="width:100%; padding:10px; border:1px solid #0ea5e9; border-radius:6px;">
+       <div style="background:#f0f9ff; padding:15px; border-radius:8px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-end;">
+    <div style="flex-grow:1;">
+        <label style="display:block; font-size:12px; color:#0369a1; font-weight:bold; margin-bottom:5px;">ΑΦΜ για Αναζήτηση myDATA</label>
+       <input type="text" 
+       id="searchAfmInput" 
+       placeholder="Πληκτρολογήστε ΑΦΜ..." 
+       onkeydown="if(event.key==='Enter') { 
+           event.preventDefault(); 
+           searchMyData(this.value); 
+       }"
+       style="width:100%; padding:10px; border:1px solid #0ea5e9; border-radius:6px; outline-color:#0369a1;">
+    </div>
 
-<button onclick="searchMyData(document.getElementById('searchAfmInput').value)" id="myDataBtn" style="background:#0ea5e9; color:white; border:none; padding:11px 20px; border-radius:6px; cursor:pointer; font-weight:bold; transition:0.3s;">
-    🔍 myDATA
-</button> 
-           
-        </div>
+    <button type="button"
+            onclick="searchMyData(document.getElementById('searchAfmInput').value)" 
+            id="myDataBtn" 
+            style="background:#0ea5e9; color:white; border:none; padding:11px 20px; height:38px; border-radius:6px; cursor:pointer; font-weight:bold; transition:0.3s; display:flex; align-items:center; gap:5px;">
+        🔍 ΑΝΑΖΗΤΗΣΗ
+    </button> 
+</div>
+       
 
       <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap: 20px; padding: 10px;">
     
@@ -1622,37 +1673,62 @@ async function searchMyData(afm) {
         </div>
     </div>
 </div> 
+      <div id="connection-status" style="position: fixed; bottom: 10px; left: 10px; z-index: 9999; display: flex; align-items: center; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-family: sans-serif;">
+    <div id="supabase-status-dot" style="width: 10px; height: 10px; background-color: #f59e0b; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>
+    <span id="supabase-status-text">Αρχικοποίηση...</span>
+</div>
+      
       
  <script>
-// Αυτή η συνάρτηση ανοίγει το modal που έχεις στον κώδικα
+/* --- ΔΙΑΧΕΙΡΙΣΗ ΠΕΛΑΤΩΝ (MODAL) --- */
 function openNewCustomerModal() {
     const modal = document.getElementById('newCustomerModal');
     if (modal) {
-        modal.style.display = 'block';
-        // Καθαρίζουμε τα πεδία για νέα καταχώρηση
+        modal.style.display = 'flex'; // Χρησιμοποιούμε flex αν το CSS σου είναι για κεντράρισμα
         document.getElementById('searchAfmInput').value = '';
         document.getElementById('newCustName').value = '';
-        // ... αν θες να καθαρίζουν και τα υπόλοιπα
-    } else {
-        console.error("Το newCustomerModal δεν βρέθηκε στον κώδικα!");
+        
+        // Focus αυτόματα στο πρώτο πεδίο (ΑΦΜ)
+        setTimeout(() => document.getElementById('searchAfmInput').focus(), 100);
     }
 }
 
-// Αυτή η συνάρτηση κλείνει το modal
 function closeNewCustomerModal() {
     const modal = document.getElementById('newCustomerModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    if (modal) modal.style.display = 'none';
 }
 
-// Κλείσιμο αν πατήσει ο χρήστης έξω από το λευκό πλαίσιο
+// 🛡️ ENTER FIX ΓΙΑ ΤΟ MODAL
+document.getElementById('newCustomerModal')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        
+        // Αν πατήσει Enter στο ΑΦΜ, κάλεσε την αναζήτηση MyData
+        if (target.id === 'searchAfmInput') {
+            e.preventDefault();
+            if (typeof fetchMyData === 'function') fetchMyData(); 
+            // Ή αν έχεις κουμπί: document.getElementById('myDataBtn')?.click();
+        } 
+        // Αν πατήσει Enter στα υπόλοιπα πεδία, πήγαινε στο επόμενο
+        else if (target.tagName === 'INPUT') {
+            e.preventDefault();
+            const inputs = Array.from(this.querySelectorAll('input'));
+            const idx = inputs.indexOf(target);
+            if (idx > -1 && idx < inputs.length - 1) {
+                inputs[idx + 1].focus();
+            }
+        }
+    }
+});
+
+// Κλείσιμο με κλικ έξω
 window.onclick = function(event) {
     const modal = document.getElementById('newCustomerModal');
     if (event.target == modal) {
         modal.style.display = "none";
     }
-}
+};
 </script>
+      
 </body>
 </html>

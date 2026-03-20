@@ -426,11 +426,9 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 </div>
  
-      
-      
-   <script>
+      <script>
 /* =============================================================
-   🔱 TRITON ERP: CLEAN ENGINE (V20.0) - CUSTOMER SEARCH ONLY
+   🔱 TRITON ERP: ENGINE V24.0 - FINAL CUSTOMIZED BUILD
    ============================================================= */
 
 window.allProducts = [];
@@ -439,91 +437,170 @@ let isProcessingEnter = false;
 const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 
-// 1. INITIALIZATION
+// 1. ΣΥΝΔΕΣΗ & ΦΟΡΤΩΣΗ
 async function initTriton() {
     if (typeof window.supabase !== 'undefined') {
         window.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("✅ Triton Engine Ready.");
-        updateDateTime();
+        console.log("✅ Triton Engine Active");
+        
+        // Φόρτωση Προϊόντων
+        const { data } = await window.client.from('products').select('*');
+        if (data) window.allProducts = data;
+
+        // Αρχική Ημερομηνία/Ώρα
+        const now = new Date();
+        if(document.getElementById('invoiceDate')) document.getElementById('invoiceDate').value = now.toISOString().split('T')[0];
+        if(document.getElementById('invoiceTime')) document.getElementById('invoiceTime').value = now.toTimeString().slice(0,5);
+        
         if (document.querySelectorAll('.item-row').length === 0) window.addItemRow();
     }
 }
 
-// 2. LIVE ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ (ΓΕΜΙΖΕΙ ΤΑ ΠΑΝΤΑ)
-window.searchCustomer = async function(input) {
-    if (!window.client) return;
+// 2. ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ (Στο κεντρικό Form)
+// Προσθήκη event listener στο custName για Live Search
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'custName') {
+        handleCustomerSearch(e.target);
+    }
+});
+
+async function handleCustomerSearch(input) {
     const term = input.value.trim();
-    
-    let existingList = document.getElementById('customer-dropdown');
-    if (existingList) existingList.remove();
-    
+    let list = document.getElementById('customer-dropdown');
+    if (list) list.remove();
     if (term.length < 2) return;
 
-    try {
-        const { data } = await window.client.from('customers')
-            .select('*')
-            .or(`name.ilike.%${term}%,afm.ilike.%${term}%`)
-            .limit(5);
-            
-        if (data && data.length > 0) {
-            const list = document.createElement('div');
-            list.id = 'customer-dropdown';
-            list.style = "position:absolute; top:100%; left:0; width:100%; background:white; border:2px solid #0ea5e9; border-radius:8px; z-index:99999; box-shadow:0 10px 15px rgba(0,0,0,0.1); cursor:pointer;";
-            
-            data.forEach(cust => {
-                const item = document.createElement('div');
-                item.style = "padding:12px; border-bottom:1px solid #f1f5f9; color:#1e293b;";
-                item.innerHTML = `<b>${cust.name}</b> <br> <small>ΑΦΜ: ${cust.afm} | ${cust.city || ''}</small>`;
-                item.onclick = () => { 
-                    window.fillCustomerUI(cust); 
-                    list.remove(); 
-                };
-                list.appendChild(item);
-            });
-            input.parentElement.style.position = 'relative';
-            input.parentElement.appendChild(list);
-        }
-    } catch (e) { console.error("Search Error", e); }
-};
+    const { data } = await window.client.from('customers')
+        .select('*')
+        .or(`name.ilike.%${term}%,afm.ilike.%${term}%`)
+        .limit(5);
 
-window.fillCustomerUI = function(cust) {
-    const mapping = {
-        'newCustName': cust.name, 'newCustJob': cust.job, 'newCustAfm': cust.afm,
-        'newCustDoy': cust.doy, 'newCustAddress': cust.address, 'newCustCity': cust.city,
-        'newCustZip': cust.zip, 'newCustPhone': cust.phone, 'newCustEmail': cust.email
-    };
-    for (let id in mapping) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.value = mapping[id] || '';
-            el.style.backgroundColor = "#f0fdf4";
-            setTimeout(() => { el.style.backgroundColor = "white"; }, 500);
+    if (data && data.length > 0) {
+        list = document.createElement('div');
+        list.id = 'customer-dropdown';
+        list.style = "position:absolute; top:100%; left:0; width:100%; background:white; border:2px solid #0ea5e9; border-radius:8px; z-index:9999; box-shadow:0 10px 20px rgba(0,0,0,0.2); cursor:pointer;";
+        
+        data.forEach(cust => {
+            const item = document.createElement('div');
+            item.style = "padding:12px; border-bottom:1px solid #f1f5f9; color:#1e293b;";
+            item.innerHTML = `<b>${cust.name}</b> - <small>${cust.afm}</small>`;
+            item.onclick = () => {
+                // Γέμισμα με τα IDs του δικού σου HTML
+                document.getElementById('custName').value = cust.name || '';
+                document.getElementById('custJob').value = cust.job || '';
+                document.getElementById('custAfm').value = cust.afm || '';
+                document.getElementById('custDoy').value = cust.doy || '';
+                document.getElementById('custCity').value = cust.city || '';
+                document.getElementById('custZip').value = cust.zip || '';
+                document.getElementById('custAddress').value = cust.address || '';
+                document.getElementById('custPhone').value = cust.phone || '';
+                document.getElementById('custEmail').value = cust.email || '';
+                list.remove();
+                document.getElementById('custJob').focus();
+            };
+            list.appendChild(item);
+        });
+        input.parentElement.style.position = 'relative';
+        input.parentElement.appendChild(list);
+    }
+}
+
+// 3. NAVIGATION ENTER (Ακολουθεί τη σειρά του HTML σου)
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        if (target.tagName === 'BUTTON' || target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+
+        if (isProcessingEnter) return;
+        isProcessingEnter = true; setTimeout(() => isProcessingEnter = false, 150);
+
+        // Σειρά πλοήγησης βάσει του Grid σου
+        const flow = {
+            'custName': 'custJob',
+            'custJob': 'custAfm',
+            'custAfm': 'custDoy',
+            'custDoy': 'custCity',
+            'custCity': 'custZip',
+            'custZip': 'custPhone', // ΤΚ -> ΤΗΛΕΦΩΝΟ (Όπως το ζήτησες)
+            'custPhone': 'custEmail',
+            'custEmail': 'deliveryPoint'
+        };
+
+        const nextId = flow[target.id];
+        if (nextId) {
+            const nextEl = document.getElementById(nextId);
+            if (nextEl) { nextEl.focus(); if(nextEl.select) nextEl.select(); return; }
+        }
+
+        // Πλοήγηση στις γραμμές
+        const row = target.closest('.item-row');
+        if (row) {
+            const inps = Array.from(row.querySelectorAll('input'));
+            const idx = inps.indexOf(target);
+            if (idx < inps.length - 1) inps[idx+1].focus();
+            else window.addItemRow();
         }
     }
-};
+}, true);
 
-// 3. ΔΙΑΧΕΙΡΙΣΗ ΓΡΑΜΜΩΝ & ΥΠΟΛΟΓΙΣΜΟΙ (ΧΩΡΙΣ POPUP ΠΡΟΪΟΝΤΩΝ)
-window.addItemRow = function(itemData = null) {
-    const container = document.getElementById('itemsContainer') || document.getElementById('invoiceItemsBody');
-    if (!container) return;
+// 4. ΑΝΑΖΗΤΗΣΗ ΠΡΟΪΟΝΤΩΝ ΣΤΙΣ ΓΡΑΜΜΕΣ
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('row-desc')) {
+        const query = e.target.value.toLowerCase();
+        const row = e.target.closest('.item-row');
+        let results = document.getElementById('product-results');
+        if (results) results.remove();
+        if (query.length < 2) return;
 
+        const matches = (window.allProducts || []).filter(p => 
+            p.name?.toLowerCase().includes(query) || p.code?.toLowerCase().includes(query)
+        ).slice(0, 10);
+
+        if (matches.length > 0) {
+            results = document.createElement('div');
+            results.id = 'product-results';
+            results.style = `position:absolute; background:white; border:2px solid #0ea5e9; border-radius:8px; z-index:9999; width:${e.target.offsetWidth}px; box-shadow:0 10px 15px rgba(0,0,0,0.1); cursor:pointer;`;
+            matches.forEach(p => {
+                const item = document.createElement('div');
+                item.style = "padding:10px; border-bottom:1px solid #f1f5f9; font-size:13px;";
+                item.innerHTML = `<strong>${p.code || ''}</strong> - ${p.name} <span style="float:right; color:#059669;">${p.price}€</span>`;
+                item.onclick = () => {
+                    row.querySelector('.row-code').value = p.code || '';
+                    row.querySelector('.row-desc').value = p.name;
+                    row.querySelector('.row-price').value = p.price;
+                    results.remove();
+                    window.calculateTotal();
+                    row.querySelector('.row-qty').focus();
+                };
+                results.appendChild(item);
+            });
+            const rect = e.target.getBoundingClientRect();
+            results.style.top = (window.scrollY + rect.bottom) + 'px';
+            results.style.left = (window.scrollX + rect.left) + 'px';
+            document.body.appendChild(results);
+        }
+    }
+});
+
+// 5. ΓΡΑΜΜΕΣ & ΥΠΟΛΟΓΙΣΜΟΙ
+window.addItemRow = function() {
+    const container = document.getElementById('itemsContainer');
     const row = document.createElement('div');
     row.className = 'item-row';
-    row.style = "display:grid; grid-template-columns: 40px 120px 1fr 80px 100px 70px 100px 40px; gap:12px; padding:10px; border-bottom:1px solid #e2e8f0; align-items:center; background:white;";
-
+    row.style = "display:grid; grid-template-columns: 50px 110px 1fr 100px 100px 80px 100px 40px; gap: 20px; padding: 10px 20px; border-bottom: 1px solid #f1f5f9; align-items:center; background:white;";
     row.innerHTML = `
         <div style="text-align:center; font-size:12px; color:#64748b;">${container.children.length + 1}</div>
-        <input type="text" class="row-code" placeholder="ΚΩΔ">
-        <input type="text" class="row-desc" placeholder="Περιγραφή...">
-        <input type="number" class="row-qty" value="1">
-        <input type="number" class="row-price" placeholder="0.00" step="0.01">
-        <input type="number" class="row-disc" value="0">
+        <input type="text" class="row-code" placeholder="ΚΩΔ" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:5px;">
+        <input type="text" class="row-desc" placeholder="Περιγραφή..." style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:5px;">
+        <input type="number" class="row-qty" value="1" style="width:100%; text-align:center; border:1px solid #cbd5e1; border-radius:4px; padding:5px;">
+        <input type="number" class="row-price" placeholder="0.00" style="width:100%; text-align:right; border:1px solid #cbd5e1; border-radius:4px; padding:5px;">
+        <input type="number" class="row-disc" value="0" style="width:100%; text-align:center; border:1px solid #cbd5e1; border-radius:4px; padding:5px;">
         <div class="row-total" style="text-align:right; font-weight:bold; color:#0369a1;">0,00 €</div>
-        <button type="button" onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer;">✕</button>
+        <button type="button" onclick="this.closest('.item-row').remove(); window.calculateTotal();" style="color:#ef4444; background:none; border:none; cursor:pointer; font-weight:bold;">✕</button>
     `;
-
     container.appendChild(row);
-    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', window.calculateTotal));
+    row.querySelectorAll('input').forEach(i => i.oninput = window.calculateTotal);
     setTimeout(() => row.querySelector('.row-code').focus(), 50);
 };
 
@@ -538,61 +615,16 @@ window.calculateTotal = function() {
         row.querySelector('.row-total').innerText = (net + vat).toFixed(2).replace('.', ',') + " €";
         subtotal += net; totalVat += vat;
     });
-    const upd = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val.toFixed(2).replace('.', ',') + " €"; };
-    upd('footerSubtotal', subtotal); upd('footerVat', totalVat); upd('footerGrandTotal', subtotal + totalVat);
+    
+    document.getElementById('netAmount').innerText = subtotal.toFixed(2).replace('.', ',') + " €";
+    document.getElementById('vatAmount').innerText = totalVat.toFixed(2).replace('.', ',') + " €";
+    document.getElementById('totalAmount').innerText = (subtotal + totalVat).toFixed(2).replace('.', ',') + " €";
+    document.getElementById('finalValue').innerText = (subtotal + totalVat).toFixed(2).replace('.', ',') + " €";
 };
 
-// 4. ENTER NAVIGATION (TK -> ΔΙΕΥΘΥΝΣΗ)
-window.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const target = e.target;
-        if (target.tagName === 'BUTTON' || target.tagName === 'TEXTAREA') return;
-        e.preventDefault();
-        
-        if (isProcessingEnter) return;
-        isProcessingEnter = true; setTimeout(() => isProcessingEnter = false, 150);
-
-        const modal = target.closest('#newCustomerModal');
-        if (modal) {
-            const flow = {
-                'newCustName': 'newCustJob', 'newCustJob': 'newCustAfm',
-                'newCustAfm': 'newCustDoy', 'newCustDoy': 'newCustCity',
-                'newCustCity': 'newCustZip', 'newCustZip': 'newCustAddress',
-                'newCustAddress': 'newCustPhone', 'newCustPhone': 'newCustEmail'
-            };
-            const next = document.getElementById(flow[target.id]);
-            if (next) { next.focus(); if(next.select) next.select(); }
-            return;
-        }
-
-        const row = target.closest('.item-row');
-        if (row) {
-            const inps = Array.from(row.querySelectorAll('input'));
-            const idx = inps.indexOf(target);
-            if (idx < inps.length - 1) inps[idx+1].focus();
-            else window.addItemRow();
-            return;
-        }
-        
-        const all = Array.from(document.querySelectorAll('input:not([readonly])')).filter(el => el.offsetWidth > 0);
-        const gIdx = all.indexOf(target);
-        if (gIdx < all.length - 1) all[gIdx+1].focus();
-    }
-}, true);
-
-function updateDateTime() {
-    const d = new Date().toISOString().split('T')[0];
-    document.querySelectorAll('input[type="date"]').forEach(i => i.value = d);
-}
-
 document.addEventListener('DOMContentLoaded', initTriton);
-window.openNewCustomerModal = () => { document.getElementById('newCustomerModal').style.display = 'flex'; document.getElementById('newCustName').focus(); };
-window.closeNewCustomerModal = () => document.getElementById('newCustomerModal').style.display = 'none';
 </script>
-     
-  
-  
- 
+      
    
  <div id="newCustomerModal" class="triton-modal" style="display:none; position:fixed; z-index:20000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
     <div class="modal-content" style="background:#fff; margin:5% auto; padding:25px; border-radius:12px; width:90%; max-width:600px; box-shadow:0 20px 25px rgba(0,0,0,0.2); font-family: sans-serif;">

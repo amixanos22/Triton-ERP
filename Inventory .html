@@ -448,13 +448,6 @@ window.onload = render;
 
 // Real-time ανανέωση αν αλλάξει κάτι στη βάση
 _supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, render).subscribe();
- // Αυτό λέει στη σελίδα: "Μόλις αλλάξει κάτι στον πίνακα products, ξαναφόρτωσε τα δεδομένα"
-DB.channel('any')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
-      console.log('Η αποθήκη ενημερώθηκε!', payload);
-      loadInventoryTable(); // Η συνάρτηση που έχεις για να γεμίζεις τον πίνακα
-  })
-  .subscribe();
 </script>
 </body>
 </html>

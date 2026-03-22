@@ -252,17 +252,18 @@
 </div>
 <script>
 // 1. ΡΥΘΜΙΣΕΙΣ ΣΥΝΔΕΣΗΣ
+  // 1. ΡΥΘΜΙΣΕΙΣ ΣΥΝΔΕΣΗΣ
 const SUPABASE_URL = 'https://pizzmcznytsfqlxnttbv.supabase.co'; 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenptY3pueXRzZnFseG50dGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODE0NzksImV4cCI6MjA4ODA1NzQ3OX0.Dl9PiyYJJ0mYarO11PyXBlH0GN014FfPVh8g_luhKwI';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const TABLE = 'products';
 
-// 2. ΕΜΦΑΝΙΣΗ ΛΙΣΤΑΣ (RENDER) - ΔΙΟΡΘΩΜΕΝΟ ΓΙΑ ΕΝΟΙΚΙΑΣΤΕΣ
+// 2. ΕΜΦΑΝΙΣΗ ΛΙΣΤΑΣ (RENDER)
 async function render() {
-    // ΑΠΑΡΑΙΤΗΤΟ: Βρίσκουμε το ID του τρέχοντος χρήστη/ενοικιαστή
     const { data: { user } } = await _supabase.auth.getUser();
     if (!user) {
         console.warn("Δεν βρέθηκε συνδεδεμένος χρήστης.");
+        document.getElementById('pBody').innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Παρακαλώ συνδεθείτε...</td></tr>';
         return;
     }
 
@@ -270,11 +271,10 @@ async function render() {
     const filterType = document.getElementById('filterType').value;
     const tbody = document.getElementById('pBody');
     
-    // ΦΙΛΤΡΑΡΙΣΜΑ: Προσθέσαμε το .eq('user_id', user.id)
     let { data: products, error } = await _supabase
         .from(TABLE)
         .select('*')
-        .eq('user_id', user.id) // <--- Εδώ γίνεται ο διαχωρισμός των ενοικιαστών
+        .eq('user_id', user.id) 
         .order('name', { ascending: true });
 
     if (error) {
@@ -303,7 +303,7 @@ async function render() {
             const typeEmoji = p.type === 'SALE' ? '🛍️' : (p.type === 'BUY' ? '📦' : '🛠️');
 
             tbody.innerHTML += `
-                <tr class="item-row" onclick="edit('${p.id}', '${p.name}', '${p.code || ''}', '${p.barcode || ''}', ${price}, ${stock}, ${p.vat || 24}, '${p.type}')">
+                <tr class="item-row" onclick="edit('${p.id}', '${p.name.replace(/'/g, "\\'")}', '${p.code || ''}', '${p.barcode || ''}', ${price}, ${stock}, ${p.vat || 24}, '${p.type}')">
                     <td style="color:#64748b; font-size:13px; font-weight:600;">${p.code || '---'}</td>
                     <td style="font-weight:700;">${p.name}</td>
                     <td style="font-size:12px; color:#64748b;">${typeEmoji}</td>
@@ -317,17 +317,16 @@ async function render() {
     document.getElementById('stat').innerText = count + " ΕΙΔΗ";
     document.getElementById('totalValue').innerText = totalValue.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
 }
-// 3. ΑΠΟΘΗΚΕΥΣΗ (SAVE)
+
+// 3. ΑΠΟΘΗΚΕΥΣΗ (SAVE) - ΜΙΑ ΦΟΡΑ ΚΑΙ ΣΩΣΤΑ
 async function save() {
+    const btn = document.querySelector('button[onclick="save()"]');
     try {
-        const btn = document.querySelector('button[onclick="save()"]');
         if (btn) { btn.disabled = true; btn.innerText = "⏳ ΑΠΟΘΗΚΕΥΣΗ..."; }
 
-        // 1. ΠΡΟΣΘΗΚΗ: Πρώτα βρίσκουμε ΠΟΙΟΣ χρήστης είναι συνδεδεμένος
         const { data: { user } } = await _supabase.auth.getUser();
         if (!user) {
-            alert("⚠️ Πρέπει να είστε συνδεδεμένος για να αποθηκεύσετε!");
-            if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
+            alert("⚠️ Πρέπει να είστε συνδεδεμένος!");
             return;
         }
 
@@ -342,13 +341,11 @@ async function save() {
 
         if (!desc) { 
             alert("⚠️ Η περιγραφή είναι υποχρεωτική!"); 
-            if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
             return; 
         }
 
-        // 2. ΠΡΟΣΘΗΚΗ: Βάζουμε το user_id στο payload
         const payload = {
-            user_id: user.id, // <--- ΕΔΩ ΤΟΥ ΔΙΝΟΥΜΕ ΤΑΥΤΟΤΗΤΑ
+            user_id: user.id,
             name: desc,
             description: desc,
             code: internalCode,
@@ -359,94 +356,42 @@ async function save() {
             vat: vat
         };
 
-        if (currentId) {
-            payload.id = currentId;
-        }
+        if (currentId) payload.id = currentId;
 
         const { error } = await _supabase.from(TABLE).upsert(payload);
         if (error) throw error;
 
-        console.log("✅ Triton: Το προϊόν αποθηκεύτηκε επιτυχώς!");
         closeModal();
         render(); 
     } catch (err) {
-        alert("❌ Σφάλμα αποθήκευσης: " + err.message);
+        alert("❌ Σφάλμα: " + err.message);
     } finally {
-        const btn = document.querySelector('button[onclick="save()"]');
         if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
     }
 }
 
-        // 1. Έλεγχος για διπλότυπο Barcode
-        if (barcode !== "") {
-            const { data: existing } = await _supabase
-                .from(TABLE)
-                .select('id, name')
-                .eq('barcode', barcode)
-                .maybeSingle();
-
-            if (existing && existing.id !== currentId) {
-                alert(`🚫 Το Barcode χρησιμοποιείται ήδη στο: ${existing.name}`);
-                if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
-                return;
-            }
-        }
-
-        // 2. Δημιουργία Payload (Προσθήκη και του description για το τιμολόγιο)
-        const payload = {
-            name: desc,
-            description: desc, // <--- ΑΥΤΟ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ ΓΙΑ ΤΗΝ INVOICE.HTML
-            code: internalCode,
-            barcode: barcode,
-            type: type,
-            price: price,
-            stock: stock,
-            vat: vat
-        };
-
-        // Αν κάνουμε edit, περνάμε το υπάρχον ID για να κάνει update και όχι insert
-        if (currentId) {
-            payload.id = currentId;
-        }
-
-        // 3. Αποθήκευση
-        const { error } = await _supabase.from(TABLE).upsert(payload);
-        if (error) throw error;
-
-        console.log("✅ Triton: Το προϊόν αποθηκεύτηκε επιτυχώς!");
-        closeModal();
-        render(); // Ανανέωση της λίστας
-    } catch (err) {
-        alert("❌ Σφάλμα αποθήκευσης: " + err.message);
-    } finally {
-        const btn = document.querySelector('button[onclick="save()"]');
-        if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
-    }
-}
 // 4. ΔΙΑΧΕΙΡΙΣΗ MODAL
 async function openModal() {
-    document.getElementById('prodModal').style.display = 'block';
+    // Καθαρισμός ID επεξεργασίας
+    delete document.getElementById('prodModal').dataset.editId;
     
-    // Αν είναι ΝΕΟ είδος (δεν υπάρχει editId)
-    if (!document.getElementById('prodModal').dataset.editId) {
-        // Καθαρίζουμε τα πεδία
-        document.getElementById('pBarcode').value = '';
-        document.getElementById('pDesc').value = '';
-        document.getElementById('pPrice').value = '';
-        document.getElementById('pStock').value = '0';
-        document.getElementById('pType').value = 'SALE';
+    // Καθαρισμός πεδίων
+    document.getElementById('pInternalCode').value = '';
+    document.getElementById('pBarcode').value = '';
+    document.getElementById('pDesc').value = '';
+    document.getElementById('pPrice').value = '';
+    document.getElementById('pStock').value = '0';
+    document.getElementById('pType').value = 'SALE';
+    document.getElementById('pVat').value = '24';
 
-        try {
-            // Υπολογισμός επόμενου κωδικού
-            const { count } = await _supabase.from(TABLE).select('*', { count: 'exact', head: true });
-            const nextNum = (count || 0) + 1;
-            
-            // Το βάζουμε ως προτεινόμενο, αλλά τώρα μπορείς να το σβήσεις και να γράψεις
-            document.getElementById('pInternalCode').value = nextNum.toString().padStart(4, '0');
-        } catch (err) {
-            console.error(err);
-        }
-    }
+    document.getElementById('prodModal').style.display = 'block';
+
+    try {
+        const { data: { user } } = await _supabase.auth.getUser();
+        const { count } = await _supabase.from(TABLE).select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+        const nextNum = (count || 0) + 1;
+        document.getElementById('pInternalCode').value = nextNum.toString().padStart(4, '0');
+    } catch (err) { console.error(err); }
 }
 
 function edit(id, name, code, barcode, price, stock, vat, type) {
@@ -463,7 +408,6 @@ function edit(id, name, code, barcode, price, stock, vat, type) {
 
 function closeModal() {
     document.getElementById('prodModal').style.display = 'none';
-    delete document.getElementById('prodModal').dataset.editId;
 }
 
 async function del(id) {
@@ -474,13 +418,11 @@ async function del(id) {
     }
 }
 
-// 5. EXPORTS
+// 5. EXPORTS & INIT
 function exportToExcel() {
     let csv = "Κωδικός;Barcode;Περιγραφή;Τύπος;Τιμή;Απόθεμα\n";
     const data = window.allProducts || [];
-    data.forEach(p => {
-        csv += `${p.code};${p.barcode || ''};${p.name};${p.type};${p.price}€;${p.stock}\n`;
-    });
+    data.forEach(p => { csv += `${p.code};${p.barcode || ''};${p.name};${p.type};${p.price}€;${p.stock}\n`; });
     const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -490,10 +432,7 @@ function exportToExcel() {
 
 function exportToPDF() { window.print(); }
 
-// 6. ΕΚΚΙΝΗΣΗ
 window.onload = render;
-
-// Real-time ανανέωση αν αλλάξει κάτι στη βάση
 _supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, render).subscribe();
 </script>
 </body>

@@ -257,15 +257,24 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const TABLE = 'products';
 
-// 2. ΕΜΦΑΝΙΣΗ ΛΙΣΤΑΣ (RENDER)
+// 2. ΕΜΦΑΝΙΣΗ ΛΙΣΤΑΣ (RENDER) - ΔΙΟΡΘΩΜΕΝΟ ΓΙΑ ΕΝΟΙΚΙΑΣΤΕΣ
 async function render() {
+    // ΑΠΑΡΑΙΤΗΤΟ: Βρίσκουμε το ID του τρέχοντος χρήστη/ενοικιαστή
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) {
+        console.warn("Δεν βρέθηκε συνδεδεμένος χρήστης.");
+        return;
+    }
+
     const search = document.getElementById('pSearch').value.toLowerCase();
     const filterType = document.getElementById('filterType').value;
     const tbody = document.getElementById('pBody');
     
+    // ΦΙΛΤΡΑΡΙΣΜΑ: Προσθέσαμε το .eq('user_id', user.id)
     let { data: products, error } = await _supabase
         .from(TABLE)
         .select('*')
+        .eq('user_id', user.id) // <--- Εδώ γίνεται ο διαχωρισμός των ενοικιαστών
         .order('name', { ascending: true });
 
     if (error) {
@@ -308,12 +317,19 @@ async function render() {
     document.getElementById('stat').innerText = count + " ΕΙΔΗ";
     document.getElementById('totalValue').innerText = totalValue.toLocaleString('el-GR', { minimumFractionDigits: 2 }) + " €";
 }
-
 // 3. ΑΠΟΘΗΚΕΥΣΗ (SAVE)
 async function save() {
     try {
         const btn = document.querySelector('button[onclick="save()"]');
         if (btn) { btn.disabled = true; btn.innerText = "⏳ ΑΠΟΘΗΚΕΥΣΗ..."; }
+
+        // 1. ΠΡΟΣΘΗΚΗ: Πρώτα βρίσκουμε ΠΟΙΟΣ χρήστης είναι συνδεδεμένος
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) {
+            alert("⚠️ Πρέπει να είστε συνδεδεμένος για να αποθηκεύσετε!");
+            if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
+            return;
+        }
 
         const internalCode = document.getElementById('pInternalCode').value;
         const barcode = document.getElementById('pBarcode').value.trim();
@@ -329,6 +345,37 @@ async function save() {
             if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
             return; 
         }
+
+        // 2. ΠΡΟΣΘΗΚΗ: Βάζουμε το user_id στο payload
+        const payload = {
+            user_id: user.id, // <--- ΕΔΩ ΤΟΥ ΔΙΝΟΥΜΕ ΤΑΥΤΟΤΗΤΑ
+            name: desc,
+            description: desc,
+            code: internalCode,
+            barcode: barcode,
+            type: type,
+            price: price,
+            stock: stock,
+            vat: vat
+        };
+
+        if (currentId) {
+            payload.id = currentId;
+        }
+
+        const { error } = await _supabase.from(TABLE).upsert(payload);
+        if (error) throw error;
+
+        console.log("✅ Triton: Το προϊόν αποθηκεύτηκε επιτυχώς!");
+        closeModal();
+        render(); 
+    } catch (err) {
+        alert("❌ Σφάλμα αποθήκευσης: " + err.message);
+    } finally {
+        const btn = document.querySelector('button[onclick="save()"]');
+        if (btn) { btn.disabled = false; btn.innerText = "ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ CLOUD"; }
+    }
+}
 
         // 1. Έλεγχος για διπλότυπο Barcode
         if (barcode !== "") {

@@ -2,35 +2,25 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>Triton ERP - Πελατολόγιο & myDATA</title>
+    <title>Triton ERP - Πελατολόγιο</title>
     <style>
         #navbar-iframe { display: none !important; }
-        body { top: 0 !important; }
+        body { top: 0 !important; background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: #1e293b; }
         :root { --triton-blue: #0ea5e9; --triton-dark: #0f172a; --triton-bg: #f8fafc; --triton-border: #cbd5e1; }
-        body { background: #e2e8f0; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: #1e293b; }
         .container { max-width: 1100px; margin: 50px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; }
         .search-box { padding: 12px 18px; width: 320px; border: 1px solid var(--triton-border); border-radius: 10px; outline: none; background: #f1f5f9; }
         .btn-add { background: var(--triton-dark); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: 800; text-transform: uppercase; }
         .btn-settings { background: #64748b; color: white; border: none; padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 18px; transition: 0.2s; }
-        
         .customers-table { width: 100%; border-collapse: collapse; }
         .customers-table th { background: #f1f5f9; color: #64748b; padding: 15px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--triton-border); }
         .customers-table td { padding: 18px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         .modal-content { background: white; width: 950px; margin: 30px auto; padding: 35px; border-radius: 15px; max-height: 90vh; overflow-y: auto; position: relative; }
         .section-title { font-size: 11px; color: var(--triton-blue); border-bottom: 1px solid #e0f2fe; padding-bottom: 6px; margin: 25px 0 15px 0; font-weight: 900; text-transform: uppercase; }
         label { display: block; font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input { width: 100%; padding: 10px; border: 1px solid var(--triton-border); border-radius: 8px; font-weight: 600; box-sizing: border-box; font-size: 13px; }
-        
-        .branch-card { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; position: relative; }
-        .branch-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 10px; }
-        .branch-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-        .btn-delete-branch { background:#ef4444; color:white; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight: bold; }
-        
-        .status-pill { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #f1f5f9; color: #64748b; }
-        .status-sent { background: #dcfce7; color: #166534; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--triton-border); border-radius: 8px; font-weight: 600; box-sizing: border-box; font-size: 13px; }
+        .branch-card { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -39,21 +29,27 @@
     <div class="header-actions">
         <div>
             <h1 style="margin:0; font-size: 32px; color: var(--triton-dark); letter-spacing: -1px;">Triton ERP</h1>
-            <p style="margin:5px 0 0; color: #64748b; font-weight: 500;">myDATA Ready | Διαχείριση ELATI PRODUCTS</p>
+            <p style="margin:5px 0 0; color: #64748b; font-weight: 500;">Διαχείριση Πελατών & Πιστωτικών Ορίων</p>
         </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-settings" onclick="openSettings()" title="Ρυθμίσεις myDATA">⚙️</button>
-            <input type="text" id="custSearch" class="search-box" placeholder="Αναζήτηση..." onkeyup="filter()">
-            <button class="btn-add" onclick="openModal()">+ Νέος Πελάτης</button>
+        <div style="display:flex; flex-direction:column; gap:10px; align-items: flex-end;">
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="custSearch" class="search-box" placeholder="Αναζήτηση..." onkeyup="filter()">
+                <button class="btn-add" onclick="openModal()">+ Νέος Πελάτης</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="limitFilter" onchange="filter()" style="width:18px; height:18px; cursor:pointer;">
+                <label for="limitFilter" style="margin:0; cursor:pointer; font-size:12px; color:var(--triton-dark);">🛡️ Μόνο με Πιστωτικό Όριο</label>
+            </div>
         </div>
     </div>
 
     <table class="customers-table">
         <thead>
             <tr>
-                <th style="width:30%">Επωνυμία</th>
+                <th style="width:35%">Επωνυμία</th>
                 <th>ΑΦΜ</th>
-                <th>Επάγγελμα</th> <th style="text-align:right">Ενέργειες</th>
+                <th>Επάγγελμα</th>
+                <th style="text-align:right">Ενέργειες</th>
             </tr>
         </thead>
         <tbody id="custBody"></tbody>
@@ -64,36 +60,57 @@
     <div class="modal-content">
         <h2 id="modalTitle">Στοιχεία Συνεργάτη</h2>
         
-        <div class="section-title">Κεντρικό Κατάστημα (ΑΑΔΕ)</div>
-        
-        <div style="display: grid; grid-template-columns: 1.2fr 2.5fr 1.8fr 1fr; gap: 15px;">
+        <div class="section-title">Βασικά Στοιχεία (ΑΑΔΕ)</div>
+        <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 2.5fr 1fr; gap: 15px;">
             <div>
                 <label>ΑΦΜ</label>
                 <div style="display:flex; gap:5px;">
                     <input type="text" id="mAfm" maxlength="9">
-                    <button onclick="searchAade(this)" style="background:var(--triton-blue); color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer;">🔍</button>
+                    <button onclick="searchAade(this)" style="background:var(--triton-blue); color:white; border:none; border-radius:8px; padding:0 12px; cursor:pointer;">🔍</button>
                 </div>
             </div>
+            <div><label>Πιστωτικό Όριο (€)</label><input type="number" id="mCreditLimit" placeholder="0.00"></div>
             <div><label>Επωνυμία</label><input type="text" id="mName"></div>
-            <div><label>Επάγγελμα</label><input type="text" id="mJob"></div> <div><label>ΔΟΥ</label><input type="text" id="mDoy"></div>
+            <div><label>ΔΟΥ</label><input type="text" id="mDoy"></div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <div><label>Επάγγελμα</label><input type="text" id="mJob"></div>
             <div><label>Διεύθυνση</label><input type="text" id="mAddr"></div>
             <div><label>Πόλη</label><input type="text" id="mCity"></div>
             <div><label>Τ.Κ.</label><input type="text" id="mTk"></div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; margin-top: 15px;">
-            <div><label>Email</label><input type="email" id="mEmail"></div>
-            <div><label>Τηλέφωνο</label><input type="text" id="mPhone"></div>
+        <div class="section-title">📦 Εμπορική Συμφωνία</div>
+        <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
+            <label>Προεπιλεγμένος Τρόπος Πληρωμής</label>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <select id="payMethodSelect" onchange="checkOtherCredit()" style="flex: 1; font-weight: bold; border: 1px solid #cbd5e1; background: #fff; padding: 10px; border-radius: 8px;">
+                    <option value="1">ΜΕΤΡΗΤΑ</option>
+                    <optgroup label="ΕΠΙ ΠΙΣΤΩΣΗ">
+                        <option value="2_3">ΠΙΣΤΩΣΗ 3 ΗΜΕΡΩΝ</option>
+                        <option value="2_15">ΠΙΣΤΩΣΗ 15 ΗΜΕΡΩΝ</option>
+                        <option value="2_30">ΠΙΣΤΩΣΗ 30 ΗΜΕΡΩΝ</option>
+                        <option value="2_other">ΠΙΣΤΩΣΗ (ΛΟΙΠΟΙ)</option>
+                    </optgroup>
+                    <option value="3">WEB BANKING</option>
+                    <option value="4">ΚΑΡΤΑ (POS / E-POS)</option>
+                    <option value="5">ΕΜΒΑΣΜΑ ΛΟΓ/ΣΜΟ ΗΜΕΔΑΠΗΣ</option>
+                </select>
+                <input type="text" id="otherDays" placeholder="Περιγραφή πίστωσης..." style="display: none; flex: 1; border: 2px solid var(--triton-blue); padding: 9px; border-radius: 8px; font-weight: bold; background: white;">
+            </div>
         </div>
 
         <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🏢 Υποκαταστήματα</span>
-            <button onclick="addBranch()" style="background: var(--triton-dark); color:white; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:11px; font-weight:bold;">+ ΠΡΟΣΘΗΚΗ ΥΠΟΚΑΤΑΣΤΗΜΑΤΟΣ</button>
+            <span>💳 Τραπεζικοί Λογαριασμοί</span>
+            <button onclick="addBankRow()" style="background: var(--triton-dark); color:white; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:11px;">+ ΠΡΟΣΘΗΚΗ ΤΡΑΠΕΖΑΣ</button>
         </div>
+        <div id="bankAccountsContainer"></div>
         
+        <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🏢 Υποκαταστήματα</span>
+            <button onclick="addBranch()" style="background: var(--triton-dark); color:white; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:11px;">+ ΠΡΟΣΘΗΚΗ ΥΠΟΚΑΤΑΣΤΗΜΑΤΟΣ</button>
+        </div>
         <div id="branchesWrapper"></div>
 
         <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:12px;">
@@ -112,16 +129,54 @@ const TABLE_CUSTOMERS = 'customers';
 
 let currentEditId = null; 
 
+function checkOtherCredit() {
+    const sel = document.getElementById('payMethodSelect').value;
+    const input = document.getElementById('otherDays');
+    if (sel === '2_other') {
+        input.style.display = 'block';
+        input.focus();
+    } else {
+        input.style.display = 'none';
+        input.value = '';
+    }
+}
+
 function openModal() {
     currentEditId = null;
     document.querySelectorAll('#custModal input').forEach(i => i.value = '');
+    document.getElementById('payMethodSelect').value = '1';
+    checkOtherCredit();
     document.getElementById('branchesWrapper').innerHTML = '';
+    document.getElementById('bankAccountsContainer').innerHTML = '';
     document.getElementById('modalTitle').innerText = "Νέος Συνεργάτης";
     document.getElementById('custModal').style.display = 'block';
 }
 
-function closeModal() { 
-    document.getElementById('custModal').style.display = 'none'; 
+function closeModal() { document.getElementById('custModal').style.display = 'none'; }
+
+function getBankColor(name) {
+    const colors = { 'ΠΕΙΡΑΙΩΣ': '#ffcc00', 'ΕΘΝΙΚΗ': '#005aab', 'ALPHA': '#003399', 'EUROBANK': '#ed1c24', 'CREDIABANK': '#006837', 'REVOLUT': '#000000' };
+    return colors[name] || '#cbd5e1';
+}
+
+function addBankRow(data = {}) {
+    const container = document.getElementById('bankAccountsContainer');
+    const div = document.createElement('div');
+    div.style = `display: grid; grid-template-columns: 1fr 2fr 40px; gap: 10px; margin-bottom: 10px; align-items: center; background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 5px solid ${getBankColor(data.bank)}`;
+    div.innerHTML = `
+        <select class="bank-select" onchange="this.parentElement.style.borderLeftColor = getBankColor(this.value)">
+            <option value="">Τράπεζα...</option>
+            <option value="ΠΕΙΡΑΙΩΣ" ${data.bank === 'ΠΕΙΡΑΙΩΣ' ? 'selected' : ''}>ΠΕΙΡΑΙΩΣ</option>
+            <option value="ΕΘΝΙΚΗ" ${data.bank === 'ΕΘΝΙΚΗ' ? 'selected' : ''}>ΕΘΝΙΚΗ</option>
+            <option value="ALPHA" ${data.bank === 'ALPHA' ? 'selected' : ''}>ALPHA</option>
+            <option value="EUROBANK" ${data.bank === 'EUROBANK' ? 'selected' : ''}>EUROBANK</option>
+            <option value="CREDIABANK" ${data.bank === 'CREDIABANK' ? 'selected' : ''}>CREDIABANK</option>
+            <option value="REVOLUT" ${data.bank === 'REVOLUT' ? 'selected' : ''}>REVOLUT</option>
+        </select>
+        <input type="text" class="bank-iban" placeholder="IBAN" value="${data.iban || ''}" style="font-family:monospace">
+        <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">🗑️</button>
+    `;
+    container.appendChild(div);
 }
 
 function addBranch(data = {}) {
@@ -129,142 +184,134 @@ function addBranch(data = {}) {
     const div = document.createElement('div');
     div.className = 'branch-card';
     div.innerHTML = `
-        <div class="branch-grid">
-            <div><label>Διεύθυνση</label><input type="text" class="b-addr" value="${data.addr || ''}"></div>
-            <div><label>Πόλη</label><input type="text" class="b-city" value="${data.city || ''}"></div>
-            <div><label>Τηλέφωνο</label><input type="text" class="b-phone" value="${data.phone || ''}"></div>
-        </div>
-        <div class="branch-footer">
-            <div><label>Email</label><input type="email" class="b-email" value="${data.email || ''}"></div>
-            <div><label>Διευθυντής</label><input type="text" class="b-manager" value="${data.manager || ''}"></div>
-            <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                <button class="btn-delete-branch" onclick="this.closest('.branch-card').remove()">Διαγραφή</button>
-            </div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px;">
+            <input type="text" class="b-addr" placeholder="Διεύθυνση" value="${data.addr || ''}">
+            <input type="text" class="b-city" placeholder="Πόλη" value="${data.city || ''}">
+            <button onclick="this.closest('.branch-card').remove()" style="background:#ef4444; color:white; border:none; border-radius:8px; cursor:pointer;">Διαγραφή</button>
         </div>
     `;
     wrapper.appendChild(div);
 }
 
 async function render() {
-    try {
-        const { data: customers, error } = await _supabase
-            .from(TABLE_CUSTOMERS)
-            .select('*')
-            .order('name', { ascending: true });
-
-        if (error) throw error;
-        const body = document.getElementById('custBody');
-        body.innerHTML = '';
+    const { data: customers } = await _supabase.from(TABLE_CUSTOMERS).select('*').order('name');
+    const body = document.getElementById('custBody');
+    body.innerHTML = '';
+    customers.forEach(c => {
+        // Οπτική ένδειξη τρόπου πληρωμής στη λίστα
+        const payLabel = c.payment_method === '1' ? '💵 Μετρητά' : (c.payment_note || '💳 Πίστωση');
+        const badge = c.credit_limit > 0 ? `<span style="font-size:10px; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; margin-left:8px;">🛡️ ${c.credit_limit}€</span>` : `<span style="font-size:10px; background:#f1f5f9; color:#64748b; padding:2px 6px; border-radius:4px; margin-left:8px;">🚫 ${payLabel}</span>`;
         
-        customers.forEach(c => {
-            body.innerHTML += `
-                <tr>
-                    <td style="font-weight:bold">${c.name}</td>
-                    <td><code>${c.afm || '-'}</code></td>
-                    <td style="color:#64748b; font-size:12px;">${c.job || '-'}</td>
-                    <td style="text-align:right">
-                        <button class="btn-settings" style="background:#0ea5e9; padding:8px 12px; margin-right:5px;" onclick="edit('${c.id}')">✏️</button>
-                        <button class="btn-settings" style="background:#ef4444; padding:8px 12px;" onclick="remove('${c.id}')">🗑️</button>
-                    </td>
-                </tr>`;
-        });
-    } catch (err) { console.error("Render Error:", err.message); }
+        body.innerHTML += `
+            <tr>
+                <td><div style="display:flex; align-items:center;"><b>${c.name}</b>${badge}</div></td>
+                <td><code>${c.afm || '-'}</code></td>
+                <td style="color:#64748b; font-size:12px;">${c.job || '-'}</td>
+                <td style="text-align:right">
+                    <button class="btn-settings" style="background:var(--triton-blue)" onclick="edit('${c.id}')">✏️</button>
+                    <button class="btn-settings" style="background:#ef4444" onclick="remove('${c.id}')">🗑️</button>
+                </td>
+            </tr>`;
+    });
 }
 
 async function saveCustomer() {
     const name = document.getElementById('mName').value.trim();
-    if(!name) return alert("⚠️ Το όνομα είναι υποχρεωτικό!");
+    if(!name) return alert("Το όνομα είναι υποχρεωτικό");
 
-    const branches = [];
-    document.querySelectorAll('.branch-card').forEach(card => {
-        branches.push({
-            addr: card.querySelector('.b-addr').value,
-            city: card.querySelector('.b-city').value,
-            phone: card.querySelector('.b-phone').value,
-            email: card.querySelector('.b-email').value,
-            manager: card.querySelector('.b-manager').value
-        });
-    });
+    const branches = Array.from(document.querySelectorAll('.branch-card')).map(card => ({
+        addr: card.querySelector('.b-addr').value,
+        city: card.querySelector('.b-city').value
+    }));
+
+    const banks = Array.from(document.querySelectorAll('#bankAccountsContainer > div')).map(row => ({
+        bank: row.querySelector('.bank-select').value,
+        iban: row.querySelector('.bank-iban').value
+    })).filter(b => b.bank && b.iban);
 
     const payload = {
-        name: name,
-        afm: document.getElementById('mAfm').value.trim(),
-        job: document.getElementById('mJob').value.trim(), // ΣΥΝΔΕΣΗ JOB
+        name, 
+        afm: document.getElementById('mAfm').value,
+        credit_limit: parseFloat(document.getElementById('mCreditLimit').value) || 0,
+        job: document.getElementById('mJob').value,
         doy: document.getElementById('mDoy').value,
         address: document.getElementById('mAddr').value,
         city: document.getElementById('mCity').value,
         zip: document.getElementById('mTk').value,
-        email: document.getElementById('mEmail').value,
-        phone: document.getElementById('mPhone').value,
-        branches: branches
+        payment_method: document.getElementById('payMethodSelect').value,
+        payment_note: document.getElementById('otherDays').value, 
+        branches, 
+        banks
     };
 
     if (currentEditId) payload.id = currentEditId;
+    
     const { error } = await _supabase.from(TABLE_CUSTOMERS).upsert(payload);
     
-    if (error) alert("❌ Σφάλμα: " + error.message);
-    else { closeModal(); render(); }
+    if (error) {
+        alert("❌ Σφάλμα: " + error.message);
+    } else {
+        closeModal(); 
+        render();
+    }
 }
 
 async function edit(id) {
-    const { data: c, error } = await _supabase.from(TABLE_CUSTOMERS).select('*').eq('id', id).single();
-    if (error) return alert("Σφάλμα φόρτωσης");
-
+    const { data: c } = await _supabase.from(TABLE_CUSTOMERS).select('*').eq('id', id).single();
     currentEditId = id;
     document.getElementById('mName').value = c.name || '';
     document.getElementById('mAfm').value = c.afm || '';
-    document.getElementById('mJob').value = c.job || ''; // ΦΟΡΤΩΣΗ JOB
+    document.getElementById('mCreditLimit').value = c.credit_limit || 0;
+    document.getElementById('mJob').value = c.job || '';
     document.getElementById('mDoy').value = c.doy || '';
     document.getElementById('mAddr').value = c.address || '';
     document.getElementById('mCity').value = c.city || '';
     document.getElementById('mTk').value = c.zip || '';
-    document.getElementById('mEmail').value = c.email || '';
-    document.getElementById('mPhone').value = c.phone || '';
     
+    // Φόρτωση τρόπου πληρωμής
+    document.getElementById('payMethodSelect').value = c.payment_method || '1';
+    document.getElementById('otherDays').value = c.payment_note || '';
+    checkOtherCredit();
+
     document.getElementById('branchesWrapper').innerHTML = '';
-    if(c.branches && Array.isArray(c.branches)) c.branches.forEach(b => addBranch(b));
-    
+    if(c.branches) c.branches.forEach(b => addBranch(b));
+    document.getElementById('bankAccountsContainer').innerHTML = '';
+    if(c.banks) c.banks.forEach(b => addBankRow(b));
+
     document.getElementById('modalTitle').innerText = "Επεξεργασία";
     document.getElementById('custModal').style.display = 'block';
 }
 
 async function remove(id) {
-    if(confirm("Διαγραφή πελάτη;")) {
-        await _supabase.from(TABLE_CUSTOMERS).delete().eq('id', id);
-        render();
-    }
+    if(confirm("Διαγραφή;")) { await _supabase.from(TABLE_CUSTOMERS).delete().eq('id', id); render(); }
 }
 
 async function searchAade(btn) {
     const afm = document.getElementById('mAfm').value.trim();
-    if (afm.length !== 9) return alert("⚠️ Εισάγετε 9 ψηφία");
-
-    const originalText = btn.innerText;
+    if (afm.length !== 9) return alert("9 ψηφία ΑΦΜ");
     btn.innerText = "⏳";
-    btn.disabled = true;
-
     try {
         const response = await fetch('https://cors-anywhere.com/https://api.aade.gr/registry/enterprise?afm=' + afm, {
             headers: { 'ocp-apim-subscription-key': '70868f03930b42799f92305a30691e84' }
         });
-
-        const xmlText = await response.text();
-        const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-
+        const xml = new DOMParser().parseFromString(await response.text(), "text/xml");
         document.getElementById('mName').value = xml.getElementsByTagName("onomasia")[0]?.textContent || '';
-        document.getElementById('mJob').value = xml.getElementsByTagName("main_act_descr")[0]?.textContent || ''; // ΑΑΔΕ ΔΡΑΣΤΗΡΙΟΤΗΤΑ
+        document.getElementById('mJob').value = xml.getElementsByTagName("main_act_descr")[0]?.textContent || '';
         document.getElementById('mDoy').value = xml.getElementsByTagName("doy_descr")[0]?.textContent || '';
         document.getElementById('mAddr').value = xml.getElementsByTagName("postal_address")[0]?.textContent || '';
         document.getElementById('mCity').value = xml.getElementsByTagName("postal_area_description")[0]?.textContent || '';
         document.getElementById('mTk').value = xml.getElementsByTagName("postal_zip_code")[0]?.textContent || '';
-    } catch (err) { alert("⚠️ Σφάλμα ΑΑΔΕ"); }
-    finally { btn.innerText = originalText; btn.disabled = false; }
+    } catch (err) { alert("Σφάλμα ΑΑΔΕ"); }
+    btn.innerText = "🔍";
 }
 
 function filter() {
-    const val = document.getElementById('custSearch').value.toLowerCase();
+    const term = document.getElementById('custSearch').value.toLowerCase();
+    const onlyLimit = document.getElementById('limitFilter').checked;
     document.querySelectorAll('#custBody tr').forEach(tr => {
-        tr.style.display = tr.innerText.toLowerCase().includes(val) ? '' : 'none';
+        const matchText = tr.innerText.toLowerCase().includes(term);
+        const matchLimit = onlyLimit ? tr.innerHTML.includes('🛡️') : true;
+        tr.style.display = (matchText && matchLimit) ? '' : 'none';
     });
 }
 
